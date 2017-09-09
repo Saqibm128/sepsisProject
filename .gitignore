@@ -1,1 +1,2 @@
-data/
+data/rawdatafiles
+__pycache__/
