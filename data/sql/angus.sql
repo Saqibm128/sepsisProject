@@ -8,14 +8,6 @@
 -- hospitalizations with ICD-9-CM codes for both:
 -- (a) a bacterial or fungal infectious process AND
 -- (b) a diagnosis of acute organ dysfunction (Appendix 2).
-
--- Define which schema to work on
-SET search_path TO mimiciii;
-
--- Appendix 1: ICD9-codes (infection)
-DROP MATERIALIZED VIEW IF EXISTS angus_sepsis CASCADE;
-CREATE MATERIALIZED VIEW angus_sepsis as
-
 WITH infection_group AS (
 	SELECT subject_id, hadm_id,
 	CASE
