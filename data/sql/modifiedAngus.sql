@@ -75,10 +75,10 @@ WITH infection_group AS (
 			ELSE 0 END AS mech_vent
 	FROM admissions),
 	chart_events as (
-		SELECT hadm_id, labevents.itemid, label, value, charttime
+		SELECT labevents.hadm_id, labevents.itemid, d_labitems.label, labevents.value, labevents.charttime
 		FROM labevents
-		WHERE itemid in (51112, 51113, 51114, 51116, 51116, 51120, 51130, 51131, 51132, 51256)
-		JOIN d_labitems on d_labitems.itemid = labevents.itemid 
+		INNER JOIN d_labitems ON d_labitems.itemid = labevents.itemid
+		WHERE labevents.itemid in (51112, 51113, 51114, 51116, 51116, 51120, 51130, 51131, 51132, 51256)
 	)
 -- List angus score for each admission
 SELECT subject_id, aggregate.hadm_id, infection,
@@ -86,7 +86,8 @@ SELECT subject_id, aggregate.hadm_id, infection,
 	CASE
 	WHEN explicit_sepsis = 1 THEN 1
 	WHEN infection = 1 AND organ_dysfunction = 1 THEN 1
-	WHEN infection = 1 AND mech_vent = 1 THEN 1
+	WHEN infection = 1 AND
+	mech_vent = 1 THEN 1
 	ELSE 0 END AS Angus
 FROM aggregate
 LEFT OUTER JOIN chart_events on chart_events.hadm_id = aggregate.hadm_id;

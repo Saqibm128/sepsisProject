@@ -14,7 +14,9 @@ import pandas as pd
 ## Use predetermined criterion as explained by Angus paper and written by MIT
 
 conn = commonDB.getConnection()
-sepsisClassified = pd.read_sql(commonDB.sepsisSQLQuery, conn)
+with open("data/sql/modifiedAngus.sql") as f:
+    query = f.read()
+sepsisClassified = pd.read_sql(query, conn)
 
 print(sepsisClassified)
 pickle.dump(sepsisClassified, open("data/rawdatafiles/patientCodeClassified.p", "wb"))
