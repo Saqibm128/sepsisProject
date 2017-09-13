@@ -78,7 +78,6 @@ WITH infection_group AS (
 		SELECT labevents.hadm_id, labevents.itemid, d_labitems.label, labevents.value, labevents.charttime
 		FROM labevents
 		INNER JOIN d_labitems ON d_labitems.itemid = labevents.itemid
-		WHERE labevents.itemid in (51112, 51113, 51114, 51116, 51116, 51120, 51130, 51131, 51132, 51256)
 	)
 -- List angus score for each admission
 SELECT subject_id, aggregate.hadm_id, infection,
