@@ -11,21 +11,21 @@ import pandas as pd
 
 
 conn = commonDB.getConnection()
-with open("data/sql/countLabEvents.sql") as f:
-    query = f.read()
-labEvents = pd.read_sql(query, conn)
+# with open("data/sql/countLabEventsAngus.sql") as f:
+#     query = f.read()
+# labEvents = pd.read_sql(query, conn)
+#
+# ## Probably shouldn't print but using the fact that python will only output a few lines
+# ##      of a long output to get a preview of the result of the query
+# print(labEvents)
+# 
+#
+# pickle.dump(labEvents, open("data/rawdatafiles/labEventCountsAngus.p", "wb"))
 
-## Probably shouldn't print but using the fact that python will only output a few lines
-##      of a long output to get a preview of the result of the query
-print(labEvents)
-
-
-pickle.dump(labEvents, open("data/rawdatafiles/labEventCounts.p", "wb"))
-
-with open("data/sql/countChartEvents.sql") as f:
+with open("data/sql/countChartEventsAngus.sql") as f:
     query = f.read()
 chartEvents = pd.read_sql(query, conn)
 
 print(chartEvents)
 
-pickle.dump(chartEvents, open("data/rawdatafiles/chartEventCounts.p", "wb"))
+pickle.dump(chartEvents, open("data/rawdatafiles/chartEventCountsAngus.p", "wb"))

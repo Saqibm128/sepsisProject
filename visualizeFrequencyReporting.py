@@ -8,7 +8,7 @@ import pandas.core.indexes
 ##      of the frequency of each labitem and chartitem, as well as providing some other statistics
 ##      from the imported pickle file (i.e. the reporting/underreporting of features)
 
-with open("data/rawdatafiles/labEventCounts.p", "rb") as dataFile:
+with open("data/rawdatafiles/labEventCountsAngus.p", "rb") as dataFile:
     frequencies = pickle.load(dataFile)
 
 nonDistinctLabEvents = frequencies.values[:, 2]
@@ -30,7 +30,7 @@ plt.show()
 plt.hist(distinctPatientsLabEvents, bins=10)
 plt.title("Distribution of Frequency of Lab Items, Removing Repeated Measure per Patient")
 plt.xlabel("Frequency Bins of Each Item")
-plt.ylabel("Count of Lab Items in Each Frequency Bin")
+Couplt.ylabel("Count of Lab Items in Each Frequency Bin")
 plt.show()
 
 
@@ -39,7 +39,7 @@ print(frequencies.describe())
 
 ## now for chartsEvents
 
-with open("data/rawdatafiles/chartEventCounts.p", "rb") as dataFile:
+with open("data/rawdatafiles/chartEventCountsAngus.p", "rb") as dataFile:
     frequencies = pickle.load(dataFile, encoding='latin1')
 
 nonDistinctChartEvents = frequencies.values[:, 2]
