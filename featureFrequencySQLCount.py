@@ -55,15 +55,23 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True):
         else:
             featureItemCodes.add(labEvents.values[i, 0])
     return featureItemCodes
-
+def getFirst24HrsDataValuesIndividually(hadm_id):
+    """
+    Runs an SQL Query to return featues that that returns features for top 100
+    most frequent itemids of both chartevents and labevents (might overlap)
+    HOWEVER, only for one hadm_id
+    :param hadm_id the admission id to run query and retrieve data for
+    :return a Dataframe with the data
+    """
 def getFirst24HrsDataValues():
     """
-    Runs the SQL Query to return features that match the itemids
+    Runs the SQL Query to return features that match the itemids of the top
+    100 most frequent itemids of both chartevents and labevents (might overlap)
     WARNING: Query will return a lot, uses tons of memory at once
-    :return a Dataframe with the data from the sql query GetFirst24Hours.sql
+    :return a Dataframe with the data from the result of sql query GetFirst24Hours.sql
     """
     conn = commonDB.getConnection()
-    with open("data/sql/GetFirst24Hours.sql") as f:
+    with open("data/sql/GetFirst24HoursFull.sql") as f:
         query = f.read()
     first24HourData = pd.read_sql(query, conn)
     return first24HourData
