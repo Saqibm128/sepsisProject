@@ -97,7 +97,7 @@ WITH infection_group AS (
     FROM distinctAdmissions
     GROUP BY itemid
   )
-  SELECT label, distinctAdmissionsCount.itemid, chartEventsCountsDistinctAdmissions
+  SELECT distinctAdmissionsCount.itemid, label, chartEventsCountsDistinctAdmissions
   FROM distinctAdmissionsCount
-	RIGHT JOIN d_items on d_items.itemid = distinctAdmissionsCount.itemid
+	JOIN d_items on d_items.itemid = distinctAdmissionsCount.itemid
 	ORDER BY chartEventsCountsDistinctAdmissions desc

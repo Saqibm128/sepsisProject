@@ -10,14 +10,13 @@ import pandas as pd
 ##      takes a lot of time. Once done, it places the data as a raw pickle file
 
 
-conn = commonDB.getConnection()
-with open("data/sql/angus.sql") as f:
-    query = f.read()
-angusData = pd.read_sql(query, conn)
-
-## Probably shouldn't print but using the fact that python will only output a few lines
-##      of a long output to get a preview of the result of the query
-print(angusData)
-
-
-pickle.dump(angusData, open("data/rawdatafiles/classifiedAngusSepsis.p", "wb"))
+def getCategorizations():
+    """
+    This is a function to run the Angus.sql query, which is responsible for categorizing patients
+    :postcondition stores results as data/rawdatafiles/classifiedAngusSepsis.p
+    """
+    conn = commonDB.getConnection()
+    with open("data/sql/angus.sql") as f:
+        query = f.read()
+    angusData = pd.read_sql(query, conn)
+    pickle.dump(angusData, open("data/rawdatafiles/classifiedAngusSepsis.p", "wb"))

@@ -10,22 +10,66 @@ import pandas as pd
 ##      takes a lot of time. Once done, it places the data as a raw pickle file
 
 
-conn = commonDB.getConnection()
-# with open("data/sql/countLabEventsAngus.sql") as f:
-#     query = f.read()
-# labEvents = pd.read_sql(query, conn)
-#
-# ## Probably shouldn't print but using the fact that python will only output a few lines
-# ##      of a long output to get a preview of the result of the query
-# print(labEvents)
-# 
-#
-# pickle.dump(labEvents, open("data/rawdatafiles/labEventCountsAngus.p", "wb"))
+def getCountOfFeaturesAngus():
+    """
+    This file goes and executes the countLabEventsAngus and countChartEventsAngus sql
+    query. In addition, writes the resulting data to file as pickle
+    :postcondition writes to file a pickle holding the raw count data of features per admission
+    """
+    conn = commonDB.getConnection()
+    with open("data/sql/countLabEventsAngus.sql") as f:
+        query = f.read()
+    labEvents = pd.read_sql(query, conn)
 
-with open("data/sql/countChartEventsAngus.sql") as f:
-    query = f.read()
-chartEvents = pd.read_sql(query, conn)
+    pickle.dump(labEvents, open("data/rawdatafiles/labEventCountsAngus.p", "wb"))
 
-print(chartEvents)
+    with open("data/sql/countChartEventsAngus.sql") as f:
+        query = f.read()
+    chartEvents = pd.read_sql(query, conn)
 
-pickle.dump(chartEvents, open("data/rawdatafiles/chartEventCountsAngus.p", "wb"))
+    # print(chartEvents)
+
+    pickle.dump(chartEvents, open("data/rawdatafiles/chartEventCountsAngus.p", "wb"))
+
+def getTopNItemIDs(numToFind = 100, sqlFormat = True):
+    """
+    :precondition labEventCountsAngus.p and chartEventCountsAngus.p were created, otherwise they will be recreated
+    :param numToFind top n features to return
+    :param sqlFormat true to return sql format (string representation), else array of numbers
+    :return list of itemid's, properly formatted
+    """
+
+    with open("data/rawdatafiles/labEventCountsAngus.p", "rb") as f:
+        labEvents = pickle.load(f)
+    with open("data/rawdatafiles/chartEventCountsAngus.p", "rb") as f:
+        chartEvents = pickle.load(f)
+    featureItemCodes = set()
+    for i in range(0, numToFind):
+        if sqlFormat:
+            featureItemCodes.add("\'" + str(labEvents.values[i, 0]) + "\'")
+        else:
+            featureItemCodes.add(labEvents.values[i, 0])
+    for i in range(0, numToFind):
+        if sqlFormat:
+            featureItemCodes.add("\'" + str(chartEvents.values[i, 0]) + "\'")
+        else:
+            featureItemCodes.add(labEvents.values[i, 0])
+    return featureItemCodes
+
+def getFirst24HrsDataValues():
+    """
+    Runs the SQL Query to return features that match the itemids
+    WARNING: Query will return a lot, uses tons of memory at once
+    :return a Dataframe with the data from the sql query GetFirst24Hours.sql
+    """
+    conn = commonDB.getConnection()
+    with open("data/sql/GetFirst24Hours.sql") as f:
+        query = f.read()
+    first24HourData = pd.read_sql(query, conn)
+    return first24HourData
+# getCountOfFeaturesAngus()
+# for itemIdString in getTopNItemIDs():
+#     print(itemIdString + ", ")
+
+data = getFirst24HrsDataValues()
+data.to_csv("data/rawdatafiles/first24Hours.csv")
