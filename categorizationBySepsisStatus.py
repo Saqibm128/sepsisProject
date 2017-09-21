@@ -10,13 +10,19 @@ import pandas as pd
 ##      takes a lot of time. Once done, it places the data as a raw pickle file
 
 
-def getCategorizations():
+def getCategorizations(writeToCSV = False):
     """
     This is a function to run the Angus.sql query, which is responsible for categorizing patients
+    :param writeToCSV If true, writes in csv format instead of pickle format
     :postcondition stores results as data/rawdatafiles/classifiedAngusSepsis.p
     """
     conn = commonDB.getConnection()
     with open("data/sql/angus.sql") as f:
         query = f.read()
     angusData = pd.read_sql(query, conn)
-    pickle.dump(angusData, open("data/rawdatafiles/classifiedAngusSepsis.p", "wb"))
+    if not writeToCSV:
+        pickle.dump(angusData, open("data/rawdatafiles/classifiedAngusSepsis.p", "wb"))
+    else:
+        angusData.to_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
+
+getCategorizations(True)
