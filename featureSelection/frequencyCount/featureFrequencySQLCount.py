@@ -11,53 +11,48 @@ import os.path
 
 
 
-def countFeatures():
+def countFeatures(path="../../data/sql/perAdmissionCount.sql"):
     """
     This file goes and executes queries to count the most common features in 24 hour ranges
     as well as labels, itemids, and average occurrences of feature in each admission.
+    :param path where to write cached copy of counts of features
     :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
 
-    with open("../../data/sql/perAdmissionCount.sql") as f:
+    with open(path, "rb") as f:
         query = f.read()
     chartEvents = pd.read_sql(query, conn)
-
     # print(chartEvents)
-
+    chartEvents.to_csv("data/rawdatafiles/counts.csv")
     return chartEvents
 
-def getTopNItemIDs(numToFind = 100, sqlFormat = True):
+def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="../../data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):
     """
     :precondition labEventCountsAngus.p and chartEventCountsAngus.p were created, otherwise they will be recreated
     :param numToFind top n features to return
+    :param path where a cached copy of counts may be held
+    :param sqlPath where a copy of the sql code to count frequencies is kept
     :param sqlFormat True to return sql format (string representation), else array of numbers (type int)
     :return string of itemid's if sqlFormat is true, properly formatted as per sqlFormat OR a set of numbers representing itemids
     """
-    if not os.path.isfile("../../data/rawdatafiles/labEventCountsAngus.p"):
-        labEvents = countFeatures()
+    if not os.path.isfile(path):
+        features = countFeatures(path=sqlPath)
     else:
-    with open("../../data/rawdatafiles/labEventCountsAngus.p", "rb") as f:
-        labEvents = pickle.load(f)
-    with open("../../data/rawdatafiles/chartEventCountsAngus.p", "rb") as f:
-        chartEvents = pickle.load(f)
+        with open(path, "rb") as f:
+            features =  pd.from_csv(path) #avoid weird conflict lines
     featureItemCodes = set() #using set because itemids may show up in both labevents AND chartevents
     for i in range(0, numToFind):
         if sqlFormat:
-            featureItemCodes.add("\'" + str(labEvents.values[i, 0]) + "\'")
+            featureItemCodes.add("\'" + str(features["itemid"][i]) + "\'")
         else:
-            featureItemCodes.add(labEvents.values[i, 0])
-    for i in range(0, numToFind):
-        if sqlFormat:
-            featureItemCodes.add("\'" + str(chartEvents.values[i, 0]) + "\'")
-        else:
-            featureItemCodes.add(labEvents.values[i, 0])
+            featureItemCodes.add(features["itemid"][i])
     if sqlFormat: #Go ahead and return a string
         toReturn = ""
         for itemIdString in featureItemCodes:
             toReturn = toReturn + itemIdString + ", "
         return toReturn[:-2] #remove last comma and space
-    return featureItemCodes #just return the set of python ints
+    return featureItemCodes #just return the set of itemids in int format
 
 def cleanUpIndividual(events, hadm_id):
     """
@@ -81,16 +76,17 @@ def cleanUpIndividual(events, hadm_id):
 
 
 
-def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10):
+def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10, path="../../data/rawdatafiles/counts.csv"):
     """
     Runs an SQL Query to return featues that that returns features for top 100
     most frequent itemids of both chartevents and labevents (might overlap)
     HOWEVER, only for one hadm_id
+    :param path variable to use for cached counts of features
     :param hadm_id the admission id to run query and retrieve data for
     :param nitems number of most reported features to return
     :return a Dataframe with the data
     """
-    itemIds = getTopNItemIDs(numToFind = nitems)
+    itemIds = getTopNItemIDs(numToFind = nitems, path=path)
     query = "WITH timeranges as (SELECT hadm_id, admittime, admittime + interval '24 hour' as endtime FROM admissions WHERE hadm_id = " + str(hadm_id)+ "),"\
         + "topLabEvents as ( SELECT hadm_id, itemid, charttime, value, valuenum FROM labevents WHERE labevents.itemid in (" \
         + itemIds \
@@ -101,7 +97,7 @@ def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10):
         + " ) SELECT * FROM topLabEvents UNION SELECT * FROM topChartEvents ORDER BY charttime"
     conn = commonDB.getConnection()
     dataToReturn = pd.read_sql(query, conn)
-    print(query) #debug method TODO: remove or comment this out
+    # print(query) #debug method TODO: remove or comment this out
     return dataToReturn
 
 def getFirst24HrsDataValues():
