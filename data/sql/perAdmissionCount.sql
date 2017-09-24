@@ -19,13 +19,14 @@ charteventsInRange as (
 ),
 distinctChartAdmissions as (
   -- We take distinct combination of lab tests and each hospital admission
-  SELECT DISTINCT hadm_id, itemid, count(itemid) as count
+  SELECT DISTINCT hadm_id, label, charteventsInRange.itemid, count(itemid) as count
   FROM charteventsInRange
+  LEFT JOIN d_items ON charteventsInRange.itemid = d_items.itemid
   GROUP BY hadm_id, itemid
 ),
 chartEventCount as (
   -- If we take multiple tests each hospital admission, we only count it once
-  SELECT itemid, COUNT(itemid) as countPerAdmission, AVG(count)
+  SELECT itemid, label, COUNT(itemid) as countPerAdmission, AVG(count)
   FROM distinctChartAdmissions
   GROUP BY itemid
 ),
@@ -33,6 +34,7 @@ distinctLabAdmissions as (
   -- We take distinct combination of lab tests and each hospital admission
   SELECT DISTINCT hadm_id, itemid, count(itemid) as count
   FROM labeventsInRange
+  LEFT JOIN d_labitems ON labeventsInRange.itemid = d_labitems.itemid
   GROUP BY hadm_id, itemid
 ),
 labEventCount as (
@@ -41,13 +43,7 @@ labEventCount as (
   FROM distinctLabAdmissions
   GROUP BY itemid
 ),
-allCounts as (
   SELECT * FROM labEventCount
   UNION
   SELECT * FROM chartEventCount
-),
-firstJoin as (SELECT allCounts.itemid, label, countPerAdmission, avgPerAdmission FROM allCounts
-LEFT JOIN d_items on d_items.itemid = allCounts.itemid),
-secondJoin as (SELECT allCounts.itemid, label, countPerAdmission, avgPerAdmission FROM allCounts
-LEFT JOIN d_labitems on d_labitems.itemid = allCounts.itemid)
-SELECT * FROM firstJoin UNION SELECT * FROM secondJoin
+  ORDER BY countPerAdmission desc

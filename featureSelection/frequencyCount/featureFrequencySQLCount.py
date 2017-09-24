@@ -2,6 +2,7 @@ import pickle
 import commonDB
 import pandas as pd
 import numpy
+import os.path
 
 
 ## @author Mohammed Saqib
@@ -12,18 +13,13 @@ import numpy
 
 def countFeatures():
     """
-    This file goes and executes the countLabEventsAngus and countChartEventsAngus sql
-    query. In addition, writes the resulting data to file as pickle
+    This file goes and executes queries to count the most common features in 24 hour ranges
+    as well as labels, itemids, and average occurrences of feature in each admission.
     :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
-    with open("data/sql/countLabEventsAngus.sql") as f:
-        query = f.read()
-    labEvents = pd.read_sql(query, conn)
 
-    pickle.dump(labEvents, open("data/rawdatafiles/labEventCountsAngus.p", "wb"))
-
-    with open("data/sql/perAdmissionCount.sql") as f:
+    with open("../../data/sql/perAdmissionCount.sql") as f:
         query = f.read()
     chartEvents = pd.read_sql(query, conn)
 
@@ -38,11 +34,12 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True):
     :param sqlFormat True to return sql format (string representation), else array of numbers (type int)
     :return string of itemid's if sqlFormat is true, properly formatted as per sqlFormat OR a set of numbers representing itemids
     """
-    if not os.path.isfile("data/rawdatafiles/labEventCountsAngus.p"):
-        getCountOfFeaturesAngus()
-    with open("data/rawdatafiles/labEventCountsAngus.p", "rb") as f:
+    if not os.path.isfile("../../data/rawdatafiles/labEventCountsAngus.p"):
+        labEvents = countFeatures()
+    else:
+    with open("../../data/rawdatafiles/labEventCountsAngus.p", "rb") as f:
         labEvents = pickle.load(f)
-    with open("data/rawdatafiles/chartEventCountsAngus.p", "rb") as f:
+    with open("../../data/rawdatafiles/chartEventCountsAngus.p", "rb") as f:
         chartEvents = pickle.load(f)
     featureItemCodes = set() #using set because itemids may show up in both labevents AND chartevents
     for i in range(0, numToFind):
@@ -104,7 +101,7 @@ def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10):
         + " ) SELECT * FROM topLabEvents UNION SELECT * FROM topChartEvents ORDER BY charttime"
     conn = commonDB.getConnection()
     dataToReturn = pd.read_sql(query, conn)
-    # print(query) #debug method TODO: remove or comment this out
+    print(query) #debug method TODO: remove or comment this out
     return dataToReturn
 
 def getFirst24HrsDataValues():
@@ -115,14 +112,14 @@ def getFirst24HrsDataValues():
     :return a Dataframe with the data from the result of sql query GetFirst24Hours.sql
     """
     conn = commonDB.getConnection()
-    with open("data/sql/GetFirst24HoursFull.sql") as f:
+    with open("../../data/sql/GetFirst24HoursFull.sql") as f:
         query = f.read()
     first24HourData = pd.read_sql(query, conn)
     return first24HourData
 if __name__ == "__main__":
     counts = countFeatures()
     print(counts)
-    counts.to_csv("data/rawdatafiles/counts.csv")
+    counts.to_csv("../../data/rawdatafiles/counts.csv")
     # hadm_ids = commonDB.getAllHADMID()["hadm_id"]
     # allPersons = pd.DataFrame()
     # for hadm_id in hadm_ids:
