@@ -10,11 +10,11 @@ import numpy
 
 
 
-def getCountOfFeaturesAngus():
+def countFeatures():
     """
     This file goes and executes the countLabEventsAngus and countChartEventsAngus sql
     query. In addition, writes the resulting data to file as pickle
-    :postcondition writes to file a pickle holding the raw count data of features per admission
+    :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
     with open("data/sql/countLabEventsAngus.sql") as f:
@@ -23,13 +23,13 @@ def getCountOfFeaturesAngus():
 
     pickle.dump(labEvents, open("data/rawdatafiles/labEventCountsAngus.p", "wb"))
 
-    with open("data/sql/countChartEventsAngus.sql") as f:
+    with open("data/sql/perAdmissionCount.sql") as f:
         query = f.read()
     chartEvents = pd.read_sql(query, conn)
 
     # print(chartEvents)
 
-    pickle.dump(chartEvents, open("data/rawdatafiles/chartEventCountsAngus.p", "wb"))
+    return chartEvents
 
 def getTopNItemIDs(numToFind = 100, sqlFormat = True):
     """
@@ -38,7 +38,8 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True):
     :param sqlFormat True to return sql format (string representation), else array of numbers (type int)
     :return string of itemid's if sqlFormat is true, properly formatted as per sqlFormat OR a set of numbers representing itemids
     """
-
+    if not os.path.isfile("data/rawdatafiles/labEventCountsAngus.p"):
+        getCountOfFeaturesAngus()
     with open("data/rawdatafiles/labEventCountsAngus.p", "rb") as f:
         labEvents = pickle.load(f)
     with open("data/rawdatafiles/chartEventCountsAngus.p", "rb") as f:
@@ -61,7 +62,7 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True):
         return toReturn[:-2] #remove last comma and space
     return featureItemCodes #just return the set of python ints
 
-def cleanUpIndividual(events):
+def cleanUpIndividual(events, hadm_id):
     """
     Takes a dataframe of all events that occurred to an individual and goes through all of them. Then cleans the data up
     :param events dataframe of all events that occurred to one individual
@@ -70,7 +71,7 @@ def cleanUpIndividual(events):
     """
     datamap = {}
     features = events["itemid"].unique() #Should return a series of unique itemids
-    datamap["hadm_id"] = events["hadm_id"][0]
+    datamap["hadm_id"] = [hadm_id]
     for feature in features:
         featureVal = (events[events["itemid"] == feature])["value"]
         if featureVal.isnull().all(): #check and see if we had a null val
@@ -119,9 +120,15 @@ def getFirst24HrsDataValues():
     first24HourData = pd.read_sql(query, conn)
     return first24HourData
 if __name__ == "__main__":
-    hadm_id = 128652 #Practice id to work with
-    dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, nitems = 30)
-    print(cleanUpIndividual(dataEvents))
+    counts = countFeatures()
+    print(counts)
+    counts.to_csv("data/rawdatafiles/counts.csv")
+    # hadm_ids = commonDB.getAllHADMID()["hadm_id"]
+    # allPersons = pd.DataFrame()
+    # for hadm_id in hadm_ids:
+    #     dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, nitems = 10)
+    #     allPersons = pd.concat([allPersons, cleanUpIndividual(dataEvents, hadm_id)])
+    # allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
 # # getCountOfFeaturesAngus()
 # print(getTopNItemIDs(numToFind = 5))
 #

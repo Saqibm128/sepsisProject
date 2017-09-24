@@ -1,4 +1,4 @@
--- Uses Angus ICD9 codes to quickly find sepsis suspects and use those for features
+-- Finds Feature Counts: Uses Angus ICD9 codes to quickly find sepsis suspects and use those for features
 -- count (chartevents)
 WITH infection_group AS (
 	SELECT subject_id, hadm_id,

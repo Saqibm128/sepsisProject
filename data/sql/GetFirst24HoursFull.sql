@@ -1,5 +1,5 @@
 WITH timeranges as (
-  SELECT hadm_id, admittime, admittime + interval '4 hour' as endtime
+  SELECT hadm_id, admittime, admittime + interval '24 hour' as endtime
   FROM admissions
 ), topLabEvents as (
   SELECT * FROM labevents WHERE labevents.itemid in ('80', '211', '467', '51330', '51165', '51126', '31', '51477', '51349', '926')
