@@ -11,11 +11,12 @@ import os.path
 
 
 
-def countFeatures(path="../../data/sql/perAdmissionCount.sql"):
+def countFeatures(path="../../data/sql/perAdmissionCount.sql", write=True):
     """
     This file goes and executes queries to count the most common features in 24 hour ranges
     as well as labels, itemids, and average occurrences of feature in each admission.
     :param path where to write cached copy of counts of features
+    :param write if this method should actually go ahead and write counts down
     :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
@@ -40,7 +41,7 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="../../data/rawdatafi
         features = countFeatures(path=sqlPath)
     else:
         with open(path, "rb") as f:
-            features =  pd.from_csv(path) #avoid weird conflict lines
+            features =  pd.DataFrame.from_csv(path)
     featureItemCodes = set() #using set because itemids may show up in both labevents AND chartevents
     for i in range(0, numToFind):
         if sqlFormat:
@@ -62,19 +63,29 @@ def cleanUpIndividual(events, hadm_id):
     :return a cleaned dataframe, with missing data interpolated, if possible from individual record
     """
     datamap = {}
-    features = events["itemid"].unique() #Should return a series of unique itemids
-    datamap["hadm_id"] = [hadm_id]
+    features = events["itemid"].unique() #Should return a series of unique itemids aka a list to iterate over for the features we decide to use
+    datamap["hadm_id"] = [str(hadm_id)]
     for feature in features:
         featureVal = (events[events["itemid"] == feature])["value"]
         if featureVal.isnull().all(): #check and see if we had a null val
-            featureVal = (events[events["itemid"] == feature])["valuenum"]
+            featureVal = (events[events["itemid"] == feature])["valuenum"] #sets featureVal as temporary series that contains all values, then to take mean of
             featureVal = [featureVal.mean()]
         else:
             featureVal = [featureVal.mode()[0]] #get first mode of all nonnumeric data
-        datamap[feature] = featureVal
-    return pd.DataFrame(data=datamap, columns=features)
+        datamap[str(feature)] = featureVal
+    df = pd.DataFrame(datamap)
+    df.set_index(["hadm_id"])
+    return df
 
-
+def cleanSeries(series):
+    '''
+    :param series to clean, does a naive clean
+    :return the data to fill Na data with
+    '''
+    if series.dtype == numpy.int_ or series.dtype == numpy.float_:
+        return series.mean()
+    else:
+        return series.mode()[0]
 
 def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10, path="../../data/rawdatafiles/counts.csv"):
     """
@@ -87,13 +98,13 @@ def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10, path="../../data/r
     :return a Dataframe with the data
     """
     itemIds = getTopNItemIDs(numToFind = nitems, path=path)
-    query = "WITH timeranges as (SELECT hadm_id, admittime, admittime + interval '24 hour' as endtime FROM admissions WHERE hadm_id = " + str(hadm_id)+ "),"\
-        + "topLabEvents as ( SELECT hadm_id, itemid, charttime, value, valuenum FROM labevents WHERE labevents.itemid in (" \
+    query = "WITH timeranges as (SELECT hadm_id, admittime, admittime + interval '24 hour' as endtime FROM admissions WHERE hadm_id = " + str(hadm_id)+ "), \n"\
+        + "topLabEvents as ( SELECT hadm_id, label, labevents.itemid, charttime, value, valuenum FROM labevents  LEFT JOIN d_labitems on d_labitems.itemid = labevents.itemid WHERE labevents.itemid in ( \n" \
         + itemIds \
-        + ") AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges)" \
-        + "), topChartEvents as (SELECT hadm_id, itemid, charttime, value, valuenum FROM chartevents WHERE chartevents.itemid in (" \
+        + "\n) AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges)\n" \
+        + "), topChartEvents as (SELECT hadm_id, label, chartevents.itemid, charttime, value, valuenum FROM chartevents  LEFT JOIN d_items on d_items.itemid = chartevents.itemid WHERE chartevents.itemid in (\n" \
         + itemIds \
-        + ") AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges)" \
+        + ")\n AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges) \n" \
         + " ) SELECT * FROM topLabEvents UNION SELECT * FROM topChartEvents ORDER BY charttime"
     conn = commonDB.getConnection()
     dataToReturn = pd.read_sql(query, conn)
