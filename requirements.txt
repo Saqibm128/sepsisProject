@@ -2,3 +2,4 @@ numpy
 pandas
 matplotlib
 psycopg2
+wfdb
