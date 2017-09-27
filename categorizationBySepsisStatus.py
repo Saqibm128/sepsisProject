@@ -24,5 +24,5 @@ def getCategorizations(writeToCSV = False):
         pickle.dump(angusData, open("data/rawdatafiles/classifiedAngusSepsis.p", "wb"))
     else:
         angusData.to_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
-
-getCategorizations(True)
+if __name__ == "__main__":
+    getCategorizations(True)

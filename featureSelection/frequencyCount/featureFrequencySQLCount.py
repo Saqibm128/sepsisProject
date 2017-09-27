@@ -54,7 +54,23 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="../../data/rawdatafi
             toReturn = toReturn + itemIdString + ", "
         return toReturn[:-2] #remove last comma and space
     return featureItemCodes #just return the set of itemids in int format
-
+def getDataAllHadmId(hadm_ids, nitems, path="data/rawdatafiles/counts.csv"):
+    '''
+    :param hadm_ids a list of all hadm_ids to include and process
+    :param nitems the number of the most common features to include in final data matrix
+    :param path, where to read most common features from (Cached from earlier sql query)
+    :return dataframe containing all data, cleaned
+    '''
+    allPersons = pd.DataFrame()
+    intermediateList = []
+    for hadm_id in hadm_ids:
+        dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, nitems = nitems, path=path)
+        intermediateList.append(cleanUpIndividual(dataEvents, hadm_id))
+    allPersons = pd.concat(intermediateList)
+    allPersons.set_index("hadm_id", inplace = True)
+    for column in allPersons.columns:
+        allPersons[column].fillna(cleanSeries(allPersons[column]), inplace=True)
+    return allPersons
 def cleanUpIndividual(events, hadm_id):
     """
     Takes a dataframe of all events that occurred to an individual and goes through all of them. Then cleans the data up
@@ -69,6 +85,7 @@ def cleanUpIndividual(events, hadm_id):
         featureVal = (events[events["itemid"] == feature])["value"]
         if featureVal.isnull().all(): #check and see if we had a null val
             featureVal = (events[events["itemid"] == feature])["valuenum"] #sets featureVal as temporary series that contains all values, then to take mean of
+            featureVal = featureVal[~featureVal.duplicated(keep='first')]
             featureVal = [featureVal.mean()]
         else:
             featureVal = [featureVal.mode()[0]] #get first mode of all nonnumeric data
@@ -79,7 +96,8 @@ def cleanUpIndividual(events, hadm_id):
 
 def cleanSeries(series):
     '''
-    :param series to clean, does a naive clean
+    Used later on to help clean up data en masse
+    :param series to clean, does a naive clean based on other stuff in series
     :return the data to fill Na data with
     '''
     if series.dtype == numpy.int_ or series.dtype == numpy.float_:
