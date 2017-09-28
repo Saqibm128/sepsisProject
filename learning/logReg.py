@@ -1,5 +1,6 @@
 import sklearn.linear_model as linMod
 import sklearn.model_selection as modSel
+import util
 
 # This function contains helper functions used to train and test on the data
 # Specifically used for LogisticRegression tests as well as all the setup that goes along with it
@@ -11,5 +12,5 @@ def cross_val_score(joinedDataframe):
         last column is the Angus sepsis specifier
     :return TODO: figure it out
     '''
-    solver = linMod.LogisticRegression()
-    cvscore = modSel.cross_val_score(estimator=solver, X=result[result.columns[:-1]], y=result["angus"], scoring= scorer, cv = 10)
+    regFunct = linMod.LogisticRegression()
+    cvscore = modSel.cross_val_score(estimator=regFunct, X=result[result.columns[:-1]], y=result["angus"], scoring= util.scorer, cv = 10)
