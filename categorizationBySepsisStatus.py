@@ -15,14 +15,17 @@ def getCategorizations(writeToCSV = False):
     This is a function to run the Angus.sql query, which is responsible for categorizing patients
     :param writeToCSV If true, writes in csv format instead of pickle format
     :postcondition stores results as data/rawdatafiles/classifiedAngusSepsis.p
+    :return the angusData
     """
     conn = commonDB.getConnection()
     with open("data/sql/angus.sql") as f:
         query = f.read()
     angusData = pd.read_sql(query, conn)
+    angusData.set_index(["hadm_id"], inplace=True)
     if not writeToCSV:
         pickle.dump(angusData, open("data/rawdatafiles/classifiedAngusSepsis.p", "wb"))
     else:
         angusData.to_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
+    return angusData
 if __name__ == "__main__":
     getCategorizations(True)
