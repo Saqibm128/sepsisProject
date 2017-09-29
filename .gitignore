@@ -1,4 +1,4 @@
-data/rawdatafiles
+data/rawdatafiles/*
 __pycache__/*
 __pycache__
 *.pyc
