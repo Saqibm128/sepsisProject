@@ -70,6 +70,14 @@ def getDataAllHadmId(hadm_ids, nitems, path="data/rawdatafiles/counts.csv"):
     allPersons.set_index("hadm_id", inplace = True)
     for column in allPersons.columns:
         allPersons[column].fillna(cleanSeries(allPersons[column]), inplace=True)
+        # remove outliers either above the 3rd std or below the 3rd std
+        if allPersons[column].dtype == numpy.number:
+            allPersons[column] = allPersons[column].apply(
+                lambda ind: ((col.mean() + 3 * col.std()) if  (ind > (col.mean() + 3 * col.std())) else ind \
+                ))
+            allPersons[column] = allPersons[column].apply(
+                lambda ind: ((col.mean() - 3 * col.std()) if  (ind < (col.mean() - 3 * col.std())) else ind \
+                ))
     return allPersons
 def cleanUpIndividual(events, hadm_id):
     """
@@ -85,7 +93,7 @@ def cleanUpIndividual(events, hadm_id):
         featureVal = (events[events["itemid"] == feature])["value"]
         if featureVal.isnull().all(): #check and see if we had a null val
             featureVal = (events[events["itemid"] == feature])["valuenum"] #sets featureVal as temporary series that contains all values, then to take mean of
-            featureVal = featureVal[~featureVal.duplicated(keep='first')]
+            featureVal = featureVal[~featureVal.duplicated(keep='first')] #if chartevents and labevents has the same exact item, ie times, dates, and values, then keep only one copy
             featureVal = [featureVal.mean()]
         else:
             featureVal = [featureVal.mode()[0]] #get first mode of all nonnumeric data
