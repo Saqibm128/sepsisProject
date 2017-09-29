@@ -9,11 +9,11 @@ import readWaveForm.waveformUtil as wfutil
 
 
 hadm_ids = commonDB.getAllHADMID()
-allPersons = freq.getDataAllHadmId(hadm_ids, 30)
-allPersons.to_csv("data/rawdatafiles/allPersonsData.csv")
+allPersons = freq.getDataAllHadmId(hadm_ids, 10)
+allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
 print(allPersons)
 
-allPersons = pd.DataFrame.from_csv("data/rawdatafiles/allPersonsData.csv")
+allPersons = pd.DataFrame.from_csv("data/rawdatafiles/testPersonsData.csv")
 classified = pd.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
 classified.set_index(["hadm_id"], inplace = True)
 result = allPersons.join(classified["angus"], how="inner")
@@ -22,3 +22,4 @@ result.to_csv("data/rawdatafiles/all10features.csv")
 # wfutil.generateAngusDF().to_csv("data/rawdatafiles/matchedWFDBAngus.csv")
 
 scores = logReg.cross_val_score(result)
+print(scores)
