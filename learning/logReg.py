@@ -14,4 +14,9 @@ def cross_val_score(joinedDataframe):
     :return TODO: figure it out
     '''
     regFunct = linMod.LogisticRegression()
-    cvscore = modSel.cross_val_score(estimator=regFunct, X=joinedDataframe.drop(["angus"], axis=1).select_dtypes([np.number]), y=joinedDataframe["angus"], scoring= util.scorer, cv = 10)
+    cvscore = modSel.cross_val_score(estimator=regFunct, \
+        X=joinedDataframe.drop(["angus"], axis=1).select_dtypes([np.number]), \
+        y=joinedDataframe["angus"], \
+        scoring= util.scorer, \
+        cv = 10)
+    return cvscore

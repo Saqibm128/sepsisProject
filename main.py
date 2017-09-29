@@ -10,9 +10,9 @@ import categorizationBySepsisStatus as catSepsis
 
 catSepsis.getCategorizations(writeToCSV = True)
 hadm_ids = commonDB.getAllHADMID()
-# allPersons = freq.getDataAllHadmId(hadm_ids, 10)
-# allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
-# print(allPersons)
+allPersons = freq.getDataAllHadmId(hadm_ids, 40)
+allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
+print(allPersons)
 
 allPersons = pd.DataFrame.from_csv("data/rawdatafiles/testPersonsData.csv")
 classified = pd.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
@@ -20,6 +20,5 @@ result = allPersons.join(classified["angus"], how="inner")
 result.to_csv("data/rawdatafiles/all10features.csv")
 #
 # wfutil.generateAngusDF().to_csv("data/rawdatafiles/matchedWFDBAngus.csv")
-
 scores = logReg.cross_val_score(result)
 print(scores)
