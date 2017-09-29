@@ -28,9 +28,8 @@ def countFeatures(path="../../data/sql/perAdmissionCount.sql", write=True):
     chartEvents.to_csv("data/rawdatafiles/counts.csv")
     return chartEvents
 
-def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="../../data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):
+def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):
     """
-    :precondition labEventCountsAngus.p and chartEventCountsAngus.p were created, otherwise they will be recreated
     :param numToFind top n features to return
     :param path where a cached copy of counts may be held
     :param sqlPath where a copy of the sql code to count frequencies is kept
@@ -42,6 +41,7 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="../../data/rawdatafi
     else:
         with open(path, "rb") as f:
             features =  pd.DataFrame.from_csv(path)
+            features.to_csv("data/rawdatafiles/counts.csv")
     featureItemCodes = set() #using set because itemids may show up in both labevents AND chartevents
     for i in range(0, numToFind):
         if sqlFormat:
