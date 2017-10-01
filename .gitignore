@@ -4,3 +4,6 @@ __pycache__
 *.pyc
 vcs.xml
 .idea
+*.swp
+
+nohup.out
