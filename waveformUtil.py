@@ -5,7 +5,7 @@ import wfdb
 import urllib.request as request
 import pandas as pd
 import numpy as np
-import categorizationBySepsisStatus as angus
+import categorization as angus
 
 def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-numerics"):
     '''
@@ -13,45 +13,48 @@ def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/m
     method here returns the subject_id of the matched records for numeric records
         uses specified format given in documentions
     :param url (already set) which sets where to read the subject Ids
-    :return a list of tuple (subject_id, start time in string format) for matched numeric records in the waveform data
+    :return a list of lists (subject_id, start time in string format) for matched numeric records in the waveform data
     '''
     resp = request.urlopen(url)
     data = resp.read()
     recordSubjects = [];
+    recordTimes = [];
     for line in data.splitlines():
         line = str(line)
         sublines = line.split('/')
         subjectID = sublines[1][1:]
         time = sublines[2].replace("p" + subjectID, "")
-        recordSubjects.append([subjectID, time[1:-2]])
-    return np.array(recordSubjects)
+        recordSubjects.append(subjectID)
+        recordTimes.append(time[1:-2])
+    return [recordSubjects, recordTimes]
 def listAllMatchedWFSubjects(url="https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-waveforms"):
     '''
     Waveforms in mimic3wdb have a frequency of 125 hz and can contain multiple waveform data
     method here returns the subject_id of the matched records for waveforms
         uses specified format given in documentions
     :param url (already set) which sets where to read the subject ids
-    :return a np array 2 x n (subject_id, start time in string format) for matched numeric records in the waveform data
+    :return a list n * 2(subject_id, start time in string format) for matched numeric records in the waveform data
     '''
     resp = request.urlopen(url)
     data = resp.read()
     recordSubjects = [];
+    recordTime = [];
     for line in data.splitlines():
         line = str(line)
         sublines = line.split('/')
         subjectID = sublines[1][1:]
         time = sublines[2].replace("p" + subjectID, "")
-        recordSubjects.append([subjectID, time[1:-2]])
-    return np.array(recordSubjects)
+        recordTime.append(time[1:-2])
+        recordSubjects.append(subjectID)
+    return [recordSubjects, recordTime]
 
 def listAllSubjects(url="https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-waveforms"):
     '''
     all subjects recorded in mimic3wdb, either numeric record or waveform record
     :param url (already set) which sets where to read the subject ids
-    :return a pandas Series of all subject ids
+    :return an ndarray of all subject ids
     '''
-    subjects = listAllMatchedWFSubjects()[0]
-    subjects.append(listAllMatchedRecSubjects[0])
+    subjects = np.append(listAllMatchedWFSubjects()[0], listAllMatchedRecSubjects()[0])
     subjects = pd.Series(subjects).unique()
     return subjects
 def generateAngusDF(cachedAngus="data/rawdatafiles/classifiedAngusSepsis.csv", sqlFile = None):

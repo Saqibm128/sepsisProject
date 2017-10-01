@@ -11,22 +11,25 @@ import os.path
 
 
 
-def countFeatures(path="../../data/sql/perAdmissionCount.sql", write=True):
+def countFeatures(ids, path="data/sql/perAdmissionCount.sql", write=True):
     """
     This file goes and executes queries to count the most common features in 24 hour ranges
-    as well as labels, itemids, and average occurrences of feature in each admission.
+    as well as labels, itemids, and average occurrences of feature in each admission for the
+    10,282 matched subset.
     :param path where to write cached copy of counts of features
     :param write if this method should actually go ahead and write counts down
+    :param ids subjectIDS to restrict the count to. Hack to get around pythons terrible sibling package import
     :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
 
-    with open(path, "rb") as f:
+    with open(path, "r") as f:
         query = f.read()
-    chartEvents = pd.read_sql(query, conn)
-    # print(chartEvents)
-    chartEvents.to_csv("data/rawdatafiles/counts.csv")
-    return chartEvents
+    matchedSubjectIds = commonDB.convertListToSQL(ids)
+    query = query.replace("<INSERT IDS HERE>", str(matchedSubjectIds))
+    events = pd.read_sql(query, conn)
+    events.to_csv("data/rawdatafiles/counts.csv")
+    return events
 
 def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):
     """
@@ -49,10 +52,7 @@ def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="data/rawdatafiles/co
         else:
             featureItemCodes.add(features["itemid"][i])
     if sqlFormat: #Go ahead and return a string
-        toReturn = ""
-        for itemIdString in featureItemCodes:
-            toReturn = toReturn + itemIdString + ", "
-        return toReturn[:-2] #remove last comma and space
+        return commonDB.convertListToSQL(featureItemCodes)
     return featureItemCodes #just return the set of itemids in int format
 def getDataAllHadmId(hadm_ids, nitems, path="data/rawdatafiles/counts.csv"):
     '''

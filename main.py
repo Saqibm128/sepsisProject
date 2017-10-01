@@ -4,9 +4,9 @@
 import featureSelection.frequencyCount.featureFrequencySQLCount as freq
 import pandas as pd
 import commonDB
-import learning.logReg as logReg
-import readWaveForm.waveformUtil as wfutil
-import categorizationBySepsisStatus as catSepsis
+import learning as logReg
+import waveForm as wfutil
+import categorization as catSepsis
 
 catSepsis.getCategorizations(writeToCSV = True)
 hadm_ids = commonDB.getAllHADMID()
