@@ -29,6 +29,7 @@ def countFeatures(ids, path="data/sql/perAdmissionCount.sql", write=True):
     query = query.replace("<INSERT IDS HERE>", str(matchedSubjectIds))
     events = pd.read_sql(query, conn)
     events.to_csv("data/rawdatafiles/counts.csv")
+
     return events
 
 def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):
@@ -108,7 +109,7 @@ def cleanSeries(series):
     :param series to clean, does a naive clean based on other stuff in series
     :return the data to fill Na data with
     '''
-    if series.dtype == numpy.int_ or series.dtype == numpy.float_:
+    if series.dtype == numpy.number:
         return series.mean()
     else:
         return series.mode()[0]

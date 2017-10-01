@@ -2,3 +2,5 @@ data/rawdatafiles/*
 __pycache__/*
 __pycache__
 *.pyc
+vcs.xml
+.idea
