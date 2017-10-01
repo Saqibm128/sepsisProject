@@ -142,7 +142,7 @@ def getFirst24HrsDataValues():
     """
     Runs the SQL Query to return features that match the itemids of the top
     100 most frequent itemids of both chartevents and labevents (might overlap)
-    WARNING: Query will return a lot, uses tons of memory at once
+    WARNING: Query will return a lot, uses tons of memory at once, don't use?
     :return a Dataframe with the data from the result of sql query GetFirst24Hours.sql
     """
     conn = commonDB.getConnection()
@@ -150,18 +150,3 @@ def getFirst24HrsDataValues():
         query = f.read()
     first24HourData = pd.read_sql(query, conn)
     return first24HourData
-if __name__ == "__main__":
-    counts = countFeatures()
-    print(counts)
-    counts.to_csv("../../data/rawdatafiles/counts.csv")
-    # hadm_ids = commonDB.getAllHADMID()["hadm_id"]
-    # allPersons = pd.DataFrame()
-    # for hadm_id in hadm_ids:
-    #     dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, nitems = 10)
-    #     allPersons = pd.concat([allPersons, cleanUpIndividual(dataEvents, hadm_id)])
-    # allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
-# # getCountOfFeaturesAngus()
-# print(getTopNItemIDs(numToFind = 5))
-#
-# data = getFirst24HrsDataValues()
-# data.to_csv("data/rawdatafiles/first24Hours.csv")
