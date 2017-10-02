@@ -126,12 +126,12 @@ def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10, path="../../data/r
     """
     itemIds = getTopNItemIDs(numToFind = nitems, path=path)
     query = "WITH timeranges as (SELECT hadm_id, admittime, admittime + interval '24 hour' as endtime FROM admissions WHERE hadm_id = " + str(hadm_id)+ "), \n"\
-        + "topLabEvents as ( SELECT hadm_id, label, labevents.itemid, charttime, value, valuenum FROM labevents  LEFT JOIN d_labitems on d_labitems.itemid = labevents.itemid WHERE labevents.itemid in ( \n" \
+        + "topLabEvents as ( SELECT hadm_id, label, labevents.itemid, charttime, value, valuenum FROM labevents  LEFT JOIN d_labitems on d_labitems.itemid = labevents.itemid WHERE labevents.itemid in  \n" \
         + itemIds \
-        + "\n) AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges)\n" \
-        + "), topChartEvents as (SELECT hadm_id, label, chartevents.itemid, charttime, value, valuenum FROM chartevents  LEFT JOIN d_items on d_items.itemid = chartevents.itemid WHERE chartevents.itemid in (\n" \
+        + "\n AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges)\n" \
+        + "), topChartEvents as (SELECT hadm_id, label, chartevents.itemid, charttime, value, valuenum FROM chartevents  LEFT JOIN d_items on d_items.itemid = chartevents.itemid WHERE chartevents.itemid in \n" \
         + itemIds \
-        + ")\n AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges) \n" \
+        + "\n AND hadm_id = " + str(hadm_id)  + " AND charttime BETWEEN (SELECT admittime FROM timeranges) AND (SELECT endtime FROM timeranges) \n" \
         + " ) SELECT * FROM topLabEvents UNION SELECT * FROM topChartEvents ORDER BY charttime"
     conn = commonDB.getConnection()
     dataToReturn = pd.read_sql(query, conn)
