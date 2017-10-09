@@ -1,7 +1,7 @@
 import pickle
 import commonDB
 import pandas as pd
-import waveformUtil as wfutil
+# import waveformUtil as wfutil TODO: remove these circular dependencies
 # from matplotlib import pyplot as plt
 
 
@@ -21,7 +21,7 @@ def getCategorizations(writeToCSV = True):
     conn = commonDB.getConnection()
     with open("data/sql/angus.sql") as f:
         query = f.read()
-    query = query.replace("<INSERT IDS HERE>", commonDB.convertListToSQL(wfutil.listAllSubjects()))
+    # query = query.replace("<INSERT IDS HERE>", commonDB.convertListToSQL(wfutil.listAllSubjects()))
     angusData = pd.read_sql(query, conn)
     angusData.set_index(["hadm_id"], inplace=True)
     if not writeToCSV:

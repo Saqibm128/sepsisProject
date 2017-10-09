@@ -5,11 +5,11 @@ import featureSelection.frequencyCount.featureFrequencySQLCount as freq
 import pandas as pd
 import commonDB
 import learning.logReg as logReg
-from readWaveForm import waveformUtil as wfutil
+from readWaveform import waveformUtil as wfutil
 import categorization as catSepsis
 import numpy
 #Get the data and write to disk (note we can comment out below lines if we have written already)
-#If we have written to disk, then we should instantiate variables with pd.DataFrame.from_csv method
+#If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
 subject_ids = wfutil.listAllSubjects()
 #freq.countFeatures(ids=subject_ids)
 #catSepsis.getCategorizations(writeToCSV = True)

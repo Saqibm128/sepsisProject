@@ -5,7 +5,7 @@ import wfdb
 import urllib.request as request
 import pandas as pd
 import numpy as np
-from .. import categorization as angus
+import categorization as angus
 
 def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-numerics"):
     '''
@@ -25,8 +25,10 @@ def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/m
         subjectID = sublines[1][1:]
         time = sublines[2].replace("p" + subjectID, "")
         recordSubjects.append(subjectID)
-        recordTimes.append(time[1:-1])
-    return pd.DataFrame({"recordSubjects": recordSubjects, "recordTimes": recordTimes})
+        recordTimes.append(time[1:-2])
+    return [recordSubjects, recordTimes]
+
+
 def listAllMatchedWFSubjects(url="https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-waveforms"):
     '''
     Waveforms in mimic3wdb have a frequency of 125 hz and can contain multiple waveform data
@@ -44,18 +46,18 @@ def listAllMatchedWFSubjects(url="https://physionet.org/physiobank/database/mimi
         sublines = line.split('/')
         subjectID = sublines[1][1:]
         time = sublines[2].replace("p" + subjectID, "")
-        recordTime.append(time[1:-1])
+        recordTime.append(time[1:-2])
         recordSubjects.append(subjectID)
-    return pd.DataFrame({recordSubjects: recordSubjects, "recordTimes": recordTime})
+    return [recordSubjects, recordTime]
 
 def listAllSubjects(url="https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-waveforms"):
     '''
-    all UNIQUE subjects recorded in mimic3wdb, either numeric record or waveform record
+    all subjects recorded in mimic3wdb, either numeric record or waveform record
     :param url (already set) which sets where to read the subject ids
     :return an ndarray of all subject ids
     '''
-    subjects = np.append(listAllMatchedWFSubjects()["recordSubjects"].as_matrix(), listAllMatchedRecSubjects()["recordSubjects"].as_matix()) #TODO: more elegant way
-    subjects = pd.Series(subjects).unique() #TODO: more elegant way to do this?
+    subjects = np.append(listAllMatchedWFSubjects()[0], listAllMatchedRecSubjects()[0])
+    subjects = pd.Series(subjects).unique()
     return subjects
 def generateAngusDF(cachedAngus="data/rawdatafiles/classifiedAngusSepsis.csv", sqlFile = None):
     '''
@@ -116,7 +118,5 @@ def applyInIntervals(applier, waveform, startIndex = 0, freq = 125, time=6):
     return None
 
 if __name__ == "__main__":
-    data = listAllMatchedWFSubjects()
-    print(data[0][0])
-    print(data[1][0])
-    sampleWFSubject(data[0][0], data[1][0])[0]
+    # print(ListAllMatchedSubjectsWaveforms()[1:10])
+    print(wfdb.srdsamp(recordname='3141595', pbdir='mimic3wdb/31/3141595/', sampfrom=0, sampto=100))
