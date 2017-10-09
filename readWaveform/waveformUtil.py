@@ -27,7 +27,27 @@ def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/m
         recordSubjects.append(subjectID)
         recordTimes.append(time[1:-2])
     return [recordSubjects, recordTimes]
-
+def compareAdmitToWF():
+    '''
+    '''
+    conn = commonDB.getConnection()
+    admissions = pd.read_sql(conn, "SELECT subject_id, hadm_id, admittime FROM admissions")
+    admissions.set_index(["subject_id"], inplace = True)
+    wfSub = listAllMatchedWFSubjects()
+    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})
+    wfSub.set_index(["subject_id"], inplace = True)
+    wfSub["endWFTime"] = pd.Series(np.zeros(wfSub.shape[0]), index=wfSub.index)
+    wfSub["percentMissing"] = pd.Series(np.zeros(wfSub.shape[0]), index=wfSub.index)
+    wfSub["numberOfWaveforms"] = pd.Series(np.zeros(wfSub.shape[0]), index=wfSub.index)
+    wfSub = wfSub.apply(helperCompareAdmitToWF, xis=1)
+def helperCompareAdmitToWF(row):
+    '''
+    Helper function to run through entire row of wfSub in compareAdmitToWF
+    :param row the specific row to process
+    :return the row with endWFTime, percentMissing, and numberOfWaveforms placed in
+    :precondition subjectID and startWFTime are present in the row
+    '''
+    data = sampleWFSubject
 
 def listAllMatchedWFSubjects(url="https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-waveforms"):
     '''
