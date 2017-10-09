@@ -26,8 +26,7 @@ WITH infection_group AS (
 		WHEN substring(icd9_code,1,5) IN ('49121','56201','56203','56211','56213',
 				'56983') THEN 1
 		ELSE 0 END AS infection
-	FROM diagnoses_icd
-	WHERE subject_id IN <INSERT IDS HERE>),
+	FROM diagnoses_icd),
 -- Appendix 2: ICD9-codes (organ dysfunction)
 	organ_diag_group as (
 	SELECT subject_id, hadm_id,
@@ -41,8 +40,7 @@ WITH infection_group AS (
 		CASE
 		WHEN substring(icd9_code,1,5) IN ('99592','78552')  THEN 1
 		ELSE 0 END AS explicit_sepsis
-	FROM diagnoses_icd
-	WHERE subject_id IN <INSERT IDS HERE>),
+	FROM diagnoses_icd),
 
 -- Mechanical ventilation
 	organ_proc_group as (
@@ -50,8 +48,7 @@ WITH infection_group AS (
 		CASE
 		WHEN substring(icd9_code,1,4) IN ('9670','9671','9672') THEN 1
 		ELSE 0 END AS mech_vent
-	FROM procedures_icd
-	WHERE subject_id IN <INSERT IDS HERE>),
+	FROM procedures_icd),
 
 -- Aggregate
 	aggregate as (
@@ -85,5 +82,4 @@ SELECT subject_id, hadm_id, infection,
 	WHEN infection = 1 AND organ_dysfunction = 1 THEN 1
 	WHEN infection = 1 AND mech_vent = 1 THEN 1
 	ELSE 0 END AS Angus
-FROM aggregate
-WHERE subject_id in <INSERT IDS HERE>;
+FROM aggregate;

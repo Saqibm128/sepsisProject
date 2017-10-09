@@ -66,11 +66,11 @@ def getDataAllHadmId(hadm_ids, nitems, path="data/rawdatafiles/counts.csv"):
     intermediateList = []
     for hadm_id in hadm_ids:
         dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, nitems = nitems, path=path)
-        intermediateList.append(cleanUpIndividual(dataEvents, hadm_id))
+        intermediateList.append(commonDB.cleanUpIndividual(dataEvents, hadm_id))
     allPersons = pd.concat(intermediateList)
     allPersons.set_index("hadm_id", inplace = True)
     for column in allPersons.columns:
-        allPersons[column].fillna(cleanSeries(allPersons[column]), inplace=True)
+        allPersons[column].fillna(commonDB.cleanSeries(allPersons[column]), inplace=True)
         # remove outliers either above the 3rd std or below the 3rd std
         if allPersons[column].dtype == numpy.number:
             allPersons[column] = allPersons[column].apply(
@@ -80,39 +80,7 @@ def getDataAllHadmId(hadm_ids, nitems, path="data/rawdatafiles/counts.csv"):
                 lambda ind: ((col.mean() - 3 * col.std()) if  (ind < (col.mean() - 3 * col.std())) else ind \
                 ))
     return allPersons
-def cleanUpIndividual(events, hadm_id):
-    """
-    Takes a dataframe of all events that occurred to an individual and goes through all of them. Then cleans the data up
-    :param events dataframe of all events that occurred to one individual
-    :param features a list of all features to look up in cleanUpIndividual
-    :return a cleaned dataframe, with missing data interpolated, if possible from individual record
-    """
-    datamap = {}
-    features = events["itemid"].unique() #Should return a series of unique itemids aka a list to iterate over for the features we decide to use
-    datamap["hadm_id"] = [str(hadm_id)]
-    for feature in features:
-        featureVal = (events[events["itemid"] == feature])["value"]
-        if featureVal.isnull().all(): #check and see if we had a null val
-            featureVal = (events[events["itemid"] == feature])["valuenum"] #sets featureVal as temporary series that contains all values, then to take mean of
-            featureVal = featureVal[~featureVal.duplicated(keep='first')] #if chartevents and labevents has the same exact item, ie times, dates, and values, then keep only one copy
-            featureVal = [featureVal.mean()]
-        else:
-            featureVal = [featureVal.mode()[0]] #get first mode of all nonnumeric data
-        datamap[str(feature)] = featureVal
-    df = pd.DataFrame(datamap)
-    df.set_index(["hadm_id"])
-    return df
 
-def cleanSeries(series):
-    '''
-    Used later on to help clean up data en masse
-    :param series to clean, does a naive clean based on other stuff in series
-    :return the data to fill Na data with
-    '''
-    if series.dtype == numpy.number:
-        return series.mean()
-    else:
-        return series.mode()[0]
 
 def getFirst24HrsDataValuesIndividually(hadm_id, nitems = 10, path="../../data/rawdatafiles/counts.csv"):
     """
