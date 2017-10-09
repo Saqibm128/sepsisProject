@@ -5,7 +5,7 @@ import featureSelection.frequencyCount.featureFrequencySQLCount as freq
 import pandas as pd
 import commonDB
 import learning.logReg as logReg
-import waveformUtil as wfutil
+from readWaveForm import waveformUtil as wfutil
 import categorization as catSepsis
 import numpy
 #Get the data and write to disk (note we can comment out below lines if we have written already)
