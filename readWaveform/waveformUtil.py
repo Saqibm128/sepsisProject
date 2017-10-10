@@ -36,7 +36,7 @@ def compareAdmitToWF():
     conn = commonDB.getConnection()
     admissions = pd.read_sql("SELECT subject_id, hadm_id, admittime FROM admissions", conn)
     wfSub = listAllMatchedWFSubjects()
-    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:1]#TODO:debug limit
+    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})
     wfSub["endWFTime"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["percentMissing"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["numberOfWaveforms"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
