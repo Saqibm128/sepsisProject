@@ -18,21 +18,18 @@ subject_ids = wfutil.listAllSubjects()
 #allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
 #print(allPersons) #debug print TODO: remove this
 
-allPersons = pd.DataFrame.from_csv("data/rawdatafiles/testPersonsData.csv")
-classified = pd.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
-result = allPersons.join(classified["angus"], how="inner")
-result.to_csv("data/rawdatafiles/all10features.csv")
-print(result) #debug print TODO: remove this
+# allPersons = pd.DataFrame.from_csv("data/rawdatafiles/testPersonsData.csv")
+# classified = pd.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
+# result = allPersons.join(classified["angus"], how="inner")
+# result.to_csv("data/rawdatafiles/all10features.csv")
 
 #remove weird error about values being too large
-result = result.select_dtypes([numpy.number])
-angus = result["angus"]
-normalized_df=(result-result.mean())/result.std() #https://stackoverflow.com/questions/26414913/normalize-columns-of-pandas-data-frame
-normalized_df["angus"] = angus
+# result = result.select_dtypes([numpy.number])
+# angus = result["angus"]
+# normalized_df=(result-result.mean())/result.std() #https://stackoverflow.com/questions/26414913/normalize-columns-of-pandas-data-frame
+# normalized_df["angus"] = angus
 #
 # wfutil.generateAngusDF().to_csv("data/rawdatafiles/matchedWFDBAngus.csv")
-scores = logReg.cross_val_score(normalized_df)
-model = logReg.fully_train(normalized_df)
-print(scores)
-print(model.coef_)
-print(model.intercept_)
+
+data = wfutil.compareAdmitToWF()
+data.to_csv("data/rawdatafiles/wfdetails.csv")
