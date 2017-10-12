@@ -16,7 +16,7 @@ def fully_train(joinedDataframe):
     regFunct = linMod.LogisticRegression()
     regFunct.fit(X=joinedDataframe.drop(["angus"], axis=1).select_dtypes([np.number]), y=joinedDataframe["angus"])
     return regFunct
-def cross_val_score(joinedDataframe):
+def cross_val_score(joinedDataframe, scorer = util.scorer):
     '''
     removes nonnumeric data, then tests with cross_val_score and provides key metrics back
     :param joinedDataframe a dataframe where all columns except the last one are feature data and the
@@ -27,6 +27,6 @@ def cross_val_score(joinedDataframe):
     cvscore = modSel.cross_val_score(estimator=regFunct, \
         X=joinedDataframe.drop(["angus"], axis=1).select_dtypes([np.number]), \
         y=joinedDataframe["angus"], \
-        scoring= util.scorer, \
+        scoring= scorer, \
         cv = 10)
     return cvscore

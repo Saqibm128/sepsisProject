@@ -163,20 +163,22 @@ def sampleWFSubject(subject_id, time):
     except:
         print("Could not get data from: " + pbdir)
         raise
-
-def applyInIntervals(applier, waveform, startIndex = 0, freq = 125, time=6):
+def applyInIntervals(applier, waveform, freq = 125, time=6):
     '''
     Applies a function to waveform data at certain hour intervals over 24 hours
     :param applier function to apply to waveform data
-    :param waveform numpy array to process
-    :param startIndex index to start applying from, default 0
+    :param waveform 1d numpy array to process
     :param freq the sampling frequency of the waveform, default 125 Hz
     :param time how long each subsection of waveform to process should be, in hours
     :return array of results of function applier
     '''
-    #TODO: do this function? or remove it!
-    return None
-
+    toRet = []
+    hour = 60 * 60 * freq #datapoints per hour
+    segment = time * hour
+    #iterate for each time segment of the waveform and use applier
+    for i in range(0, len(waveform)/(hour * time) - 1):
+        toRet.append(applier(waveform[segment*i:segment*(i+1)]))
+    return toRet
 if __name__ == "__main__":
     # print(ListAllMatchedSubjectsWaveforms()[1:10])
     print(wfdb.srdsamp(recordname='3141595', pbdir='mimic3wdb/31/3141595/', sampfrom=0, sampto=100))

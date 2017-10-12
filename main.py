@@ -15,13 +15,14 @@ subject_ids = wfutil.listAllSubjects()
 #catSepsis.getCategorizations(writeToCSV = True)
 #hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
 #allPersons = freq.getDataAllHadmId(hadm_ids, 40)
-#allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
+#allPersons.to_csv("data/rawdatafiles/allPersonsData.csv")
 #print(allPersons) #debug print TODO: remove this
 
-# allPersons = pd.DataFrame.from_csv("data/rawdatafiles/testPersonsData.csv")
+# allPersons = pd.DataFrame.from_csv("data/rawdatafiles/allPersonsData.csv")
 # classified = pd.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")
 # result = allPersons.join(classified["angus"], how="inner")
-# result.to_csv("data/rawdatafiles/all10features.csv")
+# result.to_csv("data/rawdatafiles/testTrainSet.csv")
+
 
 #remove weird error about values being too large
 # result = result.select_dtypes([numpy.number])
@@ -31,5 +32,7 @@ subject_ids = wfutil.listAllSubjects()
 #
 # wfutil.generateAngusDF().to_csv("data/rawdatafiles/matchedWFDBAngus.csv")
 
-data = wfutil.compareAdmitToWF()
-data.to_csv("data/rawdatafiles/wfdetails.csv")
+testTrainSet = pd.DataFrame.from_csv("data/rawdatafiles/testTrainSet.csv")
+
+# data = wfutil.compareAdmitToWF()
+# data.to_csv("data/rawdatafiles/wfdetails.csv")
