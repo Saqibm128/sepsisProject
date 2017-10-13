@@ -10,7 +10,7 @@ import categorization as catSepsis
 import numpy
 #Get the data and write to disk (note we can comment out below lines if we have written already)
 #If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
-subject_ids = wfutil.listAllSubjects()
+# subject_ids = wfutil.listAllSubjects()
 #freq.countFeatures(ids=subject_ids)
 #catSepsis.getCategorizations(writeToCSV = True)
 #hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
@@ -32,7 +32,12 @@ subject_ids = wfutil.listAllSubjects()
 #
 # wfutil.generateAngusDF().to_csv("data/rawdatafiles/matchedWFDBAngus.csv")
 
-testTrainSet = pd.DataFrame.from_csv("data/rawdatafiles/testTrainSet.csv")
+# testTrainSet = pd.DataFrame.from_csv("data/rawdatafiles/testTrainSet.csv")
+# testTrainSet = testTrainSet.select_dtypes([numpy.number])
+# cv_results, bestLogReg, score = logReg.test_train_validation(testTrainSet)
+# print(score)
+# cv_results = pd.DataFrame(cv_results)
+# cv_results.to_csv("data/rawdatafiles/log_reg_cv_results.csv")
 
-# data = wfutil.compareAdmitToWF()
-# data.to_csv("data/rawdatafiles/wfdetails.csv")
+data = wfutil.compareAdmitToWF()
+data.to_csv("data/rawdatafiles/wfdetails.csv")

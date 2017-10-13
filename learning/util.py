@@ -1,4 +1,4 @@
-import sklearn.metrics.roc_auc_score
+
 
 def scorer(estimator, x, y):
     '''
