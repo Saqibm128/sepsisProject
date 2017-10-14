@@ -9,13 +9,15 @@ labeventsInRange as (
   SELECT labevents.hadm_id, itemid, charttime, value, valuenum
   FROM labevents
   LEFT JOIN timeranges on timeranges.hadm_id = labevents.hadm_id
-  WHERE (charttime, charttime) OVERLAPS (timeranges.admittime, timeranges.endtime) AND subject_id in <INSERT IDS HERE>
+  WHERE (charttime, charttime) OVERLAPS (timeranges.admittime, timeranges.endtime) <INSERT IDS HERE>
+  <INSERT hadm_ids HERE>
 ),
 charteventsInRange as (
   SELECT chartevents.hadm_id, itemid, charttime, value, valuenum
   FROM chartevents
   LEFT JOIN timeranges on timeranges.hadm_id = chartevents.hadm_id
-  WHERE (charttime, charttime) OVERLAPS (timeranges.admittime, timeranges.endtime) AND subject_id in <INSERT IDS HERE>
+  WHERE (charttime, charttime) OVERLAPS (timeranges.admittime, timeranges.endtime) <INSERT IDS HERE>
+  <INSERT hadm_ids HERE>
 ),
 distinctChartAdmissions as (
   -- We take distinct combination of lab tests and each hospital admission

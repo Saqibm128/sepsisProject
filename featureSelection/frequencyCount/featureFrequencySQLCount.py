@@ -11,25 +11,30 @@ import os.path
 
 
 
-def countFeatures(ids, path="data/sql/perAdmissionCount.sql", write=True):
+def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCount.sql", write=True):
     """
     This file goes and executes queries to count the most common features in 24 hour ranges
     as well as labels, itemids, and average occurrences of feature in each admission for the
     10,282 matched subset.
     :param path where to write cached copy of counts of features
     :param write if this method should actually go ahead and write counts down
-    :param ids subjectIDS to restrict the count to. Hack to get around pythons terrible sibling package import
+    :param subject_ids subjectIDS to restrict the count to; if None, then include all
+    :param hadm_ids hadm_ids to restrict feature count to; if None, then include all
     :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
 
     with open(path, "r") as f:
         query = f.read()
-    matchedSubjectIds = commonDB.convertListToSQL(ids)
-    query = query.replace("<INSERT IDS HERE>", str(matchedSubjectIds))
+    if subject_ids == None:
+        query.replace("<INSERT IDS HERE>", "")
+    else:
+        query = query.replace("<INSERT IDS HERE>", "AND subject_id = " + commonDB.convertListToSQL(ids))
+    if hadm_ids == None:
+        query = query.replace("<INSERT hadm_ids HERE>", "")
+    else:
+        query = query.replace("<INSERT hadm_ids HERE>", "AND hadm_id =" + commonDB.convertListToSQL(hadm_ids))
     events = pd.read_sql(query, conn)
-    events.to_csv("data/rawdatafiles/counts.csv")
-
     return events
 
 def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):

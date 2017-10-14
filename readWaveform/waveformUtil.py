@@ -9,6 +9,7 @@ import categorization as angus
 import time
 import datetime
 import commonDB
+import random #TODO remove this for shuffle thing
 
 def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-numerics"):
     '''
@@ -36,7 +37,10 @@ def compareAdmitToWF():
     conn = commonDB.getConnection()
     admissions = pd.read_sql("SELECT subject_id, hadm_id, admittime FROM admissions", conn)
     wfSub = listAllMatchedWFSubjects()
-    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:1000] #TODO: Just use this subset until physionet api works or data downloads
+    # randomOrder = list(range(0, len(wfSub[0])))
+    # random.shuffle(randomOrder)
+    # randomOrder = randomOrder[0:200]
+    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:2000] #TODO: Just use this subset until physionet api works or data downloads
     wfSub["endWFTime"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["percentMissing"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["numberOfWaveforms"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
@@ -50,8 +54,11 @@ def compareAdmitToWF():
     wfSub["coversAll"] =pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     #startWfTime - admittime (in hours)
     wfSub["differenceInTime"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
-    wfSub = wfSub.apply(helperCompareTimes, axis=1)
+    # wfSub = wfSub.apply(helperCompareTimes, axis=1)
     return wfSub
+
+count = 1; #TODO: remove this
+count1 = 1;
 def helperCompareTimes(row):
     '''
     Helper function to run through entire row in joined wfSub and admissions
@@ -59,6 +66,9 @@ def helperCompareTimes(row):
     :return the row containing if the admittime plus 24 hours past it contains the start of missing data, etc.
     :precondition containsBegin and coversAll columns are already in dataframe
     '''
+    global count1
+    print("cleaning data for :" + str(count1))
+    count1 = count1 + 1
     daySecs = 24 * 60 * 60
     admittime = row["admittime"].value
     afterAdmittime = admittime + daySecs
@@ -76,6 +86,9 @@ def helperFillOutWF(row):
     :return the row with endWFTime, percentMissing, and numberOfWaveforms placed in
     :precondition subjectID and startWFTime are present in the row
     '''
+    global count
+    print("calling data for :" + str(count))
+    count = count + 1
     data, fields = sampleWFSubject(row["subject_id"], row["startWFTime"])
     secLength = len(data) / 125.0 #sampling frequency for mimic3 is known to be 125 hz
     startWF = time.strptime(row["startWFTime"], "%Y-%m-%d-%H-%M") #turn into a struct_time object to do math with it

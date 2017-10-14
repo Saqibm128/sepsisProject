@@ -10,9 +10,18 @@ import categorization as catSepsis
 import numpy
 #Get the data and write to disk (note we can comment out below lines if we have written already)
 #If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
-# subject_ids = wfutil.listAllSubjects()
-#freq.countFeatures(ids=subject_ids)
-#catSepsis.getCategorizations(writeToCSV = True)
+subject_ids = wfutil.listAllSubjects()
+freqFeatOverall = freq.countFeatures(ids=subject_ids)
+freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
+
+categorization = catSepsis.getCategorizations()
+sepsisCategorization = categorization[categorization["Angus"] == 1]
+freqFeatSepsis = freq.countFeatures(ids=subject_ids, hadm_ids=sepsisCategorization.index)
+freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv")
+
+nonSepsisCategorization = categorization[categorization["Angus"] == 0]
+freqFeatNonSepsis = freq.countFeatures(ids=subject_ids, hadm_id=nonSepsisCategorization.index)
+freqFeatNonSepsis.to_csv("data/rawdatafiles/freqFeatNonSepsis.csv")
 #hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
 #allPersons = freq.getDataAllHadmId(hadm_ids, 40)
 #allPersons.to_csv("data/rawdatafiles/allPersonsData.csv")
@@ -39,5 +48,9 @@ import numpy
 # cv_results = pd.DataFrame(cv_results)
 # cv_results.to_csv("data/rawdatafiles/log_reg_cv_results.csv")
 
-data = wfutil.compareAdmitToWF()
-data.to_csv("data/rawdatafiles/wfdetails.csv")
+
+#
+# fullScores = logReg.fully_test(testTrainSet, params)
+# fullScores.to_csv("data/rawdatafiles/full_scores.csv")
+# data = wfutil.compareAdmitToWF()
+# data.to_csv("data/rawdatafiles/wfdetails.csv")
