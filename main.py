@@ -11,7 +11,7 @@ import numpy
 #Get the data and write to disk (note we can comment out below lines if we have written already)
 #If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
 subject_ids = wfutil.listAllSubjects()
-freqFeatOverall = freq.countFeatures(ids=subject_ids)
+freqFeatOverall = freq.countFeatures(subject_ids=subject_ids)
 freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
 
 categorization = catSepsis.getCategorizations()

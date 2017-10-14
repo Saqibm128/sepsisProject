@@ -21,10 +21,11 @@ def getCategorizations(hadm_ids = None):
     conn = commonDB.getConnection()
     with open("data/sql/angus.sql") as f:
         query = f.read()
-    if hadm_ids != None:
-        query = query.replace("<INSERT IDS HERE>", "WHERE hadm_id IN " + commonDB.convertListToSQL(hadm_ids))
-    else:
+    if hadm_ids is None:
         query = query.replace("<INSERT IDS HERE>", "")
+    else:
+        query = query.replace("<INSERT IDS HERE>", "WHERE hadm_id IN " + commonDB.convertListToSQL(hadm_ids))
+
     angusData = pd.read_sql(query, conn)
     angusData.set_index(["hadm_id"], inplace=True)
     return angusData

@@ -26,14 +26,14 @@ def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCo
 
     with open(path, "r") as f:
         query = f.read()
-    if subject_ids == None:
+    if subject_ids is None:
         query.replace("<INSERT IDS HERE>", "")
     else:
-        query = query.replace("<INSERT IDS HERE>", "AND subject_id = " + commonDB.convertListToSQL(ids))
-    if hadm_ids == None:
+        query = query.replace("<INSERT IDS HERE>", "AND subject_id in " + commonDB.convertListToSQL(subject_ids))
+    if hadm_ids is None:
         query = query.replace("<INSERT hadm_ids HERE>", "")
     else:
-        query = query.replace("<INSERT hadm_ids HERE>", "AND hadm_id =" + commonDB.convertListToSQL(hadm_ids))
+        query = query.replace("<INSERT hadm_ids HERE>", "AND hadm_id in" + commonDB.convertListToSQL(hadm_ids))
     events = pd.read_sql(query, conn)
     return events
 
