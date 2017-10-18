@@ -11,16 +11,16 @@ import numpy
 #Get the data and write to disk (note we can comment out below lines if we have written already)
 #If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
 subject_ids = wfutil.listAllSubjects()
-freqFeatOverall = freq.countFeatures(subject_ids=subject_ids)
-freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
+# freqFeatOverall = freq.countFeatures(subject_ids=subject_ids)
+# freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
 
 categorization = catSepsis.getCategorizations()
-sepsisCategorization = categorization[categorization["Angus"] == 1]
-freqFeatSepsis = freq.countFeatures(ids=subject_ids, hadm_ids=sepsisCategorization.index)
+sepsisCategorization = categorization[categorization["angus"] == 1]
+freqFeatSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=sepsisCategorization.index)
 freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv")
 
-nonSepsisCategorization = categorization[categorization["Angus"] == 0]
-freqFeatNonSepsis = freq.countFeatures(ids=subject_ids, hadm_id=nonSepsisCategorization.index)
+nonSepsisCategorization = categorization[categorization["angus"] == 0]
+freqFeatNonSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=nonSepsisCategorization.index)
 freqFeatNonSepsis.to_csv("data/rawdatafiles/freqFeatNonSepsis.csv")
 #hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
 #allPersons = freq.getDataAllHadmId(hadm_ids, 40)

@@ -10,7 +10,34 @@ import pandas as pd
 ##      It does not do much else, because getting the queries
 ##      takes a lot of time. Once done, it places the data as a raw pickle file
 
+def getQSofaCategorization(hadm_ids = None, subject_ids = None):
+    """
+    This function uses the quick sepsis organ failure assessment, as defined by the third international
+    consensus for sepsis
+    :param hadm_ids a list of hadm_ids which to apply standard to
+    :param subject_ids a list of subject_ids which to apply standard to. if hadm_ids is set, this doesn't do anything
+    :return dataframe with hadm_ids as index and a column with sepsis
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4968574/
+    """
 
+    if hadm_ids is None and subject_ids is None:
+        hadm_ids = commonDB.read_sql("SELECT hadm_id FROM admissions")
+    elif hadm_ids is None:
+        hadm_ids = commonDB.read_sql("SELECT hadm_id FROM admissions WHERE subject_id in " \
+                                + commonDB.convertListToSQL(subject_ids), conn)
+    results = pd.DataFrame()
+    #check and see if glasgow coma score is below 15
+    alteredMentalVerbal = commonDB.read_sql("SELECT hadm_id FROM chartevents " \
+                                            + "WHERE valuenum < 15 and itemid = 227013 and hadm_id in " \
+                                            + commonDB.convertListToSQL(hadm_ids))
+    increasedRespiration = commonDB.read_sql("SELECT hadm_id FROM chartevents " \
+                                            + "WHERE valuenum >= 22 and itemid = 224690 and hadm_id in" \
+                                            + commonDB.convertListToSQL(hadm_ids))
+    increasedSystolicBP = commonDB.read_sql("SELECT hadm_id FROM chartevents " \
+                                            + 'WHERE valuenum <= 100 and itemid in (228152, 220050, 442, 455, 6, 51, 3313, 3317, 3319, 3321, 3323) and hadm_id in ' \
+                                            + commonDB.convertListToSQL(hadm_ids))
+    #TODO: Complete this later
+    return None
 def getCategorizations(hadm_ids = None):
     """
     This is a function to run the Angus.sql query, which is responsible for categorizing patients
