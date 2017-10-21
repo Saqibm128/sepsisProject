@@ -6,7 +6,7 @@ import pandas as pd
 import commonDB
 from readWaveform import waveformUtil as wfutil
 
-wfutil.compareTimes().to_csv("data/rawdatafiles/comparedTimes.csv")
+wfutil.preliminaryCompareTimes().to_csv("data/rawdatafiles/comparedTimes.csv")
 
 def selfJoinFix(data):
     '''
@@ -26,5 +26,5 @@ def selfJoinFix(data):
     selfJoin = selfJoin.query("(not (itemid_x > 50000 and itemid_x < 60000)) or (not(itemid_y > 50000 and itemid_y < 60000))")
     return selfJoin
 
-# selfJoin = selfJoinFix("data/rawdatafiles/counts.csv")
-# selfJoin.to_csv("data/rawdatafiles/selfCounts.csv")
+selfJoin = selfJoinFix("data/rawdatafiles/counts.csv")
+selfJoin.to_csv("data/rawdatafiles/selfCounts.csv")

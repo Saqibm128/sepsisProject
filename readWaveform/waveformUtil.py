@@ -8,8 +8,9 @@ import numpy as np
 import time
 import datetime
 import commonDB
+import math
 
-def preliminaryCompareTimes():
+def preliminaryCompareTimes(num_days=15):
     '''
     This method is a sanity check method to compare the admittime of patients to the waveform start time.
     It calculates the difference and returns the hospital admissions id that correspond to the waveform start time
@@ -17,19 +18,25 @@ def preliminaryCompareTimes():
     as a result, it should be much faster, but means we miss a lot of possible stats
 
     TLDR: This function is simpler, faster, less comprehensive version of compareAdmitToWf
-
+    :param num_days the max number of days the differnece between the admittime and
+            the wfStartTime has to be to be considered allowed, default= 15
     :return a dataframe to characterize results
     '''
     admissions = commonDB.read_sql("SELECT * FROM admissions")
     (subjects, times) = listAllMatchedWFSubjects()
-    matchedWF = pd.DataFrame({"subject_id":subjects, "time": times}) #times is when the start of recording for each wf
+    matchedWF = pd.DataFrame({"subject_id":subjects, "wfStartTime": times}) #times is when the start of recording for each wf
     matchedWF["subject_id"] = matchedWF["subject_id"].astype(np.number)
-    matchedWF["time"] = matchedWF["time"].apply(compareTimeHelper)
-    # print(admissions.head()) #TODO remvoe ths
-    # print(matchedWF.head()) #TODO remove this
+    matchedWF["wfStartTime"] = matchedWF["wfStartTime"].apply(preliminaryCompareTimesHelper) #convert weird time format into useful data
     admWfMerge = pd.merge(matchedWF, admissions, left_on="subject_id", right_on="subject_id")
+    admWfMerge["timeDiff"] = admWfMerge["wfStartTime"].subtract(admWfMerge["admittime"])
+    admWfMerge = admWfMerge[(admWfMerge["timeDiff"] > pd.Timedelta(0))]
+    admWfMerge = admWfMerge[(admWfMerge["timeDiff"] < pd.Timedelta(str(num_days) + " days"))] #don't consider waveform older than 15 days
+    admWfMerge["rawTimeDiff"] = admWfMerge["timeDiff"].astype(np.int64)
+    print(pd.Timedelta(admWfMerge["timeDiff"].astype(np.int64).mean()))
     return admWfMerge
-def preliminaryCompareTimeHelper(time):
+
+
+def preliminaryCompareTimesHelper(time):
     '''
     A helper function that turns strings of format yyyy-mm-dd-hh-mm
     into a pandas Timestamp

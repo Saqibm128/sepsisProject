@@ -11,15 +11,15 @@ import os.path
 
 
 
-def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCount.sql", write=True):
+def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCount.sql", mappings=None):
     """
     This file goes and executes queries to count the most common features in 24 hour ranges
     as well as labels, itemids, and average occurrences of feature in each admission for the
     10,282 matched subset.
     :param path where to write cached copy of counts of features
-    :param write if this method should actually go ahead and write counts down
     :param subject_ids subjectIDS to restrict the count to; if None, then include all
     :param hadm_ids hadm_ids to restrict feature count to; if None, then include all
+    :param mappings a DataFrame with columns itemid_x and itemid_y to deal with multiple mappings to same feature
     :return dataframe with the raw count data of features per admission
     """
     conn = commonDB.getConnection()
@@ -38,6 +38,23 @@ def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCo
         query = query.replace("<INSERT labevents hadm_ids HERE>", "AND labevents.hadm_id in" + commonDB.convertListToSQL(hadm_ids))
         query = query.replace("<INSERT chartevents hadm_ids HERE>", "AND chartevents.hadm_id in" + commonDB.convertListToSQL(hadm_ids))
     events = pd.read_sql(query, conn)
+    if !(mappings is None):
+        toDrop = []
+        for i in range(0, events.shape[1]):
+            if events["itemid"][i] in set(mappings["itemid_x"]):
+                ind = mappings[mappings["itemid_x"] == events["itemid"][i]].index
+                itemid_y = mappings["itemid_y"][ind]
+                countAdmissions = events["countAdmissionsPresent"][ind]
+                perAdmissions = events["avgPerAdmission"][ind]
+                countTotal = countAdmissions * perAdmissions
+                # (avg itemid_x * count itemid_x + avg itemid_y * count itemid_y) / total_counts
+                events["avgPerAdmission"][events["itemid"] == itemid_y] = (events["avgPerAdmission"][events["itemid"] == itemid_y] \
+                                                                            * events["countAdmissionsPresent"][events["itemid"] == itemid_y] \
+                                                                            + countTotal) \
+                                                                            / (countAdmissions + events["countAdmissionsPresent"][events["itemid"] == itemid_y])
+                events["countAdmissionsPresent"][events["itemid"] == itemid_y] += countTotal
+                toDrop.append(ind)
+        events.drop(toDrop, axis=1)
     return events
 
 def getTopNItemIDs(numToFind = 100, sqlFormat = True, path="data/rawdatafiles/counts.csv", sqlPath="data/sql/perAdmissionCount.sql"):

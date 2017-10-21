@@ -48,4 +48,4 @@ labEventCount as (
   SELECT * FROM labEventCount
   UNION
   SELECT * FROM chartEventCount
-  ORDER BY countPerAdmission desc
+  ORDER BY countAdmissionsPresent desc
