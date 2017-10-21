@@ -5,10 +5,10 @@ import pandas.core.indexes
 import waveformUtil as wfutil
 import featureSelection.frequencyCount.featureFrequencySQLCount as freq
 import categorization as cat
-## @author Mohammed Saqib
-## This file is responsible for creating histograms to represent the distribution
-##      of the frequency of each labitem and chartitem, as well as providing some other statistics
-##      from the imported pickle file (i.e. the reporting/underreporting of features)
+# @author Mohammed Saqib
+# This file is responsible for creating histograms to represent the distribution
+# of the frequency of each labitem and chartitem, as well as providing some other statistics
+# from the imported pickle file (i.e. the reporting/underreporting of features)
 
 
 freq.countFeatures(ids=wfutil.listAllSubjects())
@@ -24,5 +24,5 @@ plt.show()
 
 print(frequencies.describe())
 
-cat.getCategorizations(writeToCSV = True)
+cat.getCategorizations(writeToCSV=True)
 angusCounts = pandas.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")

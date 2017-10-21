@@ -5,12 +5,50 @@ import wfdb
 import urllib.request as request
 import pandas as pd
 import numpy as np
-import categorization as angus
 import time
 import datetime
 import commonDB
-import random #TODO remove this for shuffle thing
+import math
 
+def preliminaryCompareTimes(num_days=1):
+    '''
+    This method is a sanity check method to compare the admittime of patients to the waveform start time.
+    It calculates the difference and returns the hospital admissions id that correspond to the waveform start time
+    unlike compareAdmitToWF, this DOES NOT PULL WAVEFORM data
+    as a result, it should be much faster, but means we miss a lot of possible stats
+
+    TLDR: This function is simpler, faster, less comprehensive version of compareAdmitToWf
+    :param num_days the max number of days the differnece between the admittime and
+            the wfStartTime has to be to be considered allowed, default= 15
+    :return a dataframe to characterize results
+    '''
+    admissions = commonDB.read_sql("SELECT * FROM admissions")
+    (subjects, times) = listAllMatchedWFSubjects()
+    matchedWF = pd.DataFrame({"subject_id":subjects, "wfStartTime": times}) #times is when the start of recording for each wf
+    matchedWF["subject_id"] = matchedWF["subject_id"].astype(np.number)
+    matchedWF["wfStartTime"] = matchedWF["wfStartTime"].apply(preliminaryCompareTimesHelper) #convert weird time format into useful data
+    admWfMerge = pd.merge(matchedWF, admissions, left_on="subject_id", right_on="subject_id")
+    admWfMerge["timeDiff"] = admWfMerge["wfStartTime"].subtract(admWfMerge["admittime"])
+    admWfMerge = admWfMerge[(admWfMerge["timeDiff"] > pd.Timedelta(0))]
+    admWfMerge = admWfMerge[(admWfMerge["timeDiff"] < pd.Timedelta(str(num_days) + " days"))] #don't consider waveform older than 15 days
+    admWfMerge["rawTimeDiff"] = admWfMerge["timeDiff"].astype(np.int64)
+    print(pd.Timedelta(admWfMerge["timeDiff"].astype(np.int64).mean()))
+    return admWfMerge
+
+
+def preliminaryCompareTimesHelper(time):
+    '''
+    A helper function that turns strings of format yyyy-mm-dd-hh-mm
+    into a pandas Timestamp
+    :param time a string of format yyyy-mm-dd-hh-mm
+    :return pd.Timestamp equivalent
+    '''
+    year = int(time[0:4])
+    month = int(time[5:7])
+    day = int(time[8:10])
+    hour = int(time[11:13])
+    minute = int(time[14:16])
+    return pd.Timestamp(year=year, month=month, day=day, hour=hour, minute=minute)
 def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/mimic3wdb/matched/RECORDS-numerics"):
     '''
     Numeric records in mimic3wdb are averages per second (1hz) of waveform data
@@ -33,6 +71,12 @@ def listAllMatchedRecSubjects(url = "https://physionet.org/physiobank/database/m
     return [recordSubjects, recordTimes]
 def compareAdmitToWF():
     '''
+    This method runs through and pulls waveforms out of the mimic3wdb and checks for
+    1. number of waveforms found
+    2. the proportion of all waveforms that was missing
+    3. the total length of the waveforms
+    4. if the first 24 hours after an admission are covered by the waveforms
+    :return a dataframe summarizing these results
     '''
     conn = commonDB.getConnection()
     admissions = pd.read_sql("SELECT subject_id, hadm_id, admittime FROM admissions", conn)
@@ -40,7 +84,7 @@ def compareAdmitToWF():
     # randomOrder = list(range(0, len(wfSub[0])))
     # random.shuffle(randomOrder)
     # randomOrder = randomOrder[0:200]
-    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:2000] #TODO: Just use this subset until physionet api works or data downloads
+    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:3000] #TODO: Just use this subset until physionet api works or data downloads
     wfSub["endWFTime"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["percentMissing"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["numberOfWaveforms"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
@@ -132,31 +176,7 @@ def listAllSubjects(url="https://physionet.org/physiobank/database/mimic3wdb/mat
     subjects = np.append(listAllMatchedWFSubjects()[0], listAllMatchedRecSubjects()[0])
     subjects = pd.Series(subjects).unique()
     return subjects
-def generateAngusDF(cachedAngus="data/rawdatafiles/classifiedAngusSepsis.csv", sqlFile = None):
-    '''
-    Run through and get the subject_id of all patients in the matched subset.
-    Use that to generate an Angus dataframe which matches the subject_ids to sepsis status for preliminary analysis
-    :param cachedAngus file path to read cached csv file of Angus sql result from.
-    :param sqlFile None (default) if not to run, if path is given, run the query and use that instead of cached
-    :return a dataframe with hadm_ids as the index joined with the angus data
-    '''
-    if sqlFile != None:
-        categorization = angus.getCategorizations()
-    else:
-        categorization = pd.DataFrame.from_csv(cachedAngus)
-    recordSubIds = listAllMatchedRecSubjects()
-    wfSubIds = listAllMatchedWFSubjects()
-    #ensure we input unique names but we allow for all subject_ids to come in for now,
-    # even if missing any record or waveform
-    np.append(recordSubIds, wfSubIds)
-    subjectSeries = pd.Series(recordSubIds[:, 0]).astype(int).unique() # weird edge case with dtypes, make sure we don't do weird stuff with repeats
 
-    df = pd.DataFrame({"hadm_id": subjectSeries})
-    df.set_index(["hadm_id"], inplace=True)
-    categorization.subject_id = categorization.subject_id.astype(int)
-    categorization.set_index("subject_id", inplace = True)
-    toReturn = df.join(categorization, how="inner")
-    return toReturn
 def sampleWFSubject(subject_id, time):
     '''
     Wrapper function for wfdb.srdsamp3

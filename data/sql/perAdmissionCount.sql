@@ -10,14 +10,14 @@ labeventsInRange as (
   FROM labevents
   LEFT JOIN timeranges on timeranges.hadm_id = labevents.hadm_id
   WHERE (charttime, charttime) OVERLAPS (timeranges.admittime, timeranges.endtime) <INSERT IDS HERE>
-  <INSERT hadm_ids HERE>
+  <INSERT labevents hadm_ids HERE>
 ),
 charteventsInRange as (
   SELECT chartevents.hadm_id, itemid, charttime, value, valuenum
   FROM chartevents
   LEFT JOIN timeranges on timeranges.hadm_id = chartevents.hadm_id
   WHERE (charttime, charttime) OVERLAPS (timeranges.admittime, timeranges.endtime) <INSERT IDS HERE>
-  <INSERT hadm_ids HERE>
+  <INSERT chartevents hadm_ids HERE>
 ),
 distinctChartAdmissions as (
   -- We take distinct combination of lab tests and each hospital admission
@@ -28,7 +28,7 @@ distinctChartAdmissions as (
 ),
 chartEventCount as (
   -- If we take multiple tests each hospital admission, we only count it once
-  SELECT itemid, label, COUNT(itemid) as countPerAdmission, AVG(count)
+  SELECT itemid, label, COUNT(itemid) as countsAdmissionPresent, AVG(count)
   FROM distinctChartAdmissions
   GROUP BY itemid, label
 ),
@@ -41,11 +41,11 @@ distinctLabAdmissions as (
 ),
 labEventCount as (
   -- If we take multiple tests each hospital admission, we only count it once
-  SELECT itemid, label, COUNT(itemid) as countPerAdmission, AVG(count) as avgPerAdmission
+  SELECT itemid, label, COUNT(itemid) as countAdmissionsPresent, AVG(count) as avgPerAdmission
   FROM distinctLabAdmissions
   GROUP BY itemid, label
 )
   SELECT * FROM labEventCount
   UNION
   SELECT * FROM chartEventCount
-  ORDER BY countPerAdmission desc
+  ORDER BY countAdmissionsPresent desc
