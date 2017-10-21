@@ -8,6 +8,7 @@ from readWaveform import waveformUtil as wfutil
 
 wfutil.preliminaryCompareTimes().to_csv("data/rawdatafiles/comparedTimes.csv")
 
+
 def selfJoinFix(data):
     '''
     This method deals with the fact that chartevents includes items from multiple different technologies
@@ -20,11 +21,13 @@ def selfJoinFix(data):
     counts = pd.DataFrame.from_csv(data)
     countsCopy = counts.copy()
     selfJoin = pd.merge(counts, countsCopy, left_on=["label"], right_on="label")
-    selfJoin = selfJoin.query("itemid_x > itemid_y") #Keep nonunique, only one copy
-    #remove LOINC code self links (apparently mixed in as well)
+    selfJoin = selfJoin.query("itemid_x > itemid_y")  # Keep nonunique, only one copy
+    # remove LOINC code self links (apparently mixed in as well)
     # "redundant" LOINC codes are not redundant, but the qualifying details (i.e. bp on leg vs bp on arms) is missing in label
-    selfJoin = selfJoin.query("(not (itemid_x > 50000 and itemid_x < 60000)) or (not(itemid_y > 50000 and itemid_y < 60000))")
+    selfJoin = selfJoin.query(
+        "(not (itemid_x > 50000 and itemid_x < 60000)) or (not(itemid_y > 50000 and itemid_y < 60000))")
     return selfJoin
+
 
 selfJoin = selfJoinFix("data/rawdatafiles/counts.csv")
 selfJoin.to_csv("data/rawdatafiles/selfCounts.csv")

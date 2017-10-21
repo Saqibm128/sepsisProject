@@ -10,7 +10,7 @@ import datetime
 import commonDB
 import math
 
-def preliminaryCompareTimes(num_days=15):
+def preliminaryCompareTimes(num_days=1):
     '''
     This method is a sanity check method to compare the admittime of patients to the waveform start time.
     It calculates the difference and returns the hospital admissions id that correspond to the waveform start time
