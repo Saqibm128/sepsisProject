@@ -10,21 +10,24 @@ import categorization as catSepsis
 import numpy
 # Get the data and write to disk (note we can comment out below lines if we have written already)
 # If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
+mappingItemids = pd.DataFrame.from_csv("data/rawdatafiles/selfCounts.csv") #stores which itemids are equivalent
 subject_ids = wfutil.listAllSubjects()
-# freqFeatOverall = freq.countFeatures(subject_ids=subject_ids)
-# freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
+freqFeatOverall = freq.countFeatures(subject_ids=subject_ids, mapping=mappingItemids)
+freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
 
 categorization = catSepsis.getCategorizations()
 sepsisCategorization = categorization[categorization["angus"] == 1]
 freqFeatSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=sepsisCategorization.index)
-freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv")
+freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv", \
+                        mapping=mappingItemids)
 
 nonSepsisCategorization = categorization[categorization["angus"] == 0]
-freqFeatNonSepsis = freq.countFeatures(
-    subject_ids=subject_ids, hadm_ids=nonSepsisCategorization.index)
+freqFeatNonSepsis = freq.countFeatures(subject_ids=subject_ids, \
+                                        hadm_ids=nonSepsisCategorization.index, \
+                                        mappings=mappingItemids)
 freqFeatNonSepsis.to_csv("data/rawdatafiles/freqFeatNonSepsis.csv")
 #hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
-#allPersons = freq.getDataAllHadmId(hadm_ids, 40)
+#allPersons = freq.getDataByHadmId(hadm_ids, 40)
 # allPersons.to_csv("data/rawdatafiles/allPersonsData.csv")
 # print(allPersons) #debug print TODO: remove this
 
