@@ -6,10 +6,7 @@ import pandas as pd
 
 
 ## @author Mohammed Saqib
-## This file is responsible for getting out all results from sql queries.
-##      It does not do much else, because getting the queries
-##      takes a lot of time. Once done, it places the data as a raw pickle file
-
+## This file is responsible for categorizing sepsis as per angus criterion
 def getQSofaCategorization(hadm_ids = None, subject_ids = None):
     """
     This function uses the quick sepsis organ failure assessment, as defined by the third international

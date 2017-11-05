@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import sys
 
+
 from pandas import DataFrame
 
 import psycopg2
@@ -12,8 +13,19 @@ import json
 import os
 from addict import Dict
 
-
-##Set up a glogal variable that reads config.json as default file for config
+def convertListToSQL(listItems):
+    '''
+    Transform a list of items, (usually ids)
+    from type int to format "(itemId1, itemId2)"
+    for sql
+    :param listItems a python list of stuff
+    :return string in sql format for "WHERE var IN" would work
+    '''
+    toRet = ""
+    for item in listItems:
+        toRet += str(item) + ", "
+    toRet = "(" + toRet[0:-2] + ")"
+    return toRet
 
 def query(sql, config):
     """
@@ -112,14 +124,6 @@ def read_icd_diagnoses_table(mimic3_path, use_db=False, conn_info=None):
     diagnoses[['SUBJECT_ID','HADM_ID','SEQ_NUM']] = diagnoses[['SUBJECT_ID','HADM_ID','SEQ_NUM']].astype(int)
     return diagnoses
 
-def read_events_table_by_row(mimic3_path, table):
-    nb_rows = { 'chartevents': 263201376, 'labevents': 27872576, 'outputevents': 4349340 }
-    reader = csv.DictReader(open(os.path.join(mimic3_path, table.upper() + '.csv'), 'r'))
-    for i,row in enumerate(reader):
-        if 'ICUSTAY_ID' not in row:
-            row['ICUSTAY_ID'] = ''
-        yield row, i, nb_rows[table.lower()]
-
 def count_icd_codes(diagnoses, output_path=None):
     codes = diagnoses[['ICD9_CODE','SHORT_TITLE','LONG_TITLE']].drop_duplicates().set_index('ICD9_CODE')
     codes['COUNT'] = diagnoses.groupby('ICD9_CODE')['ICUSTAY_ID'].count()
@@ -202,8 +206,22 @@ def break_up_diagnoses_by_subject(diagnoses, output_path, subjects=None, verbose
         diagnoses.ix[diagnoses.SUBJECT_ID == subject_id].sort_values(by=['ICUSTAY_ID','SEQ_NUM']).to_csv(os.path.join(dn, 'diagnoses.csv'), index=False)
     if verbose:
         sys.stdout.write('DONE!\n')
-
-def read_events_table_and_break_up_by_subject(mimic3_path, table, output_path, items_to_keep=None, subjects_to_keep=None, verbose=1):
+def read_events_table_by_row(mimic3_path, table, use_db=False, conn_info=None, items_to_keep=None):
+    nb_rows = { 'chartevents': 263201376, 'labevents': 27872576, 'outputevents': 4349340 }
+    if use_db == False:
+        reader = csv.DictReader(open(os.path.join(mimic3_path, table.upper() + '.csv'), 'r'))
+    else:
+        eventsDF = query("SELECT * FROM " + table + " WHERE itemid in " + convertListToSQL(items_to_keep), conn_info)
+        eventsDF.column = eventsDF.columns.str.upper()
+        reader = csv.DictReader(eventsDF.to_csv())
+    for i,row in enumerate(reader):
+        if 'ICUSTAY_ID' not in row:
+            row['ICUSTAY_ID'] = ''
+        if 'SUBJECT_ID' not in row:
+            row['SUBJECT_ID'] = ''
+        yield row, i, nb_rows[table.lower()]
+    
+def read_events_table_and_break_up_by_subject(mimic3_path, table, output_path, items_to_keep=None, subjects_to_keep=None, verbose=1, use_db=False, conn_info=None):
     obs_header = [ 'SUBJECT_ID', 'HADM_ID', 'ICUSTAY_ID', 'CHARTTIME', 'ITEMID', 'VALUE', 'VALUEUOM' ]
     if items_to_keep is not None:
         items_to_keep = set([ str(s) for s in items_to_keep ])
@@ -235,7 +253,7 @@ def read_events_table_and_break_up_by_subject(mimic3_path, table, output_path, i
         w.writerows(curPatient.curr_obs)
         curPatient.curr_obs = []
     
-    for row, row_no, nb_rows in read_events_table_by_row(mimic3_path, table):
+    for row, row_no, nb_rows in read_events_table_by_row(mimic3_path, table, use_db=use_db, conn_info=conn_info, items_to_keep=items_to_keep):
         if verbose and (row_no % 100000 == 0):
             if curPatient.last_write_no != '':
                 sys.stdout.write('\rprocessing {0}: ROW {1} of {2}...last write '
@@ -258,6 +276,8 @@ def read_events_table_and_break_up_by_subject(mimic3_path, table, output_path, i
                     'ITEMID': row['ITEMID'],
                     'VALUE': row['VALUE'],
                     'VALUEUOM': row['VALUEUOM'] }
+        row = pd.DataFrame(row)
+        print(row)
         if curPatient.curr_subject_id != '' and curPatient.curr_subject_id != row['SUBJECT_ID']:
             write_current_observations()
         curPatient.curr_obs.append(row_out)

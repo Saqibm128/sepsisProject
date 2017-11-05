@@ -1,5 +1,7 @@
 numpy
 pandas
+scipy
+sklearn
 matplotlib
 psycopg2
 wfdb

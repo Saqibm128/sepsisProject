@@ -10,26 +10,44 @@ import categorization as catSepsis
 import numpy
 # Get the data and write to disk (note we can comment out below lines if we have written already)
 # If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
-mappingItemids = pd.DataFrame.from_csv("data/rawdatafiles/selfCounts.csv") #stores which itemids are equivalent
-subject_ids = wfutil.listAllSubjects()
-freqFeatOverall = freq.countFeatures(subject_ids=subject_ids, mapping=mappingItemids)
-freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
+# mappingItemids = pd.DataFrame.from_csv("data/rawdatafiles/selfCounts.csv") #stores which itemids are equivalent
+subject_ids = wfutil.listAllSubjects()[0:10]
+# freqFeatOverall = freq.countFeatures(subject_ids=subject_ids, mapping=mappingItemids)
+# freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
+# 
+# categorization = catSepsis.getCategorizations()
+# sepsisCategorization = categorization[categorization["angus"] == 1]
+# freqFeatSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=sepsisCategorization.index)
+# freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv", \
+#                         mapping=mappingItemids)
+# 
+# nonSepsisCategorization = categorization[categorization["angus"] == 0]
+# freqFeatNonSepsis = freq.countFeatures(subject_ids=subject_ids, \
+#                                         hadm_ids=nonSepsisCategorization.index, \
+#                                         mappings=mappingItemids)
+# freqFeatNonSepsis.to_csv("data/rawdatafiles/freqFeatNonSepsis.csv")
+hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
+print(hadm_ids.shape)
+#Read a cached copy of most common itemids for all subjects
+itemids = pd.DataFrame.from_csv("data/rawdatafiles/counts.csv")
+itemids = itemids.sort_values(["countperadmission"], ascending=False)
+itemids = itemids["itemid"][0:40]
+#Get a mapping of itemids to variables, since multiple itemids often map to same concept
+itemidVariableMap = pd.DataFrame.from_csv("data/rawdatafiles/itemid_to_variable_map.csv")
+#Level2 is mapped to index, we want this column to be variable
+itemidVariableMap["variable"] = itemidVariableMap.index
+itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
+#Read a copy of mappings of itemids to variables and transform
+#   into itemid to variable encoding (from mimiciii benchmark project)
 
-categorization = catSepsis.getCategorizations()
-sepsisCategorization = categorization[categorization["angus"] == 1]
-freqFeatSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=sepsisCategorization.index)
-freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv", \
-                        mapping=mappingItemids)
+allPersons = freq.getDataByHadmId(hadm_ids, 10, itemids, mapping=itemidVariableMap)
 
-nonSepsisCategorization = categorization[categorization["angus"] == 0]
-freqFeatNonSepsis = freq.countFeatures(subject_ids=subject_ids, \
-                                        hadm_ids=nonSepsisCategorization.index, \
-                                        mappings=mappingItemids)
-freqFeatNonSepsis.to_csv("data/rawdatafiles/freqFeatNonSepsis.csv")
-#hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
-#allPersons = freq.getDataByHadmId(hadm_ids, 40)
-# allPersons.to_csv("data/rawdatafiles/allPersonsData.csv")
-# print(allPersons) #debug print TODO: remove this
+
+
+
+
+# allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
+
 
 # allPersons = pd.DataFrame.from_csv("data/rawdatafiles/allPersonsData.csv")
 # classified = pd.DataFrame.from_csv("data/rawdatafiles/classifiedAngusSepsis.csv")

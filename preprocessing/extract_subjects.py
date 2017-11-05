@@ -4,6 +4,7 @@ import yaml
 
 from mimic3csv import *
 from preprocessing import add_hcup_ccs_2015_groups, make_phenotype_label_matrix
+from addict import Dict
 
 parser = argparse.ArgumentParser(description='Extract per-subject data from MIMIC-III CSV files.')
 parser.add_argument('mimic3_path', type=str, help='Directory containing MIMIC-III CSV files.')
@@ -15,10 +16,12 @@ parser.add_argument('--use_db', action='store_true', help='Use a database instea
 #parser.add_argument('--db_config', type=str, help='Location for JSON file containing data to instantiate connection', default='config.json')
 parser.add_argument('--phenotype_definitions', '-p', type=str, default='resources/hcup_ccs_2015_definitions.yaml',
                     help='YAML file with phenotype definitions.')
-parser.add_argument('--itemids_file ', '-i', type=str, help='CSV containing list of ITEMIDs to keep.')
+parser.add_argument('--itemids_file', '-i', type=str, help='CSV containing list of ITEMIDs to keep.')
 parser.add_argument('--verbose', '-v', type=int, help='Level of verbosity in output.', default=1)
 parser.add_argument('--test', action='store_true', help='TEST MODE: process only 1000 subjects, 1000000 events.')
 args, _ = parser.parse_known_args()
+
+args = Dict(vars(args))
 
 try:
     os.makedirs(args.output_path)
@@ -32,7 +35,7 @@ if (args.use_db):
     except:
         print("could not opent config.json")
 else:
-    globalConfig = False
+    globalConfig = None
 
 patients = read_patients_table(args.mimic3_path, use_db=args.use_db, conn_info=globalConfig)
 admits = read_admissions_table(args.mimic3_path, use_db=args.use_db, conn_info=globalConfig)
@@ -86,4 +89,4 @@ items_to_keep = set(
     [int(itemid) for itemid in DataFrame.from_csv(args.itemids_file)['ITEMID'].unique()]) if args.itemids_file else None
 for table in args.event_tables:
     read_events_table_and_break_up_by_subject(args.mimic3_path, table, args.output_path, items_to_keep=items_to_keep,
-                                              subjects_to_keep=subjects, verbose=args.verbose)
+                                              subjects_to_keep=subjects, verbose=args.verbose, use_db=args.use_db, conn_info=globalConfig)
