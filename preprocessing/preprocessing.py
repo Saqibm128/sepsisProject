@@ -1,5 +1,6 @@
 import numpy as np
 import re
+import traceback
 
 from pandas import DataFrame, Series
 
@@ -111,15 +112,15 @@ def remove_outliers_for_variable(events, variable, ranges):
 
 # SBP: some are strings of type SBP/DBP
 def clean_sbp(df):
-    v = df.value.astype(str)
+    v = df.loc[:, 'value'].astype(str)
     idx = v.apply(lambda s: '/' in s)
-    v.ix[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(1))
+    v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(1))
     return v.astype(float)
 
 def clean_dbp(df):
-    v = df.value.astype(str)
+    v = df.loc[:, 'value'].astype(str)
     idx = v.apply(lambda s: '/' in s)
-    v.ix[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(2))
+    v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(2))
     return v.astype(float)
 
 # CRR: strings with brisk, <3 normal, delayed, or >3 abnormal
@@ -127,65 +128,65 @@ def clean_crr(df):
     v = Series(np.zeros(df.shape[0]), index=df.index)
     v[:] = np.nan
 
-    # when df.value is empty, dtype can be float and comparision with string
+    # when df.loc[:, 'value'] is empty, dtype can be float and comparision with string
     # raises an exception, to fix this we change dtype to str
-    df.value = df.value.astype(str)
+    df.loc[:, 'value'] = df.loc[:, 'value'].astype(str)
 
-    v.ix[(df.value == 'Normal <3 secs') | (df.value == 'Brisk')] = 0
-    v.ix[(df.value == 'Abnormal >3 secs') | (df.value == 'Delayed')] = 1
+    v.loc[(df.loc[:, 'value'] == 'Normal <3 secs') | (df.loc[:, 'value'] == 'Brisk')] = 0
+    v.loc[(df.loc[:, 'value'] == 'Abnormal >3 secs') | (df.loc[:, 'value'] == 'Delayed')] = 1
     return v
 
 # FIO2: many 0s, some 0<x<0.2 or 1<x<20
 def clean_fio2(df):
-    v = df.value.astype(float)
-    idx = df.valueuom.fillna('').apply(lambda s: 'torr' not in s.lower()) & (df.value>1.0)
-    v.ix[idx] = v[idx] / 100.
+    v = df.loc[:, 'value'].astype(float)
+    idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'torr' not in s.lower()) & (df.loc[:, 'value']>1.0)
+    v.loc[idx] = v[idx] / 100.
     return v
 
 # GLUCOSE, PH: sometimes have ERROR as value
 def clean_lab(df):
-    v = df.value
+    v = df.loc[:, 'value']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
-    v.ix[idx] = np.nan
+    v.loc[idx] = np.nan
     return v.astype(float)
 
 # O2SAT: small number of 0<x<=1 that should be mapped to 0-100 scale
 def clean_o2sat(df):
     # change "ERROR" to NaN
-    v = df.value
+    v = df.loc[:, 'value']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
-    v.ix[idx] = np.nan
+    v.loc[idx] = np.nan
 
     v = v.astype(float)
     idx = (v<=1)
-    v.ix[idx] = v[idx] * 100.
+    v.loc[idx] = v.loc[idx] * 100.
     return v
 
 # Temperature: map Farenheit to Celsius, some ambiguous 50<x<80
 def clean_temperature(df):
-    v = df.value.astype(float)
-    idx = df.valueuom.fillna('').apply(lambda s: 'F' in s.lower()) | df.label.apply(lambda s: 'F' in s.lower()) | (v >= 79)
-    v.ix[idx] = (v[idx] - 32) * 5. / 9
+    v = df.loc[:, 'value'].astype(float)
+    idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'F' in s.lower()) | df.label.apply(lambda s: 'F' in s.lower()) | (v >= 79)
+    v.loc[idx] = (v[idx] - 32) * 5. / 9
     return v
 
 # Weight: some really light/heavy adults: <50 lb, >450 lb, ambiguous oz/lb
 # Children are tough for height, weight
 def clean_weight(df):
-    v = df.value.astype(float)
+    v = df.loc[:, 'value'].astype(float)
     # ounces
-    idx = df.valueuom.fillna('').apply(lambda s: 'oz' in s.lower()) | df.label.apply(lambda s: 'oz' in s.lower())
-    v.ix[idx] = v[idx] / 16.
+    idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'oz' in s.lower()) | df.label.apply(lambda s: 'oz' in s.lower())
+    v.loc[idx] = v[idx] / 16.
     # pounds
-    idx = idx | df.valueuom.fillna('').apply(lambda s: 'lb' in s.lower()) | df.label.apply(lambda s: 'lb' in s.lower())
-    v.ix[idx] = v[idx] * 0.453592
+    idx = idx | df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'lb' in s.lower()) | df.label.apply(lambda s: 'lb' in s.lower())
+    v.loc[idx] = v[idx] * 0.453592
     return v
 
 # Height: some really short/tall adults: <2 ft, >7 ft)
 # Children are tough for height, weight
 def clean_height(df):
-    v = df.value.astype(float)
-    idx = df.valueuom.fillna('').apply(lambda s: 'in' in s.lower()) | df.label.apply(lambda s: 'in' in s.lower())
-    v.ix[idx] = np.round(v[idx] * 2.54)
+    v = df.loc[:, 'value'].astype(float)
+    idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'in' in s.lower()) | df.label.apply(lambda s: 'in' in s.lower())
+    v.loc[idx] = np.round(v[idx] * 2.54)
     return v
 
 # ETCO2: haven't found yet
@@ -215,9 +216,9 @@ def clean_events(events):
     for var_name, clean_fn in list(clean_fns.items()):
         idx = (events["variable"] == var_name)
         try:
-            events.value.ix[idx] = clean_fn(events.ix[idx])
+              events.loc[idx, 'value'] = clean_fn(events.loc[idx])
         except Exception as inst:
-            print(inst)
+            traceback.print_exc()
             print(("Exception in clean_events:", clean_fn.__name__))
             print(("number of rows:", np.sum(idx)))
             print(("values:", events.ix[idx]))

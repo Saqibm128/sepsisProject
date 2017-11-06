@@ -64,13 +64,12 @@ def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCo
     return events
 
 
-def getDataByHadmId(hadm_ids, items, itemids, mapping=None, mustinclude=None):
+def getDataByHadmId(hadm_ids, itemids, mapping=None, mustinclude=None):
     '''
     This function turns the wide data into a narrower format and calls on other
     functions to clean up data for all hadm_ids chosen.
     :param hadm_ids a list of all hadm_ids to include and process
-    :param items features to include in final data matrix
-    :param itemids stores all the itemids, ordered by frequency of counts
+    :param itemids features to include in final data matrix
     :param mapping a DataFrame with columns itemid and variable to deal with items which are the same
                     if None, will use itemid only
     :param mustinclude a collection of itemids that must be included TODO
@@ -127,4 +126,7 @@ def getFirst24HrsDataValuesIndividually(hadm_id, itemids, mapping=None):
     if mapping is not None:
         mapping = mapping[["itemid", "variable"]]
         dataToReturn = dataToReturn.merge(mapping, left_on=['itemid'], right_on=['itemid'], how='left')
+        dataToReturn.loc[:, "variable"].fillna(dataToReturn['itemid'])
+    else:
+        dataToReturn["variable"] = dataToReturn["itemid"]
     return dataToReturn

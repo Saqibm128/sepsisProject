@@ -40,13 +40,13 @@ itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
 #Read a copy of mappings of itemids to variables and transform
 #   into itemid to variable encoding (from mimiciii benchmark project)
 
-allPersons = freq.getDataByHadmId(hadm_ids, 10, itemids, mapping=itemidVariableMap)
+allPersons = freq.getDataByHadmId(hadm_ids, itemids, mapping=itemidVariableMap)
 
 
 
 
 
-# allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
+allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
 
 
 # allPersons = pd.DataFrame.from_csv("data/rawdatafiles/allPersonsData.csv")
