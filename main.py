@@ -33,7 +33,7 @@ itemids = pd.DataFrame.from_csv("data/rawdatafiles/counts.csv")
 itemids = itemids.sort_values(["countperadmission"], ascending=False)
 itemids = itemids["itemid"][0:40]
 #Get a mapping of itemids to variables, since multiple itemids often map to same concept
-itemidVariableMap = pd.DataFrame.from_csv("data/rawdatafiles/itemid_to_variable_map.csv")
+itemidVariableMap = pd.DataFrame.from_csv("preprocessing/resources/itemid.csv")
 #Level2 is mapped to index, we want this column to be variable
 itemidVariableMap["variable"] = itemidVariableMap.index
 itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
@@ -41,6 +41,7 @@ itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
 #   into itemid to variable encoding (from mimiciii benchmark project)
 
 allPersons = freq.getDataByHadmId(hadm_ids, itemids, mapping=itemidVariableMap)
+allPersons.dropna(axis=0, how="any", subset=["Heart Rate", "Systolic blood pressure", "Diastolic blood pressure"])
 
 
 
