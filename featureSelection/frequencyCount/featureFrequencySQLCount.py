@@ -1,7 +1,7 @@
 import pickle
 import commonDB
 import pandas as pd
-import numpy
+import numpy as np
 import os.path
 from preprocessing import preprocessing
 
@@ -80,13 +80,13 @@ def getDataByHadmId(hadm_ids, itemids, mapping=None, mustinclude=None):
     for hadm_id in hadm_ids:
         dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, itemids=itemids, mapping=mapping)
         dataEvents = preprocessing.clean_events(dataEvents)
-        intermediateList.append(commonDB.cleanUpIndividual(dataEvents, hadm_id))
+        intermediateList.append(commonDB.consolidateEvents(dataEvents, hadm_id))
     allPersons = pd.concat(intermediateList)
     allPersons.set_index("hadm_id", inplace=True)
     # for column in allPersons.columns:
     #     allPersons[column].fillna(commonDB.cleanSeries(allPersons[column]), inplace=True)
     #     # remove outliers either above the 3rd std or below the 3rd std
-    #     if allPersons[column].dtype == numpy.number:
+    #     if allPersons[column].dtype == np.number:
     #         allPersons[column] = allPersons[column].apply(
     #             lambda ind: ((col.mean() + 3 * col.std()) if (ind > (col.mean() + 3 * col.std())) else ind
     #                          ))
@@ -106,13 +106,10 @@ def getFirst24HrsDataValuesIndividually(hadm_id, itemids, mapping=None):
     most common problems in clinical data
     :param itemids variable to use for counts of features
     :param hadm_id the admission id to run query and retrieve data for
-    :param itemids reported features to return
     :param mapping a DataFrame with columns itemid and variable to translate from former to latter
             mapping is used to deal with multiple itemids that are essentially the same concept
     :return a Dataframe with the data
     """
-    #Ensure that mapping is just itemid and variable when we use it
-    
     query = "WITH timeranges as (SELECT hadm_id, admittime, admittime + interval '24 hour' as endtime FROM admissions WHERE hadm_id = " + str(hadm_id) + "), \n"\
         + "topLabEvents as ( SELECT hadm_id, label, labevents.itemid, charttime, value, valuenum, valueuom FROM labevents  LEFT JOIN d_labitems on d_labitems.itemid = labevents.itemid WHERE labevents.itemid in  \n" \
         + commonDB.convertListToSQL(itemids) \
@@ -123,10 +120,11 @@ def getFirst24HrsDataValuesIndividually(hadm_id, itemids, mapping=None):
         + " ) SELECT * FROM topLabEvents UNION SELECT * FROM topChartEvents ORDER BY charttime"
     conn = commonDB.getConnection()
     dataToReturn = pd.read_sql(query, conn)
+    #default variable name is itemid if we cannot find the correct translation in the mapping dataframe we pass in
     if mapping is not None:
-        mapping = mapping[["itemid", "variable"]]
+        mapping = mapping[["itemid", "variable"]] #when we merge, we want to discard miscellaneous columns for clarity TODO: do we need this line?
         dataToReturn = dataToReturn.merge(mapping, left_on=['itemid'], right_on=['itemid'], how='left')
-        dataToReturn.loc[:, "variable"].fillna(dataToReturn['itemid'])
+        # dataToReturn.loc[:, "variable"].fillna(dataToReturn['itemid']) TODO: fix this?
     else:
         dataToReturn["variable"] = dataToReturn["itemid"]
     return dataToReturn

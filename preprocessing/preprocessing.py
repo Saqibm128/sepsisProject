@@ -46,8 +46,8 @@ def assemble_episodic_data(stays, diagnoses):
 diagnosis_labels = [ '4019', '4280', '41401', '42731', '25000', '5849', '2724', '51881', '53081', '5990', '2720', '2859', '2449', '486', '2762', '2851', '496', 'V5861', '99592', '311', '0389', '5859', '5070', '40390', '3051', '412', 'V4581', '2761', '41071', '2875', '4240', 'V1582', 'V4582', 'V5867', '4241', '40391', '78552', '5119', '42789', '32723', '49390', '9971', '2767', '2760', '2749', '4168', '5180', '45829', '4589', '73300', '5845', '78039', '5856', '4271', '4254', '4111', 'V1251', '30000', '3572', '60000', '27800', '41400', '2768', '4439', '27651', 'V4501', '27652', '99811', '431', '28521', '2930', '7907', 'E8798', '5789', '79902', 'V4986', 'V103', '42832', 'E8788', '00845', '5715', '99591', '07054', '42833', '4275', '49121', 'V1046', '2948', '70703', '2809', '5712', '27801', '42732', '99812', '4139', '3004', '2639', '42822', '25060', 'V1254', '42823', '28529', 'E8782', '30500', '78791', '78551', 'E8889', '78820', '34590', '2800', '99859', 'V667', 'E8497', '79092', '5723', '3485', '5601', '25040', '570', '71590', '2869', '2763', '5770', 'V5865', '99662', '28860', '36201', '56210' ]
 def extract_diagnosis_labels(diagnoses):
     global diagnosis_labels
-    diagnoses['value'] = 1
-    labels = diagnoses[['ICUSTAY_ID', 'ICD9_CODE', 'value']].drop_duplicates().pivot(index='ICUSTAY_ID', columns='ICD9_CODE', values='value').fillna(0).astype(int)
+    diagnoses['valuenum'] = 1
+    labels = diagnoses[['ICUSTAY_ID', 'ICD9_CODE', 'valuenum']].drop_duplicates().pivot(index='ICUSTAY_ID', columns='ICD9_CODE', valuenums='valuenum').fillna(0).astype(int)
     for l in diagnosis_labels:
         if l not in labels:
             labels[l] = 0
@@ -65,10 +65,10 @@ def add_hcup_ccs_2015_groups(diagnoses, definitions):
 
 def make_phenotype_label_matrix(phenotypes, stays=None):
     phenotypes = phenotypes[['ICUSTAY_ID', 'HCUP_CCS_2015']].ix[phenotypes.USE_IN_BENCHMARK > 0].drop_duplicates()
-    phenotypes['value'] = 1
-    phenotypes = phenotypes.pivot(index='ICUSTAY_ID', columns='HCUP_CCS_2015', values='value')
+    phenotypes['valuenum'] = 1
+    phenotypes = phenotypes.pivot(index='ICUSTAY_ID', columns='HCUP_CCS_2015', valuenums='valuenum')
     if stays is not None:
-        phenotypes = phenotypes.ix[stays.ICUSTAY_ID.sort_values()]
+        phenotypes = phenotypes.ix[stays.ICUSTAY_ID.sort_valuenums()]
     return phenotypes.fillna(0).astype(int).sort_index(axis=0).sort_index(axis=1)
 
 
@@ -102,69 +102,69 @@ def remove_outliers_for_variable(events, variable, ranges):
     if variable not in ranges.index:
         return events
     idx = (events.VARIABLE == variable)
-    V = events.value[idx]
+    V = events.valuenum[idx]
     V.ix[V < ranges.OUTLIER_LOW[variable]]  = np.nan
     V.ix[V > ranges.OUTLIER_HIGH[variable]] = np.nan
     V.ix[V < ranges.VALID_LOW[variable]]    = ranges.VALID_LOW[variable]
     V.ix[V > ranges.VALID_HIGH[variable]]   = ranges.VALID_HIGH[variable]
-    events.value.ix[idx] = V
+    events.valuenum.ix[idx] = V
     return events
 
 # SBP: some are strings of type SBP/DBP
 def clean_sbp(df):
-    v = df.loc[:, 'value'].astype(str)
+    v = df.loc[:, 'valuenum'].astype(str)
     idx = v.apply(lambda s: '/' in s)
     v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(1))
-    return v.astype(float)
+    return v.astype(np.number)
 
 def clean_dbp(df):
-    v = df.loc[:, 'value'].astype(str)
+    v = df.loc[:, 'valuenum'].astype(str)
     idx = v.apply(lambda s: '/' in s)
     v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(2))
-    return v.astype(float)
+    return v.astype(np.number)
 
 # CRR: strings with brisk, <3 normal, delayed, or >3 abnormal
 def clean_crr(df):
     v = Series(np.zeros(df.shape[0]), index=df.index)
     v[:] = np.nan
 
-    # when df.loc[:, 'value'] is empty, dtype can be float and comparision with string
+    # when df.loc[:, 'valuenum'] is empty, dtype can be np.number and comparision with string
     # raises an exception, to fix this we change dtype to str
-    df.loc[:, 'value'] = df.loc[:, 'value'].astype(str)
+    df.loc[:, 'valuenum'] = df.loc[:, 'valuenum'].astype(str)
 
-    v.loc[(df.loc[:, 'value'] == 'Normal <3 secs') | (df.loc[:, 'value'] == 'Brisk')] = 0
-    v.loc[(df.loc[:, 'value'] == 'Abnormal >3 secs') | (df.loc[:, 'value'] == 'Delayed')] = 1
+    v.loc[(df.loc[:, 'valuenum'] == 'Normal <3 secs') | (df.loc[:, 'valuenum'] == 'Brisk')] = 0
+    v.loc[(df.loc[:, 'valuenum'] == 'Abnormal >3 secs') | (df.loc[:, 'valuenum'] == 'Delayed')] = 1
     return v
 
 # FIO2: many 0s, some 0<x<0.2 or 1<x<20
 def clean_fio2(df):
-    v = df.loc[:, 'value'].astype(float)
-    idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'torr' not in s.lower()) & (df.loc[:, 'value']>1.0)
+    v = df.loc[:, 'valuenum'].astype(np.number)
+    idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'torr' not in s.lower()) & (v >1.0)
     v.loc[idx] = v[idx] / 100.
     return v
 
-# GLUCOSE, PH: sometimes have ERROR as value
+# GLUCOSE, PH: sometimes have ERROR as valuenum
 def clean_lab(df):
-    v = df.loc[:, 'value']
+    v = df.loc[:, 'valuenum']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
     v.loc[idx] = np.nan
-    return v.astype(float)
+    return v.astype(np.number)
 
 # O2SAT: small number of 0<x<=1 that should be mapped to 0-100 scale
 def clean_o2sat(df):
     # change "ERROR" to NaN
-    v = df.loc[:, 'value']
+    v = df.loc[:, 'valuenum']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
     v.loc[idx] = np.nan
 
-    v = v.astype(float)
+    v = v.astype(np.number)
     idx = (v<=1)
     v.loc[idx] = v.loc[idx] * 100.
     return v
 
 # Temperature: map Farenheit to Celsius, some ambiguous 50<x<80
 def clean_temperature(df):
-    v = df.loc[:, 'value'].astype(float)
+    v = df.loc[:, 'valuenum'].astype(np.number)
     idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'F' in s.lower()) | df.label.apply(lambda s: 'F' in s.lower()) | (v >= 79)
     v.loc[idx] = (v[idx] - 32) * 5. / 9
     return v
@@ -172,7 +172,7 @@ def clean_temperature(df):
 # Weight: some really light/heavy adults: <50 lb, >450 lb, ambiguous oz/lb
 # Children are tough for height, weight
 def clean_weight(df):
-    v = df.loc[:, 'value'].astype(float)
+    v = df.loc[:, 'valuenum'].astype(np.number)
     # ounces
     idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'oz' in s.lower()) | df.label.apply(lambda s: 'oz' in s.lower())
     v.loc[idx] = v[idx] / 16.
@@ -184,7 +184,7 @@ def clean_weight(df):
 # Height: some really short/tall adults: <2 ft, >7 ft)
 # Children are tough for height, weight
 def clean_height(df):
-    v = df.loc[:, 'value'].astype(float)
+    v = df.loc[:, 'valuenum'].astype(np.number)
     idx = df.loc[:, 'valueuom'].fillna('').apply(lambda s: 'in' in s.lower()) | df.label.apply(lambda s: 'in' in s.lower())
     v.loc[idx] = np.round(v[idx] * 2.54)
     return v
@@ -214,12 +214,13 @@ clean_fns = {
 def clean_events(events):
     global cleaning_fns
     for var_name, clean_fn in list(clean_fns.items()):
-        idx = (events["variable"] == var_name)
+        idx = (events["variable"].astype(str) == var_name)
         try:
-              events.loc[idx, 'value'] = clean_fn(events.loc[idx])
+              events.loc[idx, 'valuenum'] = clean_fn(events.loc[idx])
+              events.loc[idx, 'valuenumnum'] = events.loc[idx, 'valuenum'].astype(np.number) #so that valuenumnum matches
         except Exception as inst:
             traceback.print_exc()
             print(("Exception in clean_events:", clean_fn.__name__))
             print(("number of rows:", np.sum(idx)))
-            print(("values:", events.ix[idx]))
+            print(("valuenums:", events.ix[idx]))
     return events

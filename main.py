@@ -11,7 +11,6 @@ import numpy
 # Get the data and write to disk (note we can comment out below lines if we have written already)
 # If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
 # mappingItemids = pd.DataFrame.from_csv("data/rawdatafiles/selfCounts.csv") #stores which itemids are equivalent
-subject_ids = wfutil.listAllSubjects()[0:10]
 # freqFeatOverall = freq.countFeatures(subject_ids=subject_ids, mapping=mappingItemids)
 # freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
 # 
@@ -26,14 +25,11 @@ subject_ids = wfutil.listAllSubjects()[0:10]
 #                                         hadm_ids=nonSepsisCategorization.index, \
 #                                         mappings=mappingItemids)
 # freqFeatNonSepsis.to_csv("data/rawdatafiles/freqFeatNonSepsis.csv")
-hadm_ids = commonDB.specSubjectHadmId(subject_ids=subject_ids)
-print(hadm_ids.shape)
+hadm_ids = commonDB.specSubjectHadmId()
 #Read a cached copy of most common itemids for all subjects
-itemids = pd.DataFrame.from_csv("data/rawdatafiles/counts.csv")
-itemids = itemids.sort_values(["countperadmission"], ascending=False)
-itemids = itemids["itemid"][0:40]
+itemids = pd.DataFrame.from_csv("preprocessing/resources/itemid.csv")["itemid"].as_matrix()
 #Get a mapping of itemids to variables, since multiple itemids often map to same concept
-itemidVariableMap = pd.DataFrame.from_csv("preprocessing/resources/itemid.csv")
+itemidVariableMap = pd.DataFrame.from_csv("preprocessing/resources/itemid_to_variable_map.csv")
 #Level2 is mapped to index, we want this column to be variable
 itemidVariableMap["variable"] = itemidVariableMap.index
 itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
@@ -42,12 +38,7 @@ itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
 
 allPersons = freq.getDataByHadmId(hadm_ids, itemids, mapping=itemidVariableMap)
 allPersons.dropna(axis=0, how="any", subset=["Heart Rate", "Systolic blood pressure", "Diastolic blood pressure"])
-
-
-
-
-
-allPersons.to_csv("data/rawdatafiles/testPersonsData.csv")
+allPersons.to_csv("data/rawdatafiles/allPersonsData2.csv")
 
 
 # allPersons = pd.DataFrame.from_csv("data/rawdatafiles/allPersonsData.csv")
