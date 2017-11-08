@@ -1,6 +1,7 @@
+from __future__ import print_function
+
 import numpy as np
 import re
-import traceback
 
 from pandas import DataFrame, Series
 
@@ -25,7 +26,7 @@ e_map = { 'ASIAN': 1,
           '': 0 }
 def transform_ethnicity(ethnicity_series):
     global e_map
-
+    
     def aggregate_ethnicity(ethnicity_str):
         return ethnicity_str.replace(' OR ', '/').split(' - ')[0].split('/')[0]
 
@@ -46,13 +47,13 @@ def assemble_episodic_data(stays, diagnoses):
 diagnosis_labels = [ '4019', '4280', '41401', '42731', '25000', '5849', '2724', '51881', '53081', '5990', '2720', '2859', '2449', '486', '2762', '2851', '496', 'V5861', '99592', '311', '0389', '5859', '5070', '40390', '3051', '412', 'V4581', '2761', '41071', '2875', '4240', 'V1582', 'V4582', 'V5867', '4241', '40391', '78552', '5119', '42789', '32723', '49390', '9971', '2767', '2760', '2749', '4168', '5180', '45829', '4589', '73300', '5845', '78039', '5856', '4271', '4254', '4111', 'V1251', '30000', '3572', '60000', '27800', '41400', '2768', '4439', '27651', 'V4501', '27652', '99811', '431', '28521', '2930', '7907', 'E8798', '5789', '79902', 'V4986', 'V103', '42832', 'E8788', '00845', '5715', '99591', '07054', '42833', '4275', '49121', 'V1046', '2948', '70703', '2809', '5712', '27801', '42732', '99812', '4139', '3004', '2639', '42822', '25060', 'V1254', '42823', '28529', 'E8782', '30500', '78791', '78551', 'E8889', '78820', '34590', '2800', '99859', 'V667', 'E8497', '79092', '5723', '3485', '5601', '25040', '570', '71590', '2869', '2763', '5770', 'V5865', '99662', '28860', '36201', '56210' ]
 def extract_diagnosis_labels(diagnoses):
     global diagnosis_labels
-    diagnoses['valuenum'] = 1
-    labels = diagnoses[['ICUSTAY_ID', 'ICD9_CODE', 'valuenum']].drop_duplicates().pivot(index='ICUSTAY_ID', columns='ICD9_CODE', valuenums='valuenum').fillna(0).astype(int)
+    diagnoses['VALUE'] = 1
+    labels = diagnoses[['ICUSTAY_ID', 'ICD9_CODE', 'VALUE']].drop_duplicates().pivot(index='ICUSTAY_ID', columns='ICD9_CODE', values='VALUE').fillna(0).astype(int)    
     for l in diagnosis_labels:
         if l not in labels:
             labels[l] = 0
     labels = labels[diagnosis_labels]
-    return labels.rename_axis(dict(list(zip(diagnosis_labels, [ 'Diagnosis ' + d for d in diagnosis_labels]))), axis=1)
+    return labels.rename_axis(dict(zip(diagnosis_labels, [ 'Diagnosis ' + d for d in diagnosis_labels])), axis=1)
 
 def add_hcup_ccs_2015_groups(diagnoses, definitions):
     def_map = {}
@@ -65,10 +66,10 @@ def add_hcup_ccs_2015_groups(diagnoses, definitions):
 
 def make_phenotype_label_matrix(phenotypes, stays=None):
     phenotypes = phenotypes[['ICUSTAY_ID', 'HCUP_CCS_2015']].ix[phenotypes.USE_IN_BENCHMARK > 0].drop_duplicates()
-    phenotypes['valuenum'] = 1
-    phenotypes = phenotypes.pivot(index='ICUSTAY_ID', columns='HCUP_CCS_2015', valuenums='valuenum')
+    phenotypes['VALUE'] = 1
+    phenotypes = phenotypes.pivot(index='ICUSTAY_ID', columns='HCUP_CCS_2015', values='VALUE')
     if stays is not None:
-        phenotypes = phenotypes.ix[stays.ICUSTAY_ID.sort_valuenums()]
+        phenotypes = phenotypes.ix[stays.ICUSTAY_ID.sort_values()]
     return phenotypes.fillna(0).astype(int).sort_index(axis=0).sort_index(axis=1)
 
 
@@ -78,18 +79,21 @@ def make_phenotype_label_matrix(phenotypes, stays=None):
 
 def read_itemid_to_variable_map(fn, variable_column='LEVEL2'):
     var_map = DataFrame.from_csv(fn, index_col=None).fillna('').astype(str)
+
+    var_map.COUNT = var_map.COUNT.astype(int)
+
     var_map = var_map.ix[(var_map[variable_column] != '') & (var_map.COUNT>0)]
     var_map = var_map.ix[(var_map.STATUS == 'ready')]
     var_map.ITEMID = var_map.ITEMID.astype(int)
     var_map = var_map[[variable_column, 'ITEMID', 'MIMIC LABEL']].set_index('ITEMID')
-    return var_map.rename_axis({variable_column: 'VARIABLE', 'MIMIC LABEL': 'label'}, axis=1)
+    return var_map.rename_axis({variable_column: 'VARIABLE', 'MIMIC LABEL': 'MIMIC_LABEL'}, axis=1)
 
 def map_itemids_to_variables(events, var_map):
     return events.merge(var_map, left_on='ITEMID', right_index=True)
 
 def read_variable_ranges(fn, variable_column='LEVEL2'):
     columns = [ variable_column, 'OUTLIER LOW', 'VALID LOW', 'IMPUTE', 'VALID HIGH', 'OUTLIER HIGH' ]
-    to_rename = dict(list(zip(columns, [ c.replace(' ', '_') for c in columns ])))
+    to_rename = dict(zip(columns, [ c.replace(' ', '_') for c in columns ]))
     to_rename[variable_column] = 'VARIABLE'
     var_ranges = DataFrame.from_csv(fn, index_col=None)
     var_ranges = var_ranges[columns]
@@ -102,23 +106,23 @@ def remove_outliers_for_variable(events, variable, ranges):
     if variable not in ranges.index:
         return events
     idx = (events.VARIABLE == variable)
-    V = events.valuenum[idx]
+    V = events.VALUE[idx]
     V.ix[V < ranges.OUTLIER_LOW[variable]]  = np.nan
     V.ix[V > ranges.OUTLIER_HIGH[variable]] = np.nan
     V.ix[V < ranges.VALID_LOW[variable]]    = ranges.VALID_LOW[variable]
     V.ix[V > ranges.VALID_HIGH[variable]]   = ranges.VALID_HIGH[variable]
-    events.valuenum.ix[idx] = V
+    events.VALUE.ix[idx] = V
     return events
 
 # SBP: some are strings of type SBP/DBP
 def clean_sbp(df):
-    v = df.loc[:, 'valuenum'].astype(str)
+    v = df.loc[:, 'value'].astype(str)
     idx = v.apply(lambda s: '/' in s)
     v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(1))
     return v.astype(np.number)
 
 def clean_dbp(df):
-    v = df.loc[:, 'valuenum'].astype(str)
+    v = df.loc[:, 'value'].astype(str)
     idx = v.apply(lambda s: '/' in s)
     v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(2))
     return v.astype(np.number)
@@ -130,10 +134,10 @@ def clean_crr(df):
 
     # when df.loc[:, 'valuenum'] is empty, dtype can be np.number and comparision with string
     # raises an exception, to fix this we change dtype to str
-    df.loc[:, 'valuenum'] = df.loc[:, 'valuenum'].astype(str)
+    df.loc[:, 'value'] = df.loc[:, 'value'].astype(str)
 
-    v.loc[(df.loc[:, 'valuenum'] == 'Normal <3 secs') | (df.loc[:, 'valuenum'] == 'Brisk')] = 0
-    v.loc[(df.loc[:, 'valuenum'] == 'Abnormal >3 secs') | (df.loc[:, 'valuenum'] == 'Delayed')] = 1
+    v.loc[(df.loc[:, 'value'] == 'Normal <3 secs') | (df.loc[:, 'value'] == 'Brisk')] = 0
+    v.loc[(df.loc[:, 'value'] == 'Abnormal >3 secs') | (df.loc[:, 'value'] == 'Delayed')] = 1
     return v
 
 # FIO2: many 0s, some 0<x<0.2 or 1<x<20
@@ -145,7 +149,7 @@ def clean_fio2(df):
 
 # GLUCOSE, PH: sometimes have ERROR as valuenum
 def clean_lab(df):
-    v = df.loc[:, 'valuenum']
+    v = df.loc[:, 'value']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
     v.loc[idx] = np.nan
     return v.astype(np.number)
@@ -153,7 +157,7 @@ def clean_lab(df):
 # O2SAT: small number of 0<x<=1 that should be mapped to 0-100 scale
 def clean_o2sat(df):
     # change "ERROR" to NaN
-    v = df.loc[:, 'valuenum']
+    v = df.loc[:, 'value']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
     v.loc[idx] = np.nan
 
@@ -216,8 +220,7 @@ def clean_events(events):
     for var_name, clean_fn in list(clean_fns.items()):
         idx = (events["variable"].astype(str) == var_name)
         try:
-              events.loc[idx, 'valuenum'] = clean_fn(events.loc[idx])
-              events.loc[idx, 'valuenumnum'] = events.loc[idx, 'valuenum'].astype(np.number) #so that valuenumnum matches
+            events.loc[idx, 'value'] = clean_fn(events.loc[idx])
         except Exception as inst:
             traceback.print_exc()
             print(("Exception in clean_events:", clean_fn.__name__))
