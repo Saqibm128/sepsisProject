@@ -3,7 +3,7 @@ import pickle
 import pandas as pd
 import pandas.core.indexes
 import waveformUtil as wfutil
-import featureSelection.frequencyCount.featureFrequencySQLCount as freq
+import dataCollect.dataCollect as freq
 import categorization as cat
 # @author Mohammed Saqib
 # This file is responsible for creating histograms to represent the distribution

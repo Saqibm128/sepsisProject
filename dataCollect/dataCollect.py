@@ -64,7 +64,7 @@ def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCo
     return events
 
 
-def getDataByHadmId(hadm_ids, itemids, mapping=None, mustinclude=None):
+def getDataByHadmId(hadm_ids, itemids, mapping=None, mustinclude=None, ranges=None):
     '''
     This function turns the wide data into a narrower format and calls on other
     functions to clean up data for all hadm_ids chosen.
@@ -72,6 +72,7 @@ def getDataByHadmId(hadm_ids, itemids, mapping=None, mustinclude=None):
     :param itemids features to include in final data matrix
     :param mapping a DataFrame with columns itemid and variable to deal with items which are the same
                     if None, will use itemid only
+    :param ranges a Dataframe that holds the possible and sane ranges for variables from the MIMIC dataset
     :param mustinclude a collection of itemids that must be included TODO
     :return dataframe containing all data, cleaned
     '''
@@ -79,7 +80,7 @@ def getDataByHadmId(hadm_ids, itemids, mapping=None, mustinclude=None):
     intermediateList = []
     for hadm_id in hadm_ids:
         dataEvents = getFirst24HrsDataValuesIndividually(hadm_id=hadm_id, itemids=itemids, mapping=mapping)
-        dataEvents = preprocessing.clean_events(dataEvents)
+        dataEvents = preprocessing.clean_events(dataEvents, ranges=ranges)
         intermediateList.append(commonDB.consolidateEvents(dataEvents, hadm_id))
     allPersons = pd.concat(intermediateList)
     allPersons.set_index("hadm_id", inplace=True)
