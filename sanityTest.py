@@ -16,7 +16,7 @@ def selfJoinFix(data):
     unfortunately, may need to work on other things over time
     :param data path to the csv file (EX: data/rawdatafiles/counts.csv format)
     :return selfjoin where only if the dbsources are different but labels are some will the result come out
-    :warning This is a bandaid fix, a sort of hack. Any real solution to deal with chartevents will need to scale better than this
+    :warning This is a bandaid fix, a sort of hack. Better solution currently implemented is stolen from MIMIC3 benchmark repo
     '''
     counts = pd.DataFrame.from_csv(data)
     countsCopy = counts.copy()
