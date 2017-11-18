@@ -16,7 +16,7 @@ subjects_root_path = "data/rawdatafiles/benchmarkData"
 var_map = preprocessing.read_itemid_to_variable_map(
     "preprocessing/resources/itemid_to_variable_map.csv")
 ranges = preprocessing.read_variable_ranges("preprocessing/resources/variable_ranges.csv")
-new_path = "data/rawdatafiles/byHadmID"
+new_path = "data/rawdatafiles/byHadmID2"
 variables = var_map.VARIABLE.unique()
 
 def read_events(subject_path, remove_null=True):
@@ -98,19 +98,33 @@ def extract_multiple_subjects(subjects):
             subject_id = int(subject)
         except:
             return
-        events = read_events(dn)
+        try:
+            events = read_events(dn)
+        except:
+            print("could not find events.csv")
+            print("subject_id", subject)
         stays = read_stays(dn)
         events = events.merge(stays[["ICUSTAY_ID", "HADM_ID"]], left_on=["ICUSTAY_ID"], right_on=["ICUSTAY_ID"], how="left", suffixes=["_l", ""])
         events = events.dropna(axis=0, subset=["HADM_ID"], how="any")
         events = preprocessing.map_itemids_to_variables(events, var_map)
-        events = preprocessing.clean_events(events, ranges=ranges)
+        try:
+            events = preprocessing.clean_events(events, ranges=ranges)
+        except:
+            print(events.columns)
+            raise BaseException
         for hadm_id in events["HADM_ID"].unique():
             # For every hadm_id we want to separate, clean, find variable ranges, and get key constants out for each hadm
             episode = get_events_for_stay(events, hadm_id)
-            timeseries = convert_events_to_timeseries(episode)
+            timeseries = convert_events_to_timeseries(episode, variables=ranges.index)
             timeseries = add_hours_elapsed_to_events(timeseries)
             if timeseries.shape[0] == 0:
                 print(' (no data!)')
+                continue
+
+            if timeseries["Heart Rate"].isnull().all() or\
+              timeseries["Mean blood pressure"].isnull().all() or\
+              timeseries["Systolic blood pressure"].isnull().all():
+                print("missing key values! skipping hadm_id: ", hadm_id)
                 continue
             if not os.path.isdir(os.path.join(new_path, str(int(hadm_id)))):
                 os.mkdir(os.path.join(new_path, str(int(hadm_id))))

@@ -27,7 +27,7 @@ e_map = { 'ASIAN': 1,
           '': 0 }
 def transform_ethnicity(ethnicity_series):
     global e_map
-    
+
     def aggregate_ethnicity(ethnicity_str):
         return ethnicity_str.replace(' OR ', '/').split(' - ')[0].split('/')[0]
 
@@ -49,7 +49,7 @@ diagnosis_labels = [ '4019', '4280', '41401', '42731', '25000', '5849', '2724', 
 def extract_diagnosis_labels(diagnoses):
     global diagnosis_labels
     diagnoses['VALUE'] = 1
-    labels = diagnoses[['ICUSTAY_ID', 'ICD9_CODE', 'VALUE']].drop_duplicates().pivot(index='ICUSTAY_ID', columns='ICD9_CODE', values='VALUE').fillna(0).astype(int)    
+    labels = diagnoses[['ICUSTAY_ID', 'ICD9_CODE', 'VALUE']].drop_duplicates().pivot(index='ICUSTAY_ID', columns='ICD9_CODE', values='VALUE').fillna(0).astype(int)
     for l in diagnosis_labels:
         if l not in labels:
             labels[l] = 0
@@ -90,7 +90,11 @@ def read_itemid_to_variable_map(fn, variable_column='LEVEL2'):
     return var_map.rename_axis({variable_column: 'VARIABLE', 'MIMIC LABEL': 'LABEL'}, axis=1)
 
 def map_itemids_to_variables(events, var_map):
-    return events.merge(var_map, left_on='ITEMID', right_index=True)
+    if "VARIABLE" in events.columns:
+        events = events.drop(["VARIABLE"], axis=1)
+    if "LABEL" in events.columns:
+        events = events.drop(["LABEL"], axis=1)
+    return events.merge(var_map, left_on='ITEMID', right_index=True, how="left", suffixes=["", ""])
 
 def read_variable_ranges(fn, variable_column='LEVEL2'):
     columns = [ variable_column, 'OUTLIER LOW', 'VALID LOW', 'IMPUTE', 'VALID HIGH', 'OUTLIER HIGH' ]
@@ -101,7 +105,7 @@ def read_variable_ranges(fn, variable_column='LEVEL2'):
     var_ranges.rename_axis(to_rename, axis=1, inplace=True)
     var_ranges = var_ranges.drop_duplicates(subset='VARIABLE', keep='first')
     var_ranges.set_index('VARIABLE', inplace=True)
-    
+
     var_ranges.loc[:,['OUTLIER_LOW', 'VALID_LOW', 'IMPUTE', 'VALID_HIGH', 'OUTLIER_HIGH']] = var_ranges.loc[:,['OUTLIER_LOW', 'VALID_LOW', 'IMPUTE', 'VALID_HIGH', 'OUTLIER_HIGH']] .astype(np.number)
     return var_ranges.ix[var_ranges.notnull().all(axis=1)]
 

@@ -1,0 +1,373 @@
+LEVEL2,LEVEL1,ALTERNATIVE,STATUS,STATUS NOTE,ITEMID,MIMIC LABEL,UNITNAME,LINKSTO,ICU COUNT,CATEGORY,CONCEPTID,FLUID,LOINC_CODE,DBSOURCE,,PARAM_TYPE
+Alanine aminotransferase,Alanine aminotransferase,ALT,verify,,50861,ALANINE AMINOTRANSFERASE (ALT),,labevents,219475,CHEMISTRY,,BLOOD,6/1/1742,,,
+Alanine aminotransferase,Alanine aminotransferase,ALT,verify,,769,ALT,,chartevents,41594,Enzymes,,,,carevue,,
+Alanine aminotransferase,Alanine aminotransferase,ALT,verify,,220644,ALT,None,chartevents,37625,Labs,,,,metavision,,Numeric
+Albumin,Albumin,,verify,,50862,ALBUMIN,,labevents,146697,CHEMISTRY,,BLOOD,7/1/1751,,,
+Albumin,Albumin,,verify,,772,Albumin (>3.2),,chartevents,31022,Chemistry,,,,carevue,,
+Albumin,Albumin,,verify,,1521,Albumin,,chartevents,24454,Chemistry,,,,carevue,,
+Albumin,Albumin,,verify,,227456,Albumin,None,chartevents,22945,Labs,,,,metavision,,Numeric with tag
+Albumin,Albumin,,verify,,3727,Albumin  (3.9-4.8),,chartevents,546,Chemistry,,,,carevue,,
+Albumin,Albumin (ascites),,verify,,50835,"ALBUMIN, ASCITES",,labevents,1592,CHEMISTRY,,ASCITES,1/1/1749,,,
+Albumin,Albumin (body fluid),,verify,,51025,"ALBUMIN, BODY FLUID",,labevents,422,CHEMISTRY,,OTHER BODY FLUID,5/1/1747,,,
+Albumin,Albumin (pleural),,verify,,51046,"ALBUMIN, PLEURAL",,labevents,1175,CHEMISTRY,,PLEURAL,3/1/1748,,,
+Albumin,Albumin (urine),,verify,,51069,"ALBUMIN, URINE",,labevents,2381,CHEMISTRY,,URINE,1/1/1754,,,
+Alkaline phosphate,Alkaline phosphate,ALP,verify,,50863,ALKALINE PHOSPHATASE,,labevents,207860,CHEMISTRY,,BLOOD,6/1/6768,,,
+Alkaline phosphate,Alkaline phosphate,ALP,verify,,773,Alk. Phosphate,,chartevents,40637,Enzymes,,,,carevue,,
+Alkaline phosphate,Alkaline phosphate,ALP,verify,,225612,Alkaline Phosphate,None,chartevents,36836,Labs,,,,metavision,,Numeric
+Alkaline phosphate,Alkaline phosphate,ALP,verify,,3728,Alkaline Phosphatase,,chartevents,1651,Chemistry,,,,carevue,,
+Anion gap,Anion gap,,verify,,50868,ANION GAP,,labevents,769895,CHEMISTRY,,BLOOD,1863-0,,,
+Anion gap,Anion gap,,verify,,227073,Anion gap,None,chartevents,150220,Labs,,,,metavision,,Numeric
+Anion gap,Anion gap,,verify,,3732,Anion Gap   (8-20),,chartevents,15517,Chemistry,,,,carevue,,
+Asparate aminotransferase,Asparate aminotransferase,AST,verify,,50878,ASPARATE AMINOTRANSFERASE (AST),,labevents,219465,CHEMISTRY,,BLOOD,8/1/1920,,,
+Asparate aminotransferase,Asparate aminotransferase,AST,verify,,770,AST,,chartevents,41447,Enzymes,,,,carevue,,
+Asparate aminotransferase,Asparate aminotransferase,AST,verify,,220587,AST,None,chartevents,37598,Labs,,,,metavision,,Numeric
+Basophils,Basophils,,verify,,51146,BASOPHILS,,labevents,172142,HEMATOLOGY,,BLOOD,704-7,,,
+Basophils,Basophils,,verify,,51442,BASOPHILS,,labevents,137,HEMATOLOGY,,PLEURAL,35070-2,,,
+Basophils,Basophils,,verify,,51345,BASOPHILS,,labevents,119,HEMATOLOGY,,CEREBROSPINAL FLUID (CSF),30374-3,,,
+Basophils,Basophils,,verify,,51112,BASOPHILS,,labevents,82,HEMATOLOGY,,ASCITES,35069-4,,,
+Basophils,Basophils,,verify,,51387,BASOPHILS,,labevents,75,HEMATOLOGY,,OTHER BODY FLUID,28543-7,,,
+Basophils,Basophils,,verify,,51367,BASOPHILS,,labevents,10,HEMATOLOGY,,JOINT FLUID,17833-5,,,
+Bicarbonate,Bicarbonate,HCO3,verify,,50882,BICARBONATE,,labevents,780733,CHEMISTRY,,BLOOD,8/1/1963,,,
+Bicarbonate,Bicarbonate (serum),HCO3 (serum),verify,,227443,HCO3 (serum),None,chartevents,152671,Labs,,,,metavision,,Numeric with tag
+Bicarbonate,Bicarbonate (urine),HCO3 (urine),verify,,51076,"BICARBONATE, URINE",,labevents,1000,CHEMISTRY,,URINE,6/1/1964,,,
+Bicarbonate,Bicarbonate (whole blood),HCO3 (whole blood),verify,,50803,"CALCULATED BICARBONATE, WHOLE BLOOD",,labevents,9246,BLOOD GAS,,BLOOD,6/1/1959,,,
+Bilirubin,Bilirubin (blody fluid),,verify,,51028,"BILIRUBIN, TOTAL, BODY FLUID",,labevents,355,CHEMISTRY,,OTHER BODY FLUID,5/1/1974,,,
+Bilirubin,Bilirubin (conjugated),Direct bilirubin,verify,,50883,"BILIRUBIN, DIRECT",,labevents,45205,CHEMISTRY,,BLOOD,7/1/1968,,,
+Bilirubin,Bilirubin (conjugated),Direct bilirubin,verify,,803,Direct Bili (0-0.3),,chartevents,22646,Chemistry,,,,carevue,,
+Bilirubin,Bilirubin (conjugated),Direct bilirubin,verify,,225651,Direct Bilirubin,None,chartevents,3341,Labs,,,,metavision,,Numeric
+Bilirubin,Bilirubin (CSF),,verify,,51012,"BILIRUBIN, TOTAL, CSF",,labevents,3,CHEMISTRY,,CEREBROSPINAL FLUID (CSF),7/1/1973,,,
+Bilirubin,"Bilirubin (total, ascites)",,verify,,50838,"BILIRUBIN, TOTAL, ASCITES",,labevents,784,CHEMISTRY,,ASCITES,14422-0,,,
+Bilirubin,"Bilirubin (total, pleural)",,verify,,51049,"BILIRUBIN, TOTAL, PLEURAL",,labevents,84,CHEMISTRY,,PLEURAL,14421-2,,,
+Bilirubin,Bilirubin (total),Total bilirubin,verify,,50885,"BILIRUBIN, TOTAL",,labevents,238277,CHEMISTRY,,BLOOD,2/1/1975,,,
+Bilirubin,Bilirubin (total),Total bilirubin,verify,,1538,Total Bili,,chartevents,51334,Chemistry,,,,carevue,,
+Bilirubin,Bilirubin (total),Total bilirubin,verify,,848,Total Bili (0-1.5),,chartevents,40239,Chemistry,,,,carevue,,
+Bilirubin,Bilirubin (total),Total bilirubin,verify,,225690,Total Bilirubin,None,chartevents,37961,Labs,,,,metavision,,Numeric
+Bilirubin,Bilirubin (unconjugated),,verify,,50884,"BILIRUBIN, INDIRECT",,labevents,44385,CHEMISTRY,,BLOOD,1/1/1971,,,
+Bilirubin,Bilirubin (unconjugated),,verify,,3765,Indirect Bili(0-1.0),,chartevents,18859,Chemistry,,,,carevue,,
+Bilirubin,BIlirubin (urine dip),,verify,,51464,BILIRUBIN,,labevents,99679,HEMATOLOGY,,URINE,3/1/5770,,,
+Bilirubin,Bilirubin (urine),,verify,,51465,BILIRUBIN CRYSTALS,,labevents,83,HEMATOLOGY,,URINE,1/1/5771,,,
+Blood culture,Blood culture,,verify,,3333,Blood Cultures,,chartevents,5061,,,,,carevue,,
+Blood culture,Blood culture,,verify,,50886,BLOOD CULTURE HOLD,,labevents,188,CHEMISTRY,,BLOOD,,,,
+Blood urea nitrogen,Blood urea nitrogen,BUN,verify,,51006,UREA NITROGEN,,labevents,791925,CHEMISTRY,,BLOOD,3094-0,,,
+Blood urea nitrogen,Blood urea nitrogen,BUN,verify,,781,BUN (6-20),,chartevents,195714,Chemistry,,,,carevue,,
+Blood urea nitrogen,Blood urea nitrogen,BUN,verify,,1162,BUN,,chartevents,152539,,,,,carevue,,
+Blood urea nitrogen,Blood urea nitrogen,BUN,verify,,225624,BUN,None,chartevents,152475,Labs,,,,metavision,,Numeric
+Blood urea nitrogen,Blood urea nitrogen,BUN,verify,,3737,BUN    (6-20),,chartevents,2139,Chemistry,,,,carevue,,
+Calcium,Calcium,,verify,,50808,FREE CALCIUM,,labevents,249111,BLOOD GAS,,BLOOD,3/1/1994,,,
+Calcium,Calcium,,verify,,786,Calcium (8.4-10.2),,chartevents,158078,Chemistry,,,,carevue,,
+Calcium,Calcium,,verify,,1522,Calcium,,chartevents,130402,Chemistry,,,,carevue,,
+Calcium,Calcium,,verify,,3746,Calcium   (8.8-10.8),,chartevents,1981,Chemistry,,,,carevue,,
+Calcium,Calcium,,verify,,51066,24 HR CALCIUM,,labevents,91,CHEMISTRY,,URINE,2/1/6874,,,
+Calcium,Calcium (body fluid),,verify,,51029,"CALCIUM, BODY FLUID",,labevents,9,CHEMISTRY,,OTHER BODY FLUID,15155-5,,,
+Calcium,Calcium (total),Total Calcium,verify,,50893,"CALCIUM, TOTAL",,labevents,591999,CHEMISTRY,,BLOOD,8/1/2000,,,
+Calcium,Calcium (urine),,verify,,51077,"CALCIUM, URINE",,labevents,887,CHEMISTRY,,URINE,2004-0,,,
+Calcium,Calcium non-ionized,,verify,,225625,Calcium non-ionized,None,chartevents,135036,Labs,,,,metavision,,Numeric
+Calcium ionized,Calcium ionized,,verify,,816,Ionized Calcium,,chartevents,148637,Chemistry,,,,carevue,,
+Calcium ionized,Calcium ionized,,verify,,225667,Ionized Calcium,None,chartevents,80126,Labs,,,,metavision,,Numeric
+Calcium Ionized,Calcium Ionized,,verify,,3766,Ion Calcium,,chartevents,95,ABG's,,,,carevue,,
+Chloride,Chloride,,verify,,50902,CHLORIDE,,labevents,795568,CHEMISTRY,,BLOOD,2075-0,,,
+Chloride,Chloride,,verify,,788,Chloride (100-112),,chartevents,194344,Chemistry,,,,carevue,,
+Chloride,Chloride,,verify,,1523,Chloride,,chartevents,151836,Chemistry,,,,carevue,,
+Chloride,Chloride,,verify,,3747,Chloride  (100-112),,chartevents,15738,Chemistry,,,,carevue,,
+Chloride,Chloride,,verify,,4193,ABG Chloride,,chartevents,57,ABG's,,,,carevue,,
+Chloride,Chloride (ascites),,verify,,50839,"CHLORIDE, ASCITES",,labevents,45,CHEMISTRY,,ASCITES,33366-6,,,
+Chloride,Chloride (body fluid),,verify,,51030,"CHLORIDE, BODY FLUID",,labevents,65,CHEMISTRY,,OTHER BODY FLUID,7/1/2072,,,
+Chloride,Chloride (CSF),,verify,,51013,"CHLORIDE, CSF",,labevents,0,CHEMISTRY,,CEREBROSPINAL FLUID (CSF),,,,
+Chloride,Chloride (pleural),,verify,,51050,"CHLORIDE, PLEURAL",,labevents,11,CHEMISTRY,,PLEURAL,53627-6,,,
+Chloride,Chloride (serum),,verify,,220602,Chloride (serum),None,chartevents,160843,Labs,,,,metavision,,Numeric
+Chloride,Chloride (stool),,verify,,51062,"CHLORIDE, STOOL",,labevents,61,CHEMISTRY,,STOOL,15158-9,,,
+Chloride,Chloride (urine),,verify,,51078,"CHLORIDE, URINE",,labevents,9607,CHEMISTRY,,URINE,4/1/2078,,,
+Chloride,Chloride (whole blood),,verify,,50806,"CHLORIDE, WHOLE BLOOD",,labevents,48187,BLOOD GAS,,BLOOD,3/1/2069,,,
+Chloride,Chloride (whole blood),,verify,,226536,Chloride (whole blood),None,chartevents,12020,Labs,,,,metavision,,Numeric
+Cholesterol,Cholesterol,,verify,,789,Cholesterol (<200),,chartevents,2410,Chemistry,,,,carevue,,
+Cholesterol,Cholesterol,,verify,,1524,Cholesterol,,chartevents,1812,Chemistry,,,,carevue,,
+Cholesterol,Cholesterol,,verify,,220603,Cholesterol,None,chartevents,1567,Labs,,,,metavision,,Numeric
+Cholesterol,Cholesterol,,verify,,3748,Cholesterol (0-199),,chartevents,6,Chemistry,,,,carevue,,
+Cholesterol,Cholesterol (ascites),,verify,,50840,"CHOLESTEROL, ASCITES",,labevents,7,CHEMISTRY,,ASCITES,14441-0,,,
+Cholesterol,Cholesterol (body fluid),,verify,,51031,"CHOLESTEROL, BODY FLUID",,labevents,9,CHEMISTRY,,OTHER BODY FLUID,12183-0,,,
+Cholesterol,Cholesterol (HDL),HDL Cholesterol,verify,,50904,"CHOLESTEROL, HDL",,labevents,18260,CHEMISTRY,,BLOOD,9/1/2085,,,
+Cholesterol,Cholesterol (LDL),LDL Cholesterol,verify,,50905,"CHOLESTEROL, LDL, CALCULATED",,labevents,16486,CHEMISTRY,,BLOOD,9/1/2090,,,
+Cholesterol,Cholesterol (LDL),LDL Cholesterol,verify,,50906,"CHOLESTEROL, LDL, MEASURED",,labevents,2001,CHEMISTRY,,BLOOD,18262-6,,,
+Cholesterol,Cholesterol (pleural),,verify,,51051,"CHOLESTEROL, PLEURAL",,labevents,330,CHEMISTRY,,PLEURAL,9618-0,,,
+Cholesterol,Cholesterol (total),,verify,,50907,"CHOLESTEROL, TOTAL",,labevents,19444,CHEMISTRY,,BLOOD,3/1/2093,,,
+Creatinine,Creatinine,,verify,,50912,CREATININE,,labevents,797476,CHEMISTRY,,BLOOD,2160-0,,,
+Creatinine,Creatinine,,verify,,791,Creatinine (0-1.3),,chartevents,196677,Chemistry,,,,carevue,,
+Creatinine,Creatinine,,verify,,1525,Creatinine,,chartevents,153297,Chemistry,,,,carevue,,
+Creatinine,Creatinine,,verify,,220615,Creatinine,None,chartevents,153010,Labs,,,,metavision,,Numeric
+Creatinine,Creatinine,,verify,,3750,Creatinine   (0-0.7),,chartevents,2103,Chemistry,,,,carevue,,
+Creatinine,Creatinine,,verify,,51067,24 HR CREATININE,,labevents,653,CHEMISTRY,,URINE,6/1/2162,,,
+Creatinine,Creatinine (ascites),,verify,,50841,"CREATININE, ASCITES",,labevents,520,CHEMISTRY,,ASCITES,12191-3,,,
+Creatinine,Creatinine (body fluid),,verify,,51032,"CREATININE, BODY FLUID",,labevents,320,CHEMISTRY,,OTHER BODY FLUID,12190-5,,,
+Creatinine,Creatinine (pleural),,verify,,51052,"CREATININE, PLEURAL",,labevents,293,CHEMISTRY,,PLEURAL,14399-0,,,
+Creatinine,Creatinine (serum),,verify,,51081,"CREATININE, SERUM",,labevents,150,CHEMISTRY,,URINE,,,,
+Creatinine,Creatinine (urine),,verify,,51082,"CREATININE, URINE",,labevents,33069,CHEMISTRY,,URINE,8/1/2161,,,
+Creatinine,Creatinine (urine),,verify,,51106,URINE CREATININE,,labevents,151,CHEMISTRY,,URINE,,,,
+Creatinine,Creatinine clearance,,verify,,51080,CREATININE CLEARANCE,,labevents,150,CHEMISTRY,,URINE,33558-8,,,
+Eosinophils,Eosinophils,,verify,,3754,Eosinophils,,chartevents,8364,Heme/Coag,,,,carevue,,
+Eosinophils,Eosinophils,,verify,,51474,EOSINOPHILS,,labevents,3365,HEMATOLOGY,,URINE,25156-1,,,
+Eosinophils,Eosinophils,,verify,,51444,EOSINOPHILS,,labevents,778,HEMATOLOGY,,PLEURAL,30379-2,,,
+Eosinophils,Eosinophils,,verify,,51347,EOSINOPHILS,,labevents,655,HEMATOLOGY,,CEREBROSPINAL FLUID (CSF),26451-5,,,
+Eosinophils,Eosinophils,,verify,,51419,EOSINOPHILS,,labevents,601,HEMATOLOGY,,OTHER BODY FLUID,26452-3,,,
+Eosinophils,Eosinophils,,verify,,51114,EOSINOPHILS,,labevents,566,HEMATOLOGY,,ASCITES,30380-0,,,
+Eosinophils,Eosinophils,,verify,,51368,EOSINOPHILS,,labevents,83,HEMATOLOGY,,JOINT FLUID,17834-3,,,
+Hematocrit,Hematocrit,HCT,verify,,51221,HEMATOCRIT,,labevents,881846,HEMATOLOGY,,BLOOD,3/1/4544,,,
+Hematocrit,Hematocrit,HCT,verify,,813,Hematocrit,,chartevents,275105,Hematology,,,,carevue,,
+Hematocrit,Hematocrit,HCT,verify,,50810,"HEMATOCRIT, CALCULATED",,labevents,89715,BLOOD GAS,,BLOOD,20570-8,,,
+Hematocrit,Hematocrit,HCT,verify,,3761,Hematocrit (35-51),,chartevents,12517,ABG'S,,,,carevue,,
+Hematocrit,Hematocrit (serum),HCT (serum),verify,,220545,Hematocrit (serum),None,chartevents,165862,Labs,,,,metavision,,Numeric
+Hemoglobin,Hemoglobin,,verify,,51222,HEMOGLOBIN,,labevents,752523,HEMATOLOGY,,BLOOD,718-7,,,
+Hemoglobin,Hemoglobin,,verify,,814,Hemoglobin,,chartevents,188568,Hematology,,,,carevue,,
+Hemoglobin,Hemoglobin,,verify,,220228,Hemoglobin,g/dl,chartevents,137117,Labs,,,,metavision,,Numeric
+Hemoglobin,Hemoglobin,,verify,,50811,HEMOGLOBIN,,labevents,89712,BLOOD GAS,,BLOOD,718-7,,,
+Hemoglobin,Hemoglobin,,verify,,50852,% HEMOGLOBIN A1C,,labevents,16618,CHEMISTRY,,BLOOD,4/1/4548,,,
+Hemoglobin,Hemoglobin,,verify,,50855,ABSOLUTE HEMOGLOBIN,,labevents,3791,CHEMISTRY,,BLOOD,718-7,,,
+Lactate,Lactate,,verify,,50813,LACTATE,,labevents,187124,BLOOD GAS,,BLOOD,32693-4,,,
+Lactate dehydrogenase,Lactate dehydrogenase,LDH,verify,,50954,LACTATE DEHYDROGENASE (LD),,labevents,107122,CHEMISTRY,,BLOOD,2532-0,,,
+Lactate dehydrogenase,Lactate dehydrogenase,LDH,verify,,51054,"LACTATE DEHYDROGENASE, PLEURAL",,labevents,2502,CHEMISTRY,,PLEURAL,4/1/2530,,,
+Lactic acid,Lactic acid,,verify,,818,Lactic Acid(0.5-2.0),,chartevents,73574,Chemistry,,,,carevue,,
+Lactic acid,Lactic acid,,verify,,225668,Lactic Acid,None,chartevents,69432,Labs,,,,metavision,,Numeric
+Lactic acid,Lactic acid,,verify,,1531,Lactic Acid,,chartevents,63478,Chemistry,,,,carevue,,
+Lymphocytes,Lymphocytes,,verify,,51244,LYMPHOCYTES,,labevents,172149,HEMATOLOGY,,BLOOD,731-0,,,
+Lymphocytes,Lymphocytes,,verify,,51116,LYMPHOCYTES,,labevents,3346,HEMATOLOGY,,ASCITES,26482-0,,,
+Lymphocytes,Lymphocytes,,verify,,51446,LYMPHOCYTES,,labevents,2613,HEMATOLOGY,,PLEURAL,26481-2,,,
+Lymphocytes,Lymphocytes,,verify,,51427,LYMPHOCYTES,,labevents,1969,HEMATOLOGY,,OTHER BODY FLUID,11031-2,,,
+Lymphocytes,Lymphocytes,,verify,,51375,LYMPHOCYTES,,labevents,683,HEMATOLOGY,,JOINT FLUID,26483-8,,,
+Lymphocytes,Lymphocytes (absolute),,verify,,51133,ABSOLUTE LYMPHOCYTE COUNT,,labevents,2377,HEMATOLOGY,,BLOOD,26474-7,,,
+Lymphocytes,Lymphocytes (atypical),,verify,,51143,ATYPICAL LYMPHOCYTES,,labevents,59335,HEMATOLOGY,,BLOOD,733-6,,,
+Lymphocytes,Lymphocytes (atypical),,verify,,51343,ATYPICAL LYMPHOCYTES,,labevents,310,HEMATOLOGY,,CEREBROSPINAL FLUID (CSF),30416-2,,,
+Lymphocytes,Lymphocytes (atypical),,verify,,51110,ATYPICAL LYMPHOCYTES,,labevents,160,HEMATOLOGY,,ASCITES,33369-0,,,
+Lymphocytes,Lymphocytes (atypical),,verify,,51440,ATYPICAL LYMPHOCYTES,,labevents,159,HEMATOLOGY,,PLEURAL,33370-8,,,
+Lymphocytes,Lymphocytes (atypical),,verify,,51385,ATYPICAL LYMPHOCYTES,,labevents,68,HEMATOLOGY,,OTHER BODY FLUID,30417-0,,,
+Lymphocytes,Lymphocytes (atypical),,verify,,51365,ATYPICAL LYMPHOCYTES,,labevents,17,HEMATOLOGY,,JOINT FLUID,33371-6,,,
+Lymphocytes,Lymphocytes (percent),,verify,,51245,"LYMPHOCYTES, PERCENT",,labevents,2378,HEMATOLOGY,,BLOOD,26478-8,,,
+Magnesium,Magnesium,Mg,verify,,50960,MAGNESIUM,,labevents,664191,CHEMISTRY,,BLOOD,3/1/2601,,,
+Magnesium,Magnesium,Mg,verify,,821,Magnesium (1.6-2.6),,chartevents,198212,Chemistry,,,,carevue,,
+Magnesium,Magnesium,Mg,verify,,1532,Magnesium,,chartevents,155337,Chemistry,,,,carevue,,
+Magnesium,Magnesium,Mg,verify,,220635,Magnesium,None,chartevents,147786,Labs,,,,metavision,,Numeric
+Mean corpuscular hemoglobin,Mean corpuscular hemoglobin,MCH,verify,,51248,MCH,,labevents,748073,HEMATOLOGY,,BLOOD,785-6,,,
+Mean corpuscular hemoglobin concentration,Mean corpuscular hemoglobin concentration,MCHC,verify,,51249,MCHC,,labevents,748226,HEMATOLOGY,,BLOOD,786-4,,,
+Mean corpuscular volume,Mean corpuscular volume,MCV,verify,,51250,MCV,,labevents,748056,HEMATOLOGY,,BLOOD,787-2,,,
+Monocytes,Monocytes,,verify,,51254,MONOCYTES,,labevents,172148,HEMATOLOGY,,BLOOD,742-7,,,
+Monocytes,Monocytes,,verify,,51355,MONOCYTES,,labevents,4701,HEMATOLOGY,,CEREBROSPINAL FLUID (CSF),26486-1,,,
+Neutrophils,Neutrophils,,verify,,51256,NEUTROPHILS,,labevents,172149,HEMATOLOGY,,BLOOD,761-7,,,
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide,PaCO2,verify,,50818,PCO2,,labevents,490638,BLOOD GAS,,BLOOD,11557-6,,,
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide,PaCO2,verify,,3835,pCO2,,chartevents,9486,ABG'S,,,,carevue,,
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide,PaCO2,verify,,3836,pCO2 (other),,chartevents,8445,Other ABGs,,,,carevue,,
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide,PaCO2,verify,,3784,PCO2,,chartevents,5314,ABG's,,,,carevue,,
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide (arterial),PaCO2 (arterial),verify,,778,Arterial PaCO2,,chartevents,283616,ABG,,,,carevue,,
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide (arterial),PaCO2 (arterial),verify,,220235,Arterial CO2 Pressure,mmHg,chartevents,140215,Labs,,,,metavision,,Numeric
+Partial pressure of carbon dioxide,Partial pressure of carbon dioxide (capillary),PaCO2 (capillary),verify,,4201,pCO2 (cap),,chartevents,8106,Other ABGs,,,,carevue,,
+Partial pressure of oxygen,Partial pressure of oxygen,PaO2,verify,,779,Arterial PaO2,,chartevents,283452,ABG,,,,carevue,,
+Partial pressure of oxygen,Partial pressure of oxygen,PaO2,verify,,490,PAO2,,chartevents,1467,,,,,carevue,,
+Partial thromboplastin time,Partial thromboplastin time,PTT,verify,,51275,PTT,,labevents,474937,HEMATOLOGY,,BLOOD,2/1/3173,,,
+Partial thromboplastin time,Partial thromboplastin time,PTT,verify,,825,PTT(22-35),,chartevents,146486,Coags,,,,carevue,,
+Partial thromboplastin time,Partial thromboplastin time,PTT,verify,,1533,PTT,,chartevents,115354,Coags,,,,carevue,,
+Partial thromboplastin time,Partial thromboplastin time,PTT,verify,,227466,PTT,None,chartevents,99769,Labs,,,,metavision,,Numeric with tag
+Peak inspiratory pressure,Peak inspiratory pressure,PIP,verify,,507,PIP,,chartevents,151276,,,,,carevue,,
+Phosphate,Phosphate,,verify,,50970,PHOSPHATE,,labevents,590568,CHEMISTRY,,BLOOD,1/1/2777,,,
+Platelets,Platelets,Platelet count,verify,,51265,PLATELET COUNT,,labevents,778444,HEMATOLOGY,,BLOOD,777-3,,,
+Platelets,Platelets,Platelet count,verify,,828,Platelets,,chartevents,189535,Hematology,,,,carevue,,
+Platelets,Platelets,Platelet count,verify,,227457,Platelet Count,None,chartevents,137454,Labs,,,,metavision,,Numeric with tag
+Platelets,Platelets,Platelet count,verify,,3789,Platelet  (150-440),,chartevents,10467,Heme/Coag,,,,carevue,,
+Positive end-expiratory pressure,Positive end-expiratory pressure,PEEP,verify,,505,PEEP,,chartevents,352331,,,,,carevue,,
+Positive end-expiratory pressure,Positive end-expiratory pressure,PEEP,verify,,50819,PEEP,,labevents,86921,BLOOD GAS,,BLOOD,20077-4,,,
+Positive end-expiratory pressure,Positive end-expiratory pressure (total),PEEP (total),verify,,224700,Total PEEP Level,cmH2O,chartevents,44275,Respiratory,,,,metavision,,Numeric
+Potassium,Potassium,K,verify,,50971,POTASSIUM,,labevents,845825,CHEMISTRY,,BLOOD,3/1/2823,,,
+Potassium,Potassium,K,verify,,829,Potassium (3.5-5.3),,chartevents,326961,Chemistry,,,,carevue,,
+Potassium,Potassium,K,verify,,1535,Potassium,,chartevents,247638,Chemistry,,,,carevue,,
+Potassium,Potassium,K,verify,,3792,Potassium  (3.5-5.3),,chartevents,15817,Chemistry,,,,carevue,,
+Potassium,Potassium (serum),K (serum),verify,,227442,Potassium (serum),None,chartevents,165813,Labs,,,,metavision,,Numeric with tag
+Potassium,Potassium (whole blood),K (whole blood),verify,,50822,"POTASSIUM, WHOLE BLOOD",,labevents,192946,BLOOD GAS,,BLOOD,4/1/6298,,,
+Potassium,Potassium (whole blood),K (whole blood),verify,,227464,Potassium (whole blood),None,chartevents,49112,Labs,,,,metavision,,Numeric with tag
+Prothrombin time,Prothrombin time,PT / INR,verify,,51237,INR(PT),,labevents,471183,HEMATOLOGY,,BLOOD,7/1/5895,,,
+Prothrombin time,Prothrombin time,PT / INR,verify,,51274,PT,,labevents,469090,HEMATOLOGY,,BLOOD,2/1/5902,,,
+Prothrombin time,Prothrombin time,PT / INR,verify,,815,INR (2-4 ref. range),,chartevents,135821,Coags,,,,carevue,,
+Prothrombin time,Prothrombin time,PT / INR,verify,,824,PT(11-13.5),,chartevents,135452,Coags,,,,carevue,,
+Prothrombin time,Prothrombin time,PT / INR,verify,,1530,INR,,chartevents,106808,Coags,,,,carevue,,
+Prothrombin time,Prothrombin time,PT / INR,verify,,1286,PT,,chartevents,106567,,,,,carevue,,
+Prothrombin time,Prothrombin time,PT / INR,verify,,227467,INR,None,chartevents,93040,Labs,,,,metavision,,Numeric with tag
+Prothrombin time,Prothrombin time,PT / INR,verify,,227465,Prothrombin time,None,chartevents,93030,Labs,,,,metavision,,Numeric with tag
+Pupillary response left,Pupillary response left,,verify,,8466,Pupil Response [Left],,chartevents,442215,,,,,carevue,,
+Pupillary response left,Pupillary response left,,verify,,3593,Pupil Reactivity [Left],,chartevents,135,,,,,carevue,,
+Pupillary response right,Pupillary response right,,verify,,584,Pupil Response [Right],,chartevents,449255,,,,,carevue,,
+Pupillary response right,Pupillary response right,,verify,,8530,Pupil Reactivity [Right],,chartevents,126,,,,,carevue,,
+Pupillary size left,Pupillary size left,,verify,,8467,Pupil Size [Left],,chartevents,447035,,,,,carevue,,
+Pupillary size right,Pupillary size right,,verify,,585,Pupil Size [Right],,chartevents,455089,,,,,carevue,,
+Red blood cell count,Red blood cell count,RBC,verify,,51279,RED BLOOD CELLS,,labevents,748078,HEMATOLOGY,,BLOOD,789-8,,,
+Red blood cell count,Red blood cell count,RBC,verify,,833,RBC,,chartevents,176496,Hematology,,,,carevue,,
+Red blood cell count,Red blood cell count,RBC,verify,,51493,RBC,,labevents,84285,HEMATOLOGY,,URINE,1/1/5808,,,
+Red blood cell count,Red blood cell count,RBC,verify,,3799,Red Blood C(3.6-6.2),,chartevents,9647,Heme/Coag,,,,carevue,,
+Red blood cell count,Red blood cell count,RBC,verify,,4197,RBC(3.6-6.2),,chartevents,9404,Heme/Coag,,,,carevue,,
+Red blood cell count,Red blood cell count (ascites),RBC,verify,,51127,"RBC, ASCITES",,labevents,3280,HEMATOLOGY,,ASCITES,26457-2,,,
+Red blood cell count,Red blood cell count (CSF),RBC,verify,,51362,"RBC, CSF",,labevents,4700,HEMATOLOGY,,CEREBROSPINAL FLUID (CSF),26454-9,,,
+Red blood cell count,Red blood cell count (fragments),RBC,verify,,51278,RED BLOOD CELL FRAGMENTS,,labevents,3876,HEMATOLOGY,,BLOOD,,,,
+Red blood cell count,Red blood cell count (joint fluid),RBC,verify,,51383,"RBC, JOINT FLUID",,labevents,611,HEMATOLOGY,,JOINT FLUID,26458-0,,,
+Red blood cell count,Red blood cell count (other fluid),RBC,verify,,51438,"RBC, OTHER FLUID",,labevents,1368,HEMATOLOGY,,OTHER BODY FLUID,26455-6,,,
+Red blood cell count,Red blood cell count (pleural),RBC,verify,,51457,"RBC, PLEURAL",,labevents,2446,HEMATOLOGY,,PLEURAL,26456-4,,,
+Sodium,Sodium,Na,verify,,50983,SODIUM,,labevents,808489,CHEMISTRY,,BLOOD,2/1/2951,,,
+Sodium,Sodium,Na,verify,,837,Sodium (135-148),,chartevents,222389,Chemistry,,,,carevue,,
+Sodium,Sodium,Na,verify,,1536,Sodium,,chartevents,172697,Chemistry,,,,carevue,,
+Sodium,Sodium,Na,verify,,3803,Sodium  (135-148),,chartevents,15768,Chemistry,,,,carevue,,
+Sodium,Sodium (serum),Na (serum),verify,,220645,Sodium (serum),None,chartevents,162677,Labs,,,,metavision,,Numeric
+Sodium,Sodium (whole blood),Na (whole blood),verify,,50824,"SODIUM, WHOLE BLOOD",,labevents,71503,BLOOD GAS,,BLOOD,2947-0,,,
+Sodium,Sodium (whole blood),Na (whole blood),verify,,226534,Sodium (whole blood),None,chartevents,16627,Labs,,,,metavision,,Numeric
+Troponin-I,Troponin-I,TropI,verify,,51002,TROPONIN I,,labevents,11468,CHEMISTRY,,BLOOD,10839-9,,,
+Troponin-I,Troponin-I,TropI,verify,,851,Troponin,,chartevents,5149,Enzymes,,,,carevue,,
+Troponin-T,Troponin-T,TropT,verify,,51003,TROPONIN T,,labevents,87244,CHEMISTRY,,BLOOD,7/1/6598,,,
+Troponin-T,Troponin-T,TropT,verify,,227429,Troponin-T,None,chartevents,23324,Labs,,,,metavision,,Numeric with tag
+Urine output,Urine output,,verify,,40069,Urine Out Void,,outputevents,69467,,,,,carevue,,
+Urine output,Urine output,,verify,,40094,Urine Out Condom Cath,,outputevents,10006,,,,,carevue,,
+Urine output,Urine output (foley),,verify,,40055,Urine Out Foley,,outputevents,1917527,,,,,carevue,,
+Urine output,Urine output (foley),,verify,,226559,Foley,mL,outputevents,1186717,Output,,,,metavision,,Numeric
+White blood cell count,White blood cell count,WBC,verify,,51301,WHITE BLOOD CELLS,,labevents,753301,HEMATOLOGY,,BLOOD,804-5,,,
+White blood cell count,White blood cell count,WBC,verify,,861,"WBC (4-11,000)",,chartevents,178460,Hematology,,,,carevue,,
+White blood cell count,White blood cell count,WBC,verify,,1127,"WBC   (4-11,000)",,chartevents,169818,Hematology,,,,carevue,,
+White blood cell count,White blood cell count,WBC,verify,,1542,WBC,,chartevents,138619,Hematology,,,,carevue,,
+White blood cell count,White blood cell count,WBC,verify,,220546,WBC,None,chartevents,133356,Labs,,,,metavision,,Numeric
+White blood cell count,White blood cell count,WBC,verify,,51516,WBC,,labevents,84688,HEMATOLOGY,,URINE,4/1/5821,,,
+White blood cell count,White blood cell count,WBC,verify,,4200,WBC 4.0-11.0,,chartevents,8919,Heme/Coag,,,,carevue,,
+White blood cell count,White blood cell count,WBC,verify,,51300,WBC COUNT,,labevents,2371,HEMATOLOGY,,BLOOD,26464-8,,,
+Capillary refill rate,Capillary refill rate,CRR,ready,,3348,Capillary Refill,,chartevents,440467,,,,,carevue,,Binary
+Capillary refill rate,Capillary refill rate,CRR,ready,,115,Capillary Refill [Right],,chartevents,18631,,,,,carevue,,Binary
+Capillary refill rate,Capillary refill rate,CRR,ready,,8377,Capillary Refill [Left],,chartevents,17172,,,,,carevue,,Binary
+Diastolic blood pressure,Diastolic blood pressure (arterial),ABPd,ready,,8368,Arterial BP [Diastolic],,chartevents,2088638,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (arterial),ABPd,ready,,220051,Arterial Blood Pressure diastolic,mmHg,chartevents,1149537,Routine Vital Signs,,,,metavision,,Numeric
+Diastolic blood pressure,Diastolic blood pressure (arterial),ABPd,ready,,225310,ART BP Diastolic,mmHg,chartevents,86507,Routine Vital Signs,,,,metavision,,Numeric
+Diastolic blood pressure,Diastolic blood pressure (arterial),ABPd,ready,,8555,Arterial BP #2 [Diastolic],,chartevents,18820,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8441,NBP [Diastolic],,chartevents,1580652,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,220180,Non Invasive Blood Pressure diastolic,mmHg,chartevents,1289885,Routine Vital Signs,,,,metavision,,Numeric
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8502,BP Cuff [Diastolic],,chartevents,147419,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8440,Manual BP [Diastolic],,chartevents,2152,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8503,BP Left Arm [Diastolic],,chartevents,1921,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8504,BP Left Leg [Diastolic],,chartevents,1530,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8507,BP Right Leg [Diastolic],,chartevents,1520,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,8506,BP Right Arm [Diastolic],,chartevents,1514,,,,,carevue,,
+Diastolic blood pressure,Diastolic blood pressure (noninvasive),NBPd,ready,,224643,Manual Blood Pressure Diastolic Left,mmHg,chartevents,671,Routine Vital Signs,,,,metavision,,Numeric
+Fraction inspired oxygen,Fraction inspired oxygen,FiO2,ready,requires unit conversion or checking,3420,FIO2,,chartevents,673729,,,,,carevue,,
+Fraction inspired oxygen,Fraction inspired oxygen,FiO2,ready,requires unit conversion or checking,223835,Inspired O2 Fraction,None,chartevents,558061,Respiratory,,,,metavision,,Numeric
+Fraction inspired oxygen,Fraction inspired oxygen,FiO2,ready,requires unit conversion or checking,3422,FIO2 [Meas],,chartevents,242256,,,,,carevue,,
+Fraction inspired oxygen,Fraction inspired oxygen,FiO2,ready,requires unit conversion or checking,189,FiO2 (Analyzed),,chartevents,7644,,,,,carevue,,
+Fraction inspired oxygen,Fraction inspired oxygen,FiO2,ready,requires unit conversion or checking,727,Vision FiO2,,chartevents,544,,,,,carevue,,
+Glascow coma scale eye opening,Glascow coma scale eye opening,GCS eye,ready,should we just add these up?,184,Eye Opening,,chartevents,956672,,,,,carevue,,
+Glascow coma scale eye opening,Glascow coma scale eye opening,GCS eye,ready,should we just add these up?,220739,GCS - Eye Opening,,chartevents,571383,Neurological,,,,metavision,,Text
+Glascow coma scale motor response,Glascow coma scale motor response,GCS motor,ready,should we just add these up?,454,Motor Response,,chartevents,952565,,,,,carevue,,
+Glascow coma scale motor response,Glascow coma scale motor response,GCS motor,ready,should we just add these up?,223901,GCS - Motor Response,,chartevents,569369,Neurological,,,,metavision,,Text
+Glascow coma scale total,Glascow coma scale total,GCS total,ready,,198,GCS Total,,chartevents,948148,,,,,carevue,,
+Glascow coma scale verbal response,Glascow coma scale verbal response,GCS verbal,ready,should we just add these up?,723,Verbal Response,,chartevents,954700,,,,,carevue,,
+Glascow coma scale verbal response,Glascow coma scale verbal response,GCS verbal,ready,should we just add these up?,223900,GCS - Verbal Response,,chartevents,569810,Neurological,,,,metavision,,Text
+Glucose,Glucose,,ready,,50931,GLUCOSE,,labevents,748981,CHEMISTRY,,BLOOD,7/1/2345,,,
+Glucose,Glucose,,ready,,807,Fingerstick Glucose,,chartevents,436622,Chemistry,,,,carevue,,
+Glucose,Glucose,,ready,,811,Glucose (70-105),,chartevents,381822,Chemistry,,,,carevue,,
+Glucose,Glucose,,ready,,1529,Glucose,,chartevents,286600,Chemistry,,,,carevue,,
+Glucose,Glucose,,ready,,50809,GLUCOSE,,labevents,196734,BLOOD GAS,,BLOOD,2339-0,,,
+Glucose,Glucose,,ready,,51478,GLUCOSE,,labevents,101279,HEMATOLOGY,,URINE,7/1/5792,,,
+Glucose,Glucose,,ready,,3745,BloodGlucose,,chartevents,2655,Quick Admit,,,,carevue,,
+Glucose,Glucose (finger stick),,ready,,225664,Glucose finger stick,None,chartevents,247833,Labs,,,,metavision,,Numeric
+Glucose,Glucose (serum),,ready,,220621,Glucose (serum),None,chartevents,155071,Labs,,,,metavision,,Numeric
+Glucose,Glucose (whole blood),,ready,,226537,Glucose (whole blood),None,chartevents,71057,Labs,,,,metavision,,Numeric
+Heart Rate,Heart Rate,HR,ready,,211,Heart Rate,,chartevents,5190683,,,,,carevue,,
+Heart Rate,Heart Rate,HR,ready,,220045,Heart Rate,bpm,chartevents,2762225,Routine Vital Signs,,,,metavision,,Numeric
+Height,Height,Height,ready,requires unit conversion or checking,226707,Height,Inch,chartevents,12015,General,,,,metavision,,Numeric
+Height,Height (cm),Height (cm),ready,requires unit conversion or checking,226730,Height (cm),cm,chartevents,12015,General,,,,metavision,,Numeric
+Height,Height (in),Height (in),ready,requires unit conversion or checking,1394,Height Inches,,chartevents,26,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (arterial),ABPm,ready,,52,Arterial BP Mean,,chartevents,2075364,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (arterial),ABPm,ready,,220052,Arterial Blood Pressure mean,mmHg,chartevents,1156173,Routine Vital Signs,,,,metavision,,Numeric
+Mean blood pressure,Mean blood pressure (arterial),ABPm,ready,,225312,ART BP mean,mmHg,chartevents,87182,Routine Vital Signs,,,,metavision,,Numeric
+Mean blood pressure,Mean blood pressure (arterial),ABPm,ready,,224,IABP Mean,,chartevents,30020,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (arterial),ABPm,ready,,6702,Arterial BP Mean #2,,chartevents,18946,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (arterial),ABPm,ready,,224322,IABP Mean,mmHg,chartevents,8448,IABP,,,,metavision,,Numeric
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,456,NBP Mean,,chartevents,1560440,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,220181,Non Invasive Blood Pressure mean,mmHg,chartevents,1292916,Routine Vital Signs,,,,metavision,,Numeric
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,3312,BP Cuff [Mean],,chartevents,148028,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,3314,BP Left Arm [Mean],,chartevents,3746,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,3316,BP Left Leg [Mean],,chartevents,2047,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,3322,BP Right Leg [Mean],,chartevents,2032,,,,,carevue,,
+Mean blood pressure,Mean blood pressure (noninvasive),NBPm,ready,,3320,BP Right Arm [Mean],,chartevents,2015,,,,,carevue,,
+Oxygen saturation,Oxygen saturation,SaO2,ready,,834,SaO2,,chartevents,1716730,ABG's,,,,carevue,,
+Oxygen saturation,Oxygen saturation,SaO2,ready,,50817,OXYGEN SATURATION,,labevents,173419,BLOOD GAS,,BLOOD,20564-1,,,
+Oxygen saturation,Oxygen saturation,SaO2,ready,,8498,O2 sat [Post],,chartevents,1434,,,,,carevue,,
+Oxygen saturation,Oxygen saturation (arterial),SaO2,ready,,220227,Arterial O2 Saturation,%,chartevents,40009,Labs,,,,metavision,,Numeric
+Oxygen saturation,Pulse oximetry,SpO2,ready,,646,SpO2,,chartevents,3428011,,,,,carevue,,
+Oxygen saturation,Pulse oximetry,SpO2,ready,,220277,O2 saturation pulseoxymetry,%,chartevents,2671816,Respiratory,,,,metavision,,Numeric
+pH,pH,,ready,,50820,PH,,labevents,530795,BLOOD GAS,,BLOOD,11558-4,,,
+pH,pH,,ready,,51491,PH,,labevents,116089,HEMATOLOGY,,URINE,2/1/5803,,,
+pH,pH,,ready,,3839,ph (other),,chartevents,8403,Other ABGs,,,,carevue,,
+pH,pH,,ready,,1673,PH,,chartevents,1845,,,,,carevue,,
+pH,pH,,ready,,50831,PH,,labevents,1442,BLOOD GAS,,OTHER BODY FLUID,2/1/2748,,,
+pH,pH,,ready,,51094,PH,,labevents,1157,CHEMISTRY,,URINE,5/1/2756,,,
+pH,pH (arterial),,ready,,780,Arterial pH,,chartevents,284506,ABG,,,,carevue,,
+pH,pH (arterial),,ready,,1126,Art.pH,,chartevents,267317,ABG,,,,carevue,,
+pH,pH (arterial),,ready,,223830,PH (Arterial),None,chartevents,144429,Labs,,,,metavision,,Numeric
+pH,pH (arterial),,ready,,4753,pH (Art),,chartevents,10407,ABG,,,,carevue,,
+pH,pH (capillary),,ready,,4202,pH (cap),,chartevents,8064,Other ABGs,,,,carevue,,
+pH,pH (venous),,ready,,860,Venous pH,,chartevents,11166,VBG's,,,,carevue,,
+pH,pH (venous),,ready,,220274,PH (Venous),None,chartevents,8764,Labs,,,,metavision,,Numeric
+Respiratory rate,Respiratory rate,RR,ready,,618,Respiratory Rate,,chartevents,3395998,,,,,carevue,,
+Respiratory rate,Respiratory rate,RR,ready,,220210,Respiratory Rate,insp/min,chartevents,2737105,Respiratory,,,,metavision,,Numeric
+Respiratory rate,Respiratory rate,RR,ready,,3603,Resp Rate,,chartevents,1676914,,,,,carevue,,
+Respiratory rate,Respiratory rate (spontaneous),RR (spontaneous),ready,,224689,Respiratory Rate (spontaneous),insp/min,chartevents,452937,Respiratory,,,,metavision,,Numeric
+Respiratory rate,Respiratory rate (spontaneous),RR (spontaneous),ready,,614,Resp Rate (Spont),,chartevents,237416,,,,,carevue,,
+Respiratory rate,Respiratory rate (spontaneous),RR (spontaneous),ready,,651,Spon RR (Mech.),,chartevents,31764,,,,,carevue,,
+Respiratory rate,Respiratory rate (spontaneous),RR (spontaneous),ready,,224422,Spont RR,bpm,chartevents,16463,Respiratory,,,,metavision,,Numeric
+Respiratory rate,Respiratory rate (total),RR (total),ready,,615,Resp Rate (Total),,chartevents,417512,,,,,carevue,,
+Respiratory rate,Respiratory rate (total),RR (total),ready,,224690,Respiratory Rate (Total),insp/min,chartevents,399752,Respiratory,,,,metavision,,Numeric
+Systolic blood pressure,Systolic blood pressure (arterial),ABPs,ready,,51,Arterial BP [Systolic],,chartevents,2099353,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (arterial),ABPs,ready,,220050,Arterial Blood Pressure systolic,mmHg,chartevents,1149788,Routine Vital Signs,,,,metavision,,Numeric
+Systolic blood pressure,Systolic blood pressure (arterial),ABPs,ready,,225309,ART BP Systolic,mmHg,chartevents,86557,Routine Vital Signs,,,,metavision,,Numeric
+Systolic blood pressure,Systolic blood pressure (arterial),ABPs,ready,,6701,Arterial BP #2 [Systolic],,chartevents,19232,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,455,NBP [Systolic],,chartevents,1586769,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,220179,Non Invasive Blood Pressure systolic,mmHg,chartevents,1290488,Routine Vital Signs,,,,metavision,,Numeric
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,3313,BP Cuff [Systolic],,chartevents,148105,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,3315,BP Left Arm [Systolic],,chartevents,3762,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,442,Manual BP [Systolic],,chartevents,2565,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,3317,BP Left Leg [Systolic],,chartevents,2052,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,3323,BP Right Leg [Systolic],,chartevents,2039,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,3321,BP Right Arm [Systolic],,chartevents,2032,,,,,carevue,,
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,224167,Manual Blood Pressure Systolic Left,mmHg,chartevents,740,Routine Vital Signs,,,,metavision,,Numeric
+Systolic blood pressure,Systolic blood pressure (noninvasive),NBPs,ready,,227243,Manual Blood Pressure Systolic Right,mmHg,chartevents,541,Routine Vital Signs,,,,metavision,,Numeric
+Temperature,"Temperature (C, skin)",,ready,requires unit conversion or checking,3655,Temp Skin [C],,chartevents,533002,,,,,carevue,,
+Temperature,Temperature (C),,ready,requires unit conversion or checking,677,Temperature C (calc),,chartevents,774312,,,,,carevue,,
+Temperature,Temperature (C),,ready,requires unit conversion or checking,676,Temperature C,,chartevents,379232,,,,,carevue,,
+Temperature,Temperature (C),,ready,requires unit conversion or checking,223762,Temperature Celsius,?C,chartevents,74144,Routine Vital Signs,,,,metavision,,Numeric
+Temperature,"Temperature (F, rectal)",,ready,requires unit conversion or checking,3654,Temp Rectal [F],,chartevents,13061,,,,,carevue,,
+Temperature,Temperature (F),,ready,requires unit conversion or checking,678,Temperature F,,chartevents,775928,,,,,carevue,,
+Temperature,Temperature (F),,ready,requires unit conversion or checking,223761,Temperature Fahrenheit,?F,chartevents,522143,Routine Vital Signs,,,,metavision,,Numeric
+Temperature,Temperature (F),,ready,requires unit conversion or checking,679,Temperature F (calc),,chartevents,376716,,,,,carevue,,
+Weight,Weight (daily),,ready,requires unit conversion or checking,763,Daily Weight,,chartevents,47979,,,,,carevue,,
+Weight,Weight (daily),,ready,requires unit conversion or checking,224639,Daily Weight,kg,chartevents,46452,General,,,,metavision,,Numeric
+Weight,"Weight (kg, admission)",Admission Weight (Kg),ready,requires unit conversion or checking,226512,Admission Weight (Kg),kg,chartevents,22604,General,,,,metavision,,Numeric
+Weight,"Weight (kg, present)",,ready,requires unit conversion or checking,3580,Present Weight  (kg),,chartevents,433011,,,,,carevue,,
+Weight,Weight (kg),,ready,requires unit conversion or checking,3693,Weight Kg,,chartevents,994,,,,,carevue,,
+Weight,"Weight (lb, present)",,ready,requires unit conversion or checking,3581,Present Weight  (lb),,chartevents,433005,,,,,carevue,,
+Weight,"Weight (lbs, admission)",Admission Weight (lbs.),ready,requires unit conversion or checking,226531,Admission Weight (lbs.),None,chartevents,46255,General,,,,metavision,,Numeric
+Weight,"Weight (oz, present)",,ready,requires unit conversion or checking,3582,Present Weight  (oz),,chartevents,433004,,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,50804,CALCULATED TOTAL CO2,,labevents,490685,BLOOD GAS,,BLOOD,6/1/1959,,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,777,Arterial CO2(Calc),,chartevents,280017,ABG,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",TCO2 (calc) Arterial,maybe,,225698,TCO2 (calc) Arterial,None,chartevents,140179,Labs,,,,metavision,,Numeric
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,3810,Total CO2,,chartevents,21720,Chemistry,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,3808,TCO2        (21-30),,chartevents,9233,Chemistry,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,857,Venous CO2(Calc),,chartevents,8970,VBG'S,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,3809,TCO2 (other),,chartevents,8435,Other ABGs,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,4199,TCO2 (cap),,chartevents,8097,Other ABGs,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",TCO2 (calc) Venous,maybe,,223679,TCO2 (calc) Venous,None,chartevents,4318,Labs,,,,metavision,,Numeric
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",PCO2 (Venous),maybe,,226062,Venous CO2 Pressure,mmHg,chartevents,4312,Labs,,,,metavision,,Numeric
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,3773,Mix Venous CO2(calc),,chartevents,989,Mixed VBGs,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,3830,Venous CO2,,chartevents,886,Venous ABG,,,,carevue,,
+"CO2 (ETCO2, PCO2, etc.)","CO2 (ETCO2, PCO2, etc.)",,maybe,,3832,Venous TCO2,,chartevents,881,Venous ABG,,,,carevue,,
+Urine Appearance,Urine Appearance,,maybe,,8480,Urine [Appearance],,chartevents,720710,,,,,carevue,,
+Urine Color,Urine Color,,maybe,,706,Urine [Color],,chartevents,729261,,,,,carevue,,
+Urine output,Urine output,,maybe,,43175,Urine .,,outputevents,108982,,,,,carevue,,
+Urine output,Urine output,,maybe,,40065,OR Out PACU Urine,,outputevents,7673,,,,,carevue,,
+Urine output,Urine output,,maybe,,40061,OR Out OR Urine,,outputevents,7267,,,,,carevue,,
+Urine output,Urine output,,maybe,,40715,Urine Out Suprapubic,,outputevents,6913,,,,,carevue,,
+Urine output,Urine output,OR Urine,maybe,,226627,OR Urine,mL,outputevents,5928,Output,,,,metavision,,Numeric
+Urine output,Urine output,,maybe,,40473,Urine Out IleoConduit,,outputevents,4813,,,,,carevue,,
+Weight,Weight,,ignore,,581,Previous WeightF,,chartevents,1646896,,,,,carevue,,
+Weight,Weight,,ignore,,3723,Birth Weight    (kg),,chartevents,435395,,,,,carevue,,
+Weight,Weight,,ignore,,3583,Previous Weight (kg),,chartevents,416625,,,,,carevue,,
+Weight,Weight,,ignore,,3692,Weight Change  (gms),,chartevents,416417,,,,,carevue,,
+Weight,Weight,,ignore,,580,Previous Weight,,chartevents,146993,,,,,carevue,,
+Weight,Weight,,ignore,,733,Weight Change,,chartevents,36844,,,,,carevue,,
+Weight,Weight,Unintentional weight loss >10 lbs.,ignore,,225124,Unintentional weight loss >10 lbs.,,chartevents,29601,Adm History/FHPA,,,,metavision,,Checkbox
+Weight,Weight,,ignore,,4183,Birthweight (kg),,chartevents,8254,,,,,carevue,,
+Weight,Weight,Feeding Weight,ignore,,226846,Feeding Weight,kg,chartevents,6018,General,,,,metavision,,Numeric

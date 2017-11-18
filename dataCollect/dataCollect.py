@@ -27,7 +27,7 @@ def countFeatures(subject_ids=None, hadm_ids=None, path="data/sql/perAdmissionCo
     with open(path, "r") as f:
         query = f.read()
     if subject_ids is None:
-        query.replace("<INSERT IDS HERE>", "")
+        query = query.replace("<INSERT IDS HERE>", "")
     else:
         query = query.replace("<INSERT IDS HERE>", "AND subject_id in " +
                               commonDB.convertListToSQL(subject_ids))
@@ -102,7 +102,7 @@ def getFirst24HrsDataValuesIndividually(hadm_id, itemids, mapping=None):
     Runs an SQL Query to return featues that that returns features for top 100
     most frequent itemids of both chartevents and labevents (might overlap)
     HOWEVER, only for one hadm_id
-    
+
     In addition uses the preprocessing csv stolen from mimic3 benchmark to deal with
     most common problems in clinical data
     :param itemids variable to use for counts of features

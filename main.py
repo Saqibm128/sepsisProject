@@ -14,14 +14,16 @@ from preprocessing import preprocessing
 # mappingItemids = pd.DataFrame.from_csv("data/rawdatafiles/selfCounts.csv") #stores which itemids are equivalent
 # freqFeatOverall = freq.countFeatures(subject_ids=subject_ids, mapping=mappingItemids)
 # freqFeatOverall.to_csv("data/rawdatafiles/freqOverallMatchedSubset.csv")
-# 
-categorization = catSepsis.getCategorizationsBySubjectID()
-categorization.to_csv("data/rawdatafiles/categorizationBySubject.csv")
+#
+# categorization = catSepsis.getCategorizationsBySubjectID()
+# categorization.to_csv("data/rawdatafiles/categorizationBySubject.csv")
 # sepsisCategorization = categorization[categorization["angus"] == 1]
+counts = freq.countFeatures()
+counts.to_csv("data/rawdatafiles/counts.csv")
 # freqFeatSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=sepsisCategorization.index)
 # freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv", \
 #                         mapping=mappingItemids)
-# 
+#
 # nonSepsisCategorization = categorization[categorization["angus"] == 0]
 # freqFeatNonSepsis = freq.countFeatures(subject_ids=subject_ids, \
 #                                         hadm_ids=nonSepsisCategorization.index, \
@@ -37,7 +39,7 @@ categorization.to_csv("data/rawdatafiles/categorizationBySubject.csv")
 # itemidVariableMap["itemid"] = itemidVariableMap["ITEMID"]
 # #Read a copy of mappings of itemids to variables and transform
 # #   into itemid to variable encoding (from mimiciii benchmark project)
-# 
+#
 # ranges = preprocessing.read_variable_ranges("preprocessing/resources/variable_ranges.csv")
 # allPersons = freq.getDataByHadmId(hadm_ids, itemids, mapping=itemidVariableMap, ranges=ranges)
 # allPersons.dropna(axis=0, how="any", subset=["Heart Rate", "Systolic blood pressure", "Diastolic blood pressure"])

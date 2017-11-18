@@ -6,8 +6,19 @@ import pandas as pd
 import commonDB
 from readWaveform import waveformUtil as wfutil
 
-wfutil.preliminaryCompareTimes().to_csv("data/rawdatafiles/comparedTimes.csv")
-
+# wfutil.preliminaryCompareTimes().to_csv("data/rawdatafiles/comparedTimes.csv")
+labelDF = pd.read_csv("preprocessing/resources/itemid_to_variable_map_only_labeled.csv")
+countsDF = pd.read_csv("data/rawdatafiles/counts.csv")
+countsDF.columns = countsDF.columns.str.upper()
+mergedDF = labelDF.merge(countsDF, left_on="ITEMID", right_on="ITEMID")
+for variable in mergedDF["LEVEL2"]:
+    idx = (mergedDF["LEVEL2"] == variable)
+    totalCount = mergedDF["COUNTPERADMISSION"][idx].sum()
+    firstRow = mergedDF[idx]
+    firstRow["COUNTPERADMISSION"] = totalCount
+    mergedDF = mergedDF[mergedDF["LEVEL2"] != variable]
+    mergedDF.append(firstRow)
+mergedDF.to_csv("data/rawdatafiles/mergedCountsLabel.csv")
 
 def selfJoinFix(data):
     '''
