@@ -5,6 +5,7 @@ __pycache__
 vcs.xml
 .idea
 *.swp
+preprocessing/config.json
 
 *.out
 nohup.out
