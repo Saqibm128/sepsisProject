@@ -120,8 +120,9 @@ def extract_multiple_subjects(subjects):
             if timeseries.shape[0] == 0:
                 print(' (no data!)')
                 continue
-
-            if timeseries["Heart Rate"].isnull().all() or\
+            #hard coded fix, TODO: see why this fails without this first condition
+            if "Heart Rate" not in timeseries.columns or\
+              timeseries["Heart Rate"].isnull().all() or\
               timeseries["Mean blood pressure"].isnull().all() or\
               timeseries["Systolic blood pressure"].isnull().all():
                 print("missing key values! skipping hadm_id: ", hadm_id)
