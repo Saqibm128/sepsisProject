@@ -59,8 +59,8 @@ def getCategorizationsBySubjectID(catDF = None):
             bySubjectCat.append(pd.DataFrame({"subject_id": [subject_id], "angus": [0]}))
     bySubject = pd.concat(bySubjectCat)
     return bySubject.set_index("subject_id")
-                
-    
+
+
 def getCategorizations(hadm_ids = None):
     """
     This is a function to run the Angus.sql query, which is responsible for categorizing patients

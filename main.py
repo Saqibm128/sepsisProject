@@ -5,10 +5,13 @@ import dataCollect.dataCollect as freq
 import pandas as pd
 import commonDB
 import learning.logReg as logReg
+import learning.svm
+import learning.util
 from readWaveform import waveformUtil as wfutil
 import categorization as catSepsis
 import numpy
 from preprocessing import preprocessing
+from pipeline.hadmid_reader import Hadm_Id_Reader
 # Get the data and write to disk (note we can comment out below lines if we have written already)
 # If we have written to disk, tpythen we should instantiate variables with pd.DataFrame.from_csv method
 # mappingItemids = pd.DataFrame.from_csv("data/rawdatafiles/selfCounts.csv") #stores which itemids are equivalent
@@ -18,12 +21,11 @@ from preprocessing import preprocessing
 # categorization = catSepsis.getCategorizationsBySubjectID()
 # categorization.to_csv("data/rawdatafiles/categorizationBySubject.csv")
 # sepsisCategorization = categorization[categorization["angus"] == 1]
-counts = freq.countFeatures()
-counts.to_csv("data/rawdatafiles/counts.csv")
+# counts = freq.countFeatures()
+# counts.to_csv("data/rawdatafiles/counts.csv")
 # freqFeatSepsis = freq.countFeatures(subject_ids=subject_ids, hadm_ids=sepsisCategorization.index)
 # freqFeatSepsis.to_csv("data/rawdatafiles/freqFeatSepsis.csv", \
 #                         mapping=mappingItemids)
-#
 # nonSepsisCategorization = categorization[categorization["angus"] == 0]
 # freqFeatNonSepsis = freq.countFeatures(subject_ids=subject_ids, \
 #                                         hadm_ids=nonSepsisCategorization.index, \
@@ -73,4 +75,33 @@ counts.to_csv("data/rawdatafiles/counts.csv")
 # fullScores.to_csv("data/rawdatafiles/full_scores.csv")
 # data = wfutil.compareAdmitToWF()
 # data.to_csv("data/rawdatafiles/wfdetails.csv")
+
+# reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID2/")
+# testTrainSet = reader.getFullAvg()
+# classified = catSepsis.getCategorizations()
+# classified.to_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
+# print(classified["angus"].index.dtype)
+# testTrainSet["angus"] = classified["angus"][testTrainSet.index]
+testTrainSet = pd.read_csv("./data/rawdatafiles/testTrainSet.csv")
+result = logReg.test_train_validation(testTrainSet)
+
+print(result.best_score)
+cv_results = pd.DataFrame(result.cv_results)
+cv_results.to_csv("data/rawdatafiles/lr_cv_results.csv")
+#
+fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
+fullScores.to_csv("data/rawdatafiles/lr_full_scores.csv")
+
+
+result = learning.svm.test_train_validation(testTrainSet)
+
+print(result.best_score)
+cv_results = pd.DataFrame(result.cv_results)
+cv_results.to_csv("data/rawdatafiles/svm_cv_results.csv")
+#
+fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
+fullScores.to_csv("data/rawdatafiles/svm_full_scores.csv")
+# data = wfutil.compareAdmitToWF()
+# data.to_csv("data/rawdatafiles/wfdetails.csv")
+
 print("done!")
