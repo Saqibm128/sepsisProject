@@ -46,7 +46,7 @@ def test(joinedDataframe, trainTuple, testTuple, params=None, logReg=None):
         scores["matthews_corrcoef"][0]=matC
     return scores
 
-def test_train_validation(joinedDataframe, train_validation_size = .6):
+def test_train_validation(joinedDataframe, train_validation_size = .9):
     '''
     Does a test, train, and validation split, uses cross validation on the validation split
     and returns the results based on the test split
@@ -68,7 +68,7 @@ def test_train_validation(joinedDataframe, train_validation_size = .6):
     params.C = [.1, .2, .4, .8, 1.6, 3.2, 6.4]
     logReg = linMod.LogisticRegression();
     print(logReg.get_params().keys())
-    gridSearcher = modSel.GridSearchCV(logReg, params)
+    gridSearcher = modSel.GridSearchCV(logReg, params, n_jobs=3)
     gridSearcher.fit(Xtrain, Ytrain)
     bestLogReg = gridSearcher.best_estimator_
     bestLogReg.fit(Xtrain, Ytrain)

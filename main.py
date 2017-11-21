@@ -76,23 +76,23 @@ from pipeline.hadmid_reader import Hadm_Id_Reader
 # data = wfutil.compareAdmitToWF()
 # data.to_csv("data/rawdatafiles/wfdetails.csv")
 
-# reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID2/")
-# testTrainSet = reader.getFullAvg()
-# classified = catSepsis.getCategorizations()
-# classified.to_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
-# print(classified["angus"].index.dtype)
-# testTrainSet["angus"] = classified["angus"][testTrainSet.index]
-testTrainSet = pd.read_csv("./data/rawdatafiles/testTrainSet.csv")
+print("beginning to read all files in")
+reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID2/")
+testTrainSet = reader.getFullAvg()
+classified = pd.read_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
+testTrainSet["angus"] = classified["angus"][testTrainSet.index]
+
+print("beginning logReg grid search")
 result = logReg.test_train_validation(testTrainSet)
 
 print(result.best_score)
 cv_results = pd.DataFrame(result.cv_results)
 cv_results.to_csv("data/rawdatafiles/lr_cv_results.csv")
-#
+
 fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
 fullScores.to_csv("data/rawdatafiles/lr_full_scores.csv")
 
-
+print("beginning svm gridsearch")
 result = learning.svm.test_train_validation(testTrainSet)
 
 print(result.best_score)

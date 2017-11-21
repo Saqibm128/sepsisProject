@@ -8,7 +8,7 @@ from addict import Dict
 # This script contains helper functions used to train and test on the data
 
 
-def test_train_validation(joinedDataframe, train_validation_size = .8):
+def test_train_validation(joinedDataframe, train_validation_size = .9):
     '''
     Does a test, train, and validation split, uses cross validation on the validation split
     and returns the results based on the test split

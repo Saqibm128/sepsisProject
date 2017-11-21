@@ -17,28 +17,32 @@ class Hadm_Id_Reader():
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)
-
-    def avg(self, hadmid):
+    def avg(self, hadmid, endbound = None):
         '''
         This method provides no analysis over time and instead only provides the average
         for every variable
+        :param endbound the last time, in hours, after first event to take into
+            account data, if None dataframe is generated without end limit
         :param hadmid hadm_id to apply this function to
         '''
-        data = self.__get_data(hadmid)
+        data = self.__get_data(hadmid, endbound=endbound)
         return data.mean()
-    def getFullAvg(self):
+    def getFullAvg(self, endbound = None):
         toReturn = {}
         for hadmid in self.hadms:
-            toReturn[int(hadmid)] = (self.avg(hadmid))
+            toReturn[int(hadmid)] = (self.avg(hadmid, endbound=endbound))
         return pd.DataFrame(toReturn).transpose().dropna(axis=1, how="any") #drop the nonnumeric columns due to inabilty to deal with mean()
-    def __get_data(self, hadmid):
+    def __get_data(self, hadmid, endbound=None):
         '''
         Helper function to read and do a simple preprocessing of dataset
         to fill in completely missing data variables
         :param hadmid which hospital admission to read
+        :param endbound the last time, in hours, after first event to take into account data, if None no bound
         :return the preprocessed dataframe
         '''
         data = pd.read_csv(os.path.join(self.hadm_dir, hadmid, self.file_name))
+        if endbound is not None:
+            data = data.loc[data.index <= endbound]
         for var in data.columns:
             if var not in self.__ranges.index:
                 data = data.drop(var, axis=1)
