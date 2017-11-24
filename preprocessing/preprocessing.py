@@ -84,9 +84,9 @@ def read_itemid_to_variable_map(fn, variable_column='LEVEL2'):
     var_map.COUNT = var_map.COUNT.astype(int)
 
     var_map = var_map.ix[(var_map[variable_column] != '') & (var_map.COUNT>0)]
-    var_map = var_map.ix[(var_map.STATUS == 'ready')]
+    # var_map = var_map.ix[(var_map.STATUS == 'ready')]
     var_map.ITEMID = var_map.ITEMID.astype(int)
-    var_map = var_map[[variable_column, 'ITEMID', 'MIMIC LABEL']].set_index('ITEMID')
+    var_map = var_map[[variable_column, 'ITEMID', 'MIMIC LABEL']]
     var_map = var_map.rename_axis({variable_column: 'VARIABLE', 'MIMIC LABEL': 'LABEL'}, axis=1)
     var_map["VARIABLE"] = var_map["VARIABLE"].str.upper() #to deal with inconsistent capitalization
     return var_map
@@ -96,7 +96,8 @@ def map_itemids_to_variables(events, var_map):
         events = events.drop(["VARIABLE"], axis=1)
     if "LABEL" in events.columns:
         events = events.drop(["LABEL"], axis=1)
-    return events.merge(var_map, left_on='ITEMID', right_index=True, how="left", suffixes=["", ""])
+    df = events.merge(var_map, left_on=['ITEMID'], right_on=['ITEMID'], how="left", suffixes=["", ""])
+    return df
 
 def read_variable_ranges(fn, variable_column='LEVEL2'):
     columns = [ variable_column, 'OUTLIER LOW', 'VALID LOW', 'IMPUTE', 'VALID HIGH', 'OUTLIER HIGH' ]
@@ -117,7 +118,8 @@ def remove_outliers_for_variable(events, variable, ranges):
         return events
     try:
         idx = (events.VARIABLE == variable)
-        V = events.VALUE[idx].astype(np.number)
+        V = events.VALUE[idx]
+        V = val_as_num(V)
     except:
         print(variable)
         traceback.print_exc()
@@ -134,13 +136,22 @@ def clean_sbp(df):
     v = df.loc[:, 'VALUE'].astype(str)
     idx = v.apply(lambda s: '/' in s)
     v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(1))
-    return v.astype(np.number)
-
+    v = v.replace(r'\s+', np.nan, regex=True)
+    return val_as_num(v)
+def val_as_num(v):
+    for i in v.index:
+        try:
+            float(v[i])
+        except:
+            v[i] = np.NaN
+    v = v.astype(np.number)
+    return v;
 def clean_dbp(df):
     v = df.loc[:, 'VALUE'].astype(str)
     idx = v.apply(lambda s: '/' in s)
     v.loc[idx] = v[idx].apply(lambda s: re.match('^(\d+)/(\d+)$', s).group(2))
-    return v.astype(np.number)
+    v = v.replace(r'\s+', np.nan, regex=True)
+    return val_as_num(v)
 
 # CRR: strings with brisk, <3 normal, delayed, or >3 abnormal
 def clean_crr(df):
@@ -153,11 +164,12 @@ def clean_crr(df):
 
     v.loc[(df.loc[:, 'VALUE'] == 'Normal <3 secs') | (df.loc[:, 'VALUE'] == 'Brisk')] = 0
     v.loc[(df.loc[:, 'VALUE'] == 'Abnormal >3 secs') | (df.loc[:, 'VALUE'] == 'Delayed')] = 1
-    return v
+    v = v.replace(r'\s+', np.nan, regex=True)
+    return val_as_num(v)
 
 # FIO2: many 0s, some 0<x<0.2 or 1<x<20
 def clean_fio2(df):
-    v = df.loc[:, 'VALUE'].astype(np.number)
+    v = val_as_num(df.loc[:, 'VALUE'])
     idx = df.loc[:, 'VALUEUOM'].fillna('').apply(lambda s: 'torr' not in s.lower()) & (v >1.0)
     v.loc[idx] = v[idx] / 100.
     return v
@@ -166,24 +178,24 @@ def clean_fio2(df):
 def clean_lab(df):
     v = df.loc[:, 'VALUE']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
-    v.loc[idx] = np.nan
-    return v.astype(np.number)
+    v = df.loc[:, 'VALUE']
+    return val_as_num(v)
 
 # O2SAT: small number of 0<x<=1 that should be mapped to 0-100 scale
 def clean_o2sat(df):
     # change "ERROR" to NaN
     v = df.loc[:, 'VALUE']
     idx = v.apply(lambda s: type(s) is str and not re.match('^(\d+(\.\d*)?|\.\d+)$', s))
-    v.loc[idx] = np.nan
-
-    v = v.astype(np.number)
+    v = df.loc[:, 'VALUE']
+    v = val_as_num(v)
     idx = (v<=1)
     v.loc[idx] = v.loc[idx] * 100.
     return v
 
 # Temperature: map Farenheit to Celsius, some ambiguous 50<x<80
 def clean_temperature(df):
-    v = df.loc[:, 'VALUE'].astype(np.number)
+    v = df.loc[:, 'VALUE']
+    v = val_as_num(v)
     idx = df.loc[:, 'VALUEUOM'].fillna('').apply(lambda s: 'F' in s.lower()) | df.LABEL.apply(lambda s: 'F' in s.lower()) | (v >= 79)
     v.loc[idx] = (v[idx] - 32) * 5. / 9
     return v
@@ -191,7 +203,8 @@ def clean_temperature(df):
 # Weight: some really light/heavy adults: <50 lb, >450 lb, ambiguous oz/lb
 # Children are tough for height, weight
 def clean_weight(df):
-    v = df.loc[:, 'VALUE'].astype(np.number)
+    v = df.loc[:, 'VALUE']
+    v = val_as_num(v)
     # ounces
     idx = df.loc[:, 'VALUEUOM'].fillna('').apply(lambda s: 'oz' in s.lower()) | df.LABEL.apply(lambda s: 'oz' in s.lower())
     v.loc[idx] = v[idx] / 16.
@@ -203,7 +216,8 @@ def clean_weight(df):
 # Height: some really short/tall adults: <2 ft, >7 ft)
 # Children are tough for height, weight
 def clean_height(df):
-    v = df.loc[:, 'VALUE'].astype(np.number)
+    v = df.loc[:, 'VALUE']
+    v = val_as_num(v)
     idx = df.loc[:, 'VALUEUOM'].fillna('').apply(lambda s: 'in' in s.lower()) | df.LABEL.apply(lambda s: 'in' in s.lower())
     v.loc[idx] = np.round(v[idx] * 2.54)
     return v
@@ -243,5 +257,5 @@ def clean_events(events, ranges=None):
             print(("values:", events.ix[idx]))
             # raise BaseException
         if ranges is not None:
-            remove_outliers_for_variable(events, var_name, ranges)
+            events = remove_outliers_for_variable(events, var_name, ranges)
     return events

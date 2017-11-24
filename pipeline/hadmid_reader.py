@@ -19,12 +19,27 @@ class Hadm_Id_Reader():
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)
+    def convert_timeseries_to_features(timeseries):
+        '''
+        A method to convert timeseries data into a format which can be taken
+            by traditional ML techniques
+            i.e. turn feature time combo ("Heart Rate" at 6 hours) into 'pseudofeature'
+            ('Heart Rate, 6')
+        :param timeseries time indexed, feature columns data
+        :return dataframe of 1 row, containing rearranged data
+        '''
+        toReturn = pd.DataFrame()
+        for hour in timeseries.index:
+            for col in timeseries.col:
+                toReturn[str(col) + ", " + str(hour)] = timeseries.loc[hour, col]
+        return toReturn
     def countEvents(self, hadmid, endbound=None):
         '''
         This method provides the counts of events for a certain hadm_id for each variable
         :param hadmid the hospital admission to apply this method to
         :param endbound the last time, in hours, to take into account data; if None
             all data from all time of the hospital admission is taken into account
+        :return dataframe containing count of events for each feature
         '''
         data = pd.read_csv(os.path.join(self.hadm_dir, hadmid, self.file_name))
         if endbound is not None:
@@ -121,11 +136,12 @@ class Hadm_Id_Reader():
         data = self.resample(timeUnit=timeUnit, hadmid = hadmid)
         while (data.index.max() < total_time):
             data.loc[data.index.max() + timeUnit] = data.loc[data.index.max()]
-        return data
+        return data.loc[data.index <= total_time]
 
     def next_hadm():
         '''
         This method goes to the next hadm_id if this reader is used as an iterator
+        TODO: implement other iterator-like features or just plain remove it
         '''
         self.__current_hadm = hadms[self.__index + 1]
         self.__index += 1

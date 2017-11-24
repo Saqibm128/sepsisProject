@@ -16,7 +16,7 @@ subjects_root_path = "data/rawdatafiles/benchmarkData"
 var_map = preprocessing.read_itemid_to_variable_map(
     "preprocessing/resources/itemid_to_variable_map.csv")
 ranges = preprocessing.read_variable_ranges("preprocessing/resources/variable_ranges.csv")
-new_path = "data/rawdatafiles/byHadmID"
+new_path = "data/rawdatafiles/byHadmID3"
 variables = var_map.VARIABLE.unique()
 
 def read_events(subject_path, remove_null=True):
@@ -110,7 +110,6 @@ def extract_multiple_subjects(subjects):
         try:
             events = preprocessing.clean_events(events, ranges=ranges)
         except:
-            print(events.columns)
             raise BaseException
         for hadm_id in events["HADM_ID"].unique():
             # For every hadm_id we want to separate, clean, find variable ranges, and get key constants out for each hadm
@@ -132,18 +131,48 @@ def extract_multiple_subjects(subjects):
             timeseries.to_csv(os.path.join(new_path, str(int(hadm_id)), 'episode_timeseries.csv'), index_label='HOURS')
             print("finished:", hadm_id, subject_id)
 
-
+def extract_multiple_hadmids(hadmids):
+    print("beginning extraction", len(hadmids))
+    for hadmid in hadmids:
+        print(str(hadmid))
+        events = commonDB.read_sql("SELECT * FROM chartevents WHERE HADM_ID=" + str(hadmid), uppercase=True)
+        events = events.dropna(axis=0, subset=["HADM_ID"], how="any")
+        events = preprocessing.map_itemids_to_variables(events, var_map)
+        try:
+            events = preprocessing.clean_events(events, ranges=ranges)
+        except:
+            print(events.columns)
+            raise BaseException
+        for hadm_id in events["HADM_ID"].unique():
+            # For every hadm_id we want to separate, clean, find variable ranges, and get key constants out for each hadm
+            episode = get_events_for_stay(events, hadm_id)
+            timeseries = convert_events_to_timeseries(episode, variables=ranges.index)
+            timeseries = add_hours_elapsed_to_events(timeseries)
+            if timeseries.shape[0] == 0:
+                print(' (no data!)')
+                continue
+            #hard coded fix, TODO: see why this fails without this first condition
+            if timeseries["HEART RATE"].isnull().all() or\
+              timeseries["MEAN BLOOD PRESSURE"].isnull().all() or\
+              timeseries["SYSTOLIC BLOOD PRESSURE"].isnull().all():
+                print("missing key values! skipping hadm_id: ", hadm_id)
+                continue
+            if not os.path.isdir(os.path.join(new_path, str(int(hadm_id)))):
+                os.mkdir(os.path.join(new_path, str(int(hadm_id))))
+            timeseries.set_index(["HOURS"], inplace=True)
+            timeseries.to_csv(os.path.join(new_path, str(int(hadm_id)), 'episode_timeseries.csv'), index_label='HOURS')
+            print("finished:", hadm_id)
 
 
 if __name__ == '__main__':
-    subjects = os.listdir(subjects_root_path)
-    print("beginning to process", len(subjects))
-    num_process = 10
+    hadmids = commonDB.read_sql("SELECT HADM_ID from ADMISSIONS", uppercase=True)["HADM_ID"]
+    print("beginning to process", len(hadmids))
+    num_process = 12
     for i in range(0, num_process):
-        portion = int(len(subjects) / num_process)
+        portion = int(len(hadmids) / num_process)
         if i != num_process - 1:
-            to_process = subjects[portion * i: portion * (i + 1)]
+            to_process = hadmids[portion * i: portion * (i + 1)]
         else:
-            to_process = subjects[portion * i:]
-        p = Process(target=extract_multiple_subjects, args=(to_process,))
+            to_process = hadmids[portion * i:]
+        p = Process(target=extract_multiple_hadmids, args=(to_process,))
         p.start()

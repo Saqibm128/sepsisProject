@@ -46,7 +46,7 @@ def test(joinedDataframe, trainTuple, testTuple, params=None, logReg=None):
         scores["matthews_corrcoef"][0]=matC
     return scores
 
-def test_train_validation(joinedDataframe, train_validation_size = .9):
+def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     '''
     Does a test, train, and validation split, uses cross validation on the validation split
     and returns the results based on the test split
@@ -57,9 +57,11 @@ def test_train_validation(joinedDataframe, train_validation_size = .9):
     X = joinedDataframe.drop(["angus"], axis = 1)
     Y = joinedDataframe["angus"]
     #https://stackoverflow.com/questions/34842405/parameter-stratify-from-method-train-test-split-scikit-learn
-    Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_validation_size, stratify = Y)
-    #Xvalid, Xtest, Yvalid, Ytest = modSel.train_test_split(XtestValid, YtestValid, train_size = validation_size, stratify = YtestValid)
-
+    Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_size + validation_size, stratify = Y)
+    XvalidIndices, _ = modSel.train_test_split(list(range(0, len(Xtrain))), train_size = validation_size, stratify = Ytrain)
+    Xvalid = np.full(len(Xtrain), -1)
+    for index in XvalidIndices:
+        Xvalid[index] = 0
     #we set up parameter search space here to look up
     params = Dict()
     params.tol = np.arange(10 ** -4, 10 ** -3, 10** -4)
@@ -67,8 +69,9 @@ def test_train_validation(joinedDataframe, train_validation_size = .9):
     params.penalty = ['l2']
     params.C = [.1, .2, .4, .8, 1.6, 3.2, 6.4]
     logReg = linMod.LogisticRegression();
-    print(logReg.get_params().keys())
-    gridSearcher = modSel.GridSearchCV(logReg, params, n_jobs=3)
+
+    predef_split = modSel.PredefinedSplit(Xvalid)
+    gridSearcher = modSel.GridSearchCV(logReg, params, n_jobs=3, cv=predef_split)
     gridSearcher.fit(Xtrain, Ytrain)
     bestLogReg = gridSearcher.best_estimator_
     bestLogReg.fit(Xtrain, Ytrain)
@@ -77,4 +80,5 @@ def test_train_validation(joinedDataframe, train_validation_size = .9):
             "predictor":bestLogReg, \
             "best_score":score, \
             "testTuple": (Xtest, Ytest), \
+            "validationTuple": (Xvalid, Yvalid), \
             "trainTuple": (Xtrain, Ytrain)})
