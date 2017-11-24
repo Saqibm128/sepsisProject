@@ -77,11 +77,12 @@ from pipeline.hadmid_reader import Hadm_Id_Reader
 # data.to_csv("data/rawdatafiles/wfdetails.csv")
 
 print("beginning to read all files in")
-reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID2/")
+reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID/")
 testTrainSet = reader.getFullAvg()
 classified = pd.read_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
+classified.set_index("hadm_id", inplace=True)
 testTrainSet["angus"] = classified["angus"][testTrainSet.index]
-
+testTrainSet.to_csv("./data/rawdatafiles/testTrainSet.csv")
 print("beginning logReg grid search")
 result = logReg.test_train_validation(testTrainSet)
 

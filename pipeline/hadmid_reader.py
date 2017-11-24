@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import os
 from preprocessing.preprocessing import read_variable_ranges
+from addict import Dict
 
 class Hadm_Id_Reader():
 
@@ -17,6 +19,31 @@ class Hadm_Id_Reader():
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)
+    def countEvents(self, hadmid, endbound=None):
+        '''
+        This method provides the counts of events for a certain hadm_id for each variable
+        :param hadmid the hospital admission to apply this method to
+        :param endbound the last time, in hours, to take into account data; if None
+            all data from all time of the hospital admission is taken into account
+        '''
+        data = pd.read_csv(os.path.join(self.hadm_dir, hadmid, self.file_name))
+        if endbound is not None:
+            data = data.loc[data.index <= endbound] #Exclude any data after the last end
+        eventCounts = Dict()
+        totalLength = data.shape[0]
+        for col in data.columns:
+            eventCounts[col] = data[col].shape[0] - data[col].isnull().sum()
+        return eventCounts
+    def countEventsPerHospitalAdmission(self, endbound=None):
+        toConcat = []
+        i = 0
+        for hadmid in self.hadms:
+            if i % 100 == 0:
+                print(i)
+            i+=1
+            eventCounts = self.countEvents(hadmid, endbound=endbound)
+            toConcat.append(pd.DataFrame(eventCounts, index=[int(hadmid)]))
+        return (pd.concat(toConcat))
     def avg(self, hadmid, endbound = None):
         '''
         This method provides no analysis over time and instead only provides the average
@@ -30,8 +57,10 @@ class Hadm_Id_Reader():
     def getFullAvg(self, endbound = None):
         toReturn = {}
         for hadmid in self.hadms:
+            toAppend = (self.avg(hadmid, endbound=endbound))
             toReturn[int(hadmid)] = (self.avg(hadmid, endbound=endbound))
-        return pd.DataFrame(toReturn).transpose().dropna(axis=1, how="any") #drop the nonnumeric columns due to inabilty to deal with mean()
+        toReturn = pd.DataFrame(toReturn).transpose().dropna(axis=1, how="any") #drop the nonnumeric columns due to inabilty to deal with mean()
+        return toReturn
     def __get_data(self, hadmid, endbound=None):
         '''
         Helper function to read and do a simple preprocessing of dataset
@@ -42,7 +71,7 @@ class Hadm_Id_Reader():
         '''
         data = pd.read_csv(os.path.join(self.hadm_dir, hadmid, self.file_name))
         if endbound is not None:
-            data = data.loc[data.index <= endbound]
+            data = data.loc[data.index <= endbound] #Exclude any data after the last end
         for var in data.columns:
             if var not in self.__ranges.index:
                 data = data.drop(var, axis=1)

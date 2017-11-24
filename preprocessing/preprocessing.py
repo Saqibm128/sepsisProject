@@ -87,7 +87,9 @@ def read_itemid_to_variable_map(fn, variable_column='LEVEL2'):
     var_map = var_map.ix[(var_map.STATUS == 'ready')]
     var_map.ITEMID = var_map.ITEMID.astype(int)
     var_map = var_map[[variable_column, 'ITEMID', 'MIMIC LABEL']].set_index('ITEMID')
-    return var_map.rename_axis({variable_column: 'VARIABLE', 'MIMIC LABEL': 'LABEL'}, axis=1)
+    var_map = var_map.rename_axis({variable_column: 'VARIABLE', 'MIMIC LABEL': 'LABEL'}, axis=1)
+    var_map["VARIABLE"] = var_map["VARIABLE"].str.upper() #to deal with inconsistent capitalization
+    return var_map
 
 def map_itemids_to_variables(events, var_map):
     if "VARIABLE" in events.columns:
@@ -104,6 +106,7 @@ def read_variable_ranges(fn, variable_column='LEVEL2'):
     var_ranges = var_ranges[columns]
     var_ranges.rename_axis(to_rename, axis=1, inplace=True)
     var_ranges = var_ranges.drop_duplicates(subset='VARIABLE', keep='first')
+    var_ranges["VARIABLE"] = var_ranges["VARIABLE"].str.upper() # deal with capitalization issue
     var_ranges.set_index('VARIABLE', inplace=True)
 
     var_ranges.loc[:,['OUTLIER_LOW', 'VALID_LOW', 'IMPUTE', 'VALID_HIGH', 'OUTLIER_HIGH']] = var_ranges.loc[:,['OUTLIER_LOW', 'VALID_LOW', 'IMPUTE', 'VALID_HIGH', 'OUTLIER_HIGH']] .astype(np.number)
@@ -230,7 +233,7 @@ clean_fns = {
 def clean_events(events, ranges=None):
     global cleaning_fns
     for var_name, clean_fn in list(clean_fns.items()):
-        idx = (events["VARIABLE"].astype(str) == var_name)
+        idx = (events["VARIABLE"].astype(str) == var_name.upper())
         try:
             events.loc[idx, 'VALUE'] = clean_fn(events.loc[idx])
         except Exception as inst:

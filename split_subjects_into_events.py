@@ -16,7 +16,7 @@ subjects_root_path = "data/rawdatafiles/benchmarkData"
 var_map = preprocessing.read_itemid_to_variable_map(
     "preprocessing/resources/itemid_to_variable_map.csv")
 ranges = preprocessing.read_variable_ranges("preprocessing/resources/variable_ranges.csv")
-new_path = "data/rawdatafiles/byHadmID2"
+new_path = "data/rawdatafiles/byHadmID"
 variables = var_map.VARIABLE.unique()
 
 def read_events(subject_path, remove_null=True):
@@ -121,17 +121,16 @@ def extract_multiple_subjects(subjects):
                 print(' (no data!)')
                 continue
             #hard coded fix, TODO: see why this fails without this first condition
-            if "Heart Rate" not in timeseries.columns or\
-              timeseries["Heart Rate"].isnull().all() or\
-              timeseries["Mean blood pressure"].isnull().all() or\
-              timeseries["Systolic blood pressure"].isnull().all():
+            if timeseries["HEART RATE"].isnull().all() or\
+              timeseries["MEAN BLOOD PRESSURE"].isnull().all() or\
+              timeseries["SYSTOLIC BLOOD PRESSURE"].isnull().all():
                 print("missing key values! skipping hadm_id: ", hadm_id)
                 continue
             if not os.path.isdir(os.path.join(new_path, str(int(hadm_id)))):
                 os.mkdir(os.path.join(new_path, str(int(hadm_id))))
             timeseries.set_index(["HOURS"], inplace=True)
             timeseries.to_csv(os.path.join(new_path, str(int(hadm_id)), 'episode_timeseries.csv'), index_label='HOURS')
-            print("finished:", hadm_id)
+            print("finished:", hadm_id, subject_id)
 
 
 
