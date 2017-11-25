@@ -71,7 +71,7 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     logReg = linMod.LogisticRegression();
 
     predef_split = modSel.PredefinedSplit(Xvalid)
-    gridSearcher = modSel.GridSearchCV(logReg, params, n_jobs=3, cv=predef_split)
+    gridSearcher = modSel.GridSearchCV(logReg, params, n_jobs=1, cv=predef_split)
     gridSearcher.fit(Xtrain, Ytrain)
     bestLogReg = gridSearcher.best_estimator_
     bestLogReg.fit(Xtrain, Ytrain)
@@ -80,5 +80,4 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
             "predictor":bestLogReg, \
             "best_score":score, \
             "testTuple": (Xtest, Ytest), \
-            "validationTuple": (Xvalid, Yvalid), \
             "trainTuple": (Xtrain, Ytrain)})

@@ -77,21 +77,22 @@ from pipeline.hadmid_reader import Hadm_Id_Reader
 # data.to_csv("data/rawdatafiles/wfdetails.csv")
 
 print("beginning to read all files in")
-reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID/")
-testTrainSet = reader.getFullAvg()
-classified = pd.read_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
-classified.set_index("hadm_id", inplace=True)
-testTrainSet["angus"] = classified["angus"][testTrainSet.index]
-testTrainSet.to_csv("./data/rawdatafiles/testTrainSet.csv")
-print("beginning logReg grid search")
-result = logReg.test_train_validation(testTrainSet)
-
-print(result.best_score)
-cv_results = pd.DataFrame(result.cv_results)
-cv_results.to_csv("data/rawdatafiles/lr_cv_results.csv")
-
-fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
-fullScores.to_csv("data/rawdatafiles/lr_full_scores.csv")
+reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID3/")
+# testTrainSet = reader.getFullAvg()
+# classified = pd.read_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
+# classified.set_index("hadm_id", inplace=True)
+# testTrainSet["angus"] = classified["angus"][testTrainSet.index]
+# testTrainSet.to_csv("./data/rawdatafiles/testTrainSet.csv")
+testTrainSet = pd.read_csv("./data/rawdatafiles/testTrainSet.csv")
+# print("beginning logReg grid search")
+# result = logReg.test_train_validation(testTrainSet)
+#
+# print(result.best_score)
+# cv_results = pd.DataFrame(result.cv_results)
+# cv_results.to_csv("data/rawdatafiles/lr_cv_results.csv")
+#
+# fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
+# fullScores.to_csv("data/rawdatafiles/lr_full_scores.csv")
 
 print("beginning svm gridsearch")
 result = learning.svm.test_train_validation(testTrainSet)

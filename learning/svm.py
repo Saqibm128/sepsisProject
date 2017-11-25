@@ -8,7 +8,7 @@ from addict import Dict
 # This script contains helper functions used to train and test on the data
 
 
-def test_train_validation(joinedDataframe, train_validation_size = .9):
+def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     '''
     Does a test, train, and validation split, uses cross validation on the validation split
     and returns the results based on the test split
@@ -19,20 +19,24 @@ def test_train_validation(joinedDataframe, train_validation_size = .9):
     X = joinedDataframe.drop(["angus"], axis = 1)
     Y = joinedDataframe["angus"]
     #https://stackoverflow.com/questions/34842405/parameter-stratify-from-method-train-test-split-scikit-learn
-    Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_validation_size, stratify = Y)
-
+    Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_size + validation_size, stratify = Y)
+    XvalidIndices, _ = modSel.train_test_split(list(range(0, len(Xtrain))), train_size = validation_size, stratify = Ytrain)
+    Xvalid = np.full(len(Xtrain), -1)
+    for index in XvalidIndices:
+        Xvalid[index] = 0
     #we set up parameter search space here to look up
     params = Dict()
-    params.C = [.1, .2, .4, .8, 1.6, 3.2, 6.4, 12.8]
-    params.tol = [(10**-4), 5*(10**-3), (10**-3), 5*(10**-2), .01]
+    params.C = [ .4, .8, 1.6, 3.2, 6.4]
+    params.tol = [(10**-4), (10**-3), .01]
     polyParams = Dict(params) #copy to a new dict to avoid testing param sets that are the same
     params.kernel = ["linear", "rbf", "sigmoid"]
-    params.gamma = ["auto", .001, .005, .01, .05, .1]
+    params.gamma = ["auto", .001, .01,  .1]
     polyParams.kernel = ["poly"]
-    polyParams.degree = [1, 2, 3, 4, 5, 6, 10, 20]
+    polyParams.degree = [1, 2, 3, 4, 5]
     polyParams.coef0 = [0, 1, 5, -1, -5]
     svm = sklearn.svm.SVC()
-    gridSearcher = modSel.GridSearchCV(svm, [params, polyParams], n_jobs=3)
+    predef_split = modSel.PredefinedSplit(Xvalid)
+    gridSearcher = modSel.GridSearchCV(svm, [params, polyParams], n_jobs=10, cv=predef_split)
     gridSearcher.fit(Xtrain, Ytrain)
     bestPredictor = gridSearcher.best_estimator_
     bestPredictor.fit(Xtrain, Ytrain)
