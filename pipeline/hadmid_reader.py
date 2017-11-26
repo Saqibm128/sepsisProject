@@ -6,10 +6,11 @@ from addict import Dict
 
 class Hadm_Id_Reader():
 
-    def __init__(self, hadm_dir, file_name="episode_timeseries.csv", variable_ranges="preprocessing/resources/variable_ranges.csv"):
+    def __init__(self, hadm_dir, file_name="episode_timeseries.csv", vars_to_keep=None, variable_ranges="preprocessing/resources/variable_ranges.csv"):
         '''
         :param hadm_dir the directory where each folder holding hadm_id data is located
         :param file_name the name of the file inside each directory that holds data
+        :param vars_to_keep list of all variables to keep, if None use all variables given
         :param variable_ranges the file which holds key info on variables and the mapping to mean values for imputing completely
                                 missing data
         '''
@@ -19,6 +20,7 @@ class Hadm_Id_Reader():
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)
+        self.__vars_to_keep = vars_to_keep
     def __convert_timeseries_to_features(self, timeseries):
         '''
         A simple method to convert timeseries data into a format which can be taken
@@ -42,6 +44,8 @@ class Hadm_Id_Reader():
         :return a traditional feature vector
         '''
         ts = self.resample_fixed_length(hadm_id=hadm_id)
+        if ts is None:
+            return None;
         numericCols = []
         for col in ts.columns:
             if np.issubdtype(ts[col].dtype, np.number):
@@ -62,8 +66,9 @@ class Hadm_Id_Reader():
         for hadm_id in self.hadms:
             print(hadm_id)
             toAppend = (self.traditional_time_event_vector(hadm_id))
-            toReturn.append(toAppend.set_index(pd.Series([int(hadm_id)])))
-        toReturn = pd.concat(toReturn) #drop the nonnumeric columns due to inabilty to deal with mean()
+            if toAppend is not None:
+                toReturn.append(toAppend.set_index(pd.Series([int(hadm_id)])))
+        toReturn = pd.concat(toReturn)
         return toReturn
     def countEvents(self, hadm_id, endbound=None):
         '''
@@ -73,6 +78,8 @@ class Hadm_Id_Reader():
             all data from all time of the hospital admission is taken into account
         :return dataframe containing count of events for each feature
         '''
+        if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+            return None;
         data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
         if endbound is not None:
             data = data.loc[data.index <= endbound] #Exclude any data after the last end
@@ -89,7 +96,8 @@ class Hadm_Id_Reader():
                 print(i)
             i+=1
             eventCounts = self.countEvents(hadm_id, endbound=endbound)
-            toConcat.append(pd.DataFrame(eventCounts, index=[int(hadm_id)]))
+            if eventCounts is not None:
+                toConcat.append(pd.DataFrame(eventCounts, index=[int(hadm_id)]))
         return (pd.concat(toConcat))
     def avg(self, hadm_id, endbound = None):
         '''
@@ -99,13 +107,19 @@ class Hadm_Id_Reader():
             account data, if None dataframe is generated without end limit
         :param hadm_id hadm_id to apply this function to
         '''
-        data = self.__get_data(hadm_id, endbound=endbound)
+        if self.__vars_to_keep is None:
+            data = self.__get_data(hadm_id, endbound=endbound)
+        else:
+            data = self.__get_data(hadm_id, endbound=endbound)[self.__vars_to_keep]
+        if data is None:
+            return None;
         return data.mean()
     def getFullAvg(self, endbound = None):
         toReturn = {}
         for hadm_id in self.hadms:
             toAppend = (self.avg(hadm_id, endbound=endbound))
-            toReturn[int(hadm_id)] = (self.avg(hadm_id, endbound=endbound))
+            if toAppend is not None:
+                toReturn[int(hadm_id)] = (self.avg(hadm_id, endbound=endbound))
         toReturn = pd.DataFrame(toReturn).transpose().dropna(axis=1, how="any") #drop the nonnumeric columns due to inabilty to deal with mean()
         return toReturn
     def __get_data(self, hadm_id, endbound=None):
@@ -116,6 +130,8 @@ class Hadm_Id_Reader():
         :param endbound the last time, in hours, after first event to take into account data, if None no bound
         :return the preprocessed dataframe
         '''
+        if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+            return None;
         data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
         if endbound is not None:
             data = data.loc[data.index <= endbound] #Exclude any data after the last end
@@ -124,7 +140,8 @@ class Hadm_Id_Reader():
                 data = data.drop(var, axis=1)
                 continue
             if data[var].isnull().all():
-                data[var] = self.__ranges["IMPUTE"][var]
+                if self.__vars_to_keep is None or var in self.__vars_to_keep:
+                    data[var] = self.__ranges["IMPUTE"][var]
         return data
     def resample(self, hadm_id, timeUnit = 6):
         '''
@@ -136,16 +153,22 @@ class Hadm_Id_Reader():
         :param hadm_id the events of the correct hadm_id to sample
         :return the properly resampled df
         '''
+        if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+            return None;
         data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
         charttime = data["CHARTTIME"]
         data.set_index(pd.DatetimeIndex(charttime), inplace=True)
         data = data.resample(str(60 * timeUnit) + "T").mean() #https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
+        for var in self.__ranges.index:
+            if var not in data.columns:
+                data[var] = pd.Series(index=data.index).apply(lambda a: self.__ranges["IMPUTE"][var])
         for var in data.columns:
-            if var not in self.__ranges.index: #drop any index that isn't an actual variable in Ranges i.e. we cannot impute
+            if var not in self.__ranges.index: #drop any columns that isn't an actual variable in Ranges i.e. we cannot impute
                 data = data.drop(var, axis=1)
                 continue
             if data[var].isnull().all():
-                data[var] = data[var].fillna(self.__ranges["IMPUTE"][var]) # for variables that are completely missing, just use the imputed variable
+                if self.__vars_to_keep is None or var in self.__vars_to_keep:
+                    data[var] = data[var].fillna(self.__ranges["IMPUTE"][var]) # for variables that are completely missing, just use the imputed variable
         data = data.fillna(method="ffill") # Forward fill
         data = data.fillna(method="bfill") # any remaining NaN, fill with backfilling
 
@@ -153,7 +176,10 @@ class Hadm_Id_Reader():
         charttime = pd.Series(data.index)
         hours = charttime.apply(pd.Timestamp) - charttime.apply(pd.Timestamp).min()
         hours = hours.astype('timedelta64[s]')/60/60 # set it to hours
-        return data.set_index(hours).sort_index()
+        data = data.set_index(hours).sort_index()
+        if self.__vars_to_keep is not None:
+            data = data[self.__vars_to_keep]
+        return data
     def resample_fixed_length(self, hadm_id, total_time = 24, timeUnit = 6):
         '''
         This method is similar to resample but forward fills such that the resulting DataFrame
@@ -165,6 +191,8 @@ class Hadm_Id_Reader():
         :param total_time total hours the final df should span
         :return the properly resampled df of correct size
         '''
+        if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+            return None;
         data = self.resample(timeUnit=timeUnit, hadm_id = hadm_id)
         while (data.index.max() < total_time):
             data.loc[data.index.max() + timeUnit] = data.loc[data.index.max()]

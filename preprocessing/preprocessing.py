@@ -106,10 +106,9 @@ def read_variable_ranges(fn, variable_column='LEVEL2'):
     var_ranges = DataFrame.from_csv(fn, index_col=None)
     var_ranges = var_ranges[columns]
     var_ranges.rename_axis(to_rename, axis=1, inplace=True)
-    var_ranges = var_ranges.drop_duplicates(subset='VARIABLE', keep='first')
     var_ranges.loc[:,"VARIABLE"] = var_ranges["VARIABLE"].str.upper() # deal with capitalization issue
+    var_ranges = var_ranges.drop_duplicates(subset='VARIABLE', keep='first')
     var_ranges.set_index('VARIABLE', inplace=True)
-
     var_ranges.loc[:,['OUTLIER_LOW', 'VALID_LOW', 'IMPUTE', 'VALID_HIGH', 'OUTLIER_HIGH']] = var_ranges.loc[:,['OUTLIER_LOW', 'VALID_LOW', 'IMPUTE', 'VALID_HIGH', 'OUTLIER_HIGH']] .astype(np.number)
     return var_ranges.ix[var_ranges.notnull().all(axis=1)]
 

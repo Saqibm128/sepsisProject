@@ -16,7 +16,7 @@ subjects_root_path = "data/rawdatafiles/benchmarkData"
 var_map = preprocessing.read_itemid_to_variable_map(
     "preprocessing/resources/itemid_to_variable_map.csv")
 ranges = preprocessing.read_variable_ranges("preprocessing/resources/variable_ranges.csv")
-new_path = "data/rawdatafiles/byHadmID3"
+new_path = "data/rawdatafiles/byHadmID"
 variables = var_map.VARIABLE.unique()
 
 def read_events(subject_path, remove_null=True):
@@ -92,6 +92,12 @@ def add_hours_elapsed_to_events(events):
     return events
 
 def extract_multiple_subjects(subjects):
+    '''
+    This method uses the data retrieved from extract_subjects.py and segments based on
+    HADM_ID
+    :param subjects the list of subjects to apply towards
+    :postcondition writes to the new_path a directory structure containing hadm_id files
+    '''
     for subject in subjects:
         dn = os.path.join(subjects_root_path, subject)
         try:
@@ -132,6 +138,13 @@ def extract_multiple_subjects(subjects):
             print("finished:", hadm_id, subject_id)
 
 def extract_multiple_hadmids(hadmids):
+    '''
+    This file is work in progress attempt to replicate and move dependence away from extract_subjects.py
+    Specifically, it calls the database itself, instead of the results of extract_subjects.py
+    TODO: add age checking to explicitly exclude pediatric patients
+    :param hadmids a list of hospital admissions to call the database on
+    :postcondition creates directory structure at new_path that contains events partitioned by hadmid
+    '''
     print("beginning extraction", len(hadmids))
     for hadmid in hadmids:
         print(str(hadmid))
@@ -165,14 +178,25 @@ def extract_multiple_hadmids(hadmids):
 
 
 if __name__ == '__main__':
-    hadmids = commonDB.read_sql("SELECT HADM_ID from ADMISSIONS", uppercase=True)["HADM_ID"]
-    print("beginning to process", len(hadmids))
+    # hadmids = commonDB.read_sql("SELECT HADM_ID from ADMISSIONS", uppercase=True)["HADM_ID"]
+    # print("beginning to process", len(hadmids))
+    # num_process = 12
+    # for i in range(0, num_process):
+    #     portion = int(len(hadmids) / num_process)
+    #     if i != num_process - 1:
+    #         to_process = hadmids[portion * i: portion * (i + 1)]
+    #     else:
+    #         to_process = hadmids[portion * i:]
+    #     p = Process(target=extract_multiple_hadmids, args=(to_process,))
+    #     p.start()
+    subject_ids = os.listdir(subjects_root_path)
+    print("beginning to process", len(subject_ids))
     num_process = 12
     for i in range(0, num_process):
-        portion = int(len(hadmids) / num_process)
+        portion = int(len(subject_ids) / num_process)
         if i != num_process - 1:
-            to_process = hadmids[portion * i: portion * (i + 1)]
+            to_process = subject_ids[portion * i: portion * (i + 1)]
         else:
-            to_process = hadmids[portion * i:]
-        p = Process(target=extract_multiple_hadmids, args=(to_process,))
+            to_process = subject_ids[portion * i:]
+        p = Process(target=extract_multiple_subjects, args=(to_process,))
         p.start()

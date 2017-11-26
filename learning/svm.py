@@ -27,7 +27,7 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     #we set up parameter search space here to look up
     params = Dict()
     params.C = [ .4, .8, 1.6, 3.2, 6.4]
-    params.tol = [(10**-4), (10**-3), .01]
+    params.tol = [.01] # to make it easier to converge
     polyParams = Dict(params) #copy to a new dict to avoid testing param sets that are the same
     params.kernel = ["linear", "rbf", "sigmoid"]
     params.gamma = ["auto", .001, .01,  .1]
