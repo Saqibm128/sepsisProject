@@ -61,6 +61,17 @@ class Hadm_Id_Reader():
         delta = pd.DataFrame(delta).set_index(deltaInd).transpose()
         vec = self.__convert_timeseries_to_features(ts)
         return pd.concat([vec, var_std, delta], axis=1)
+    def populate_all_hadms(self):
+        '''
+        This function goes through and writes a copy of the final data time by features matrix
+        from the end of the pipeline to file for each hospital admission
+        '''
+        for hadm_id in self.hadms:
+            if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+                continue;
+            (data, _) = self.resample_fixed_length(hadm_id)
+            data.to_csv(os.path.join(self.hadm_dir, hadm_id, "processed.csv"))
+            
     def traditional_time_event_matrix(self):
         toReturn = []
         for hadm_id in self.hadms:
@@ -76,7 +87,7 @@ class Hadm_Id_Reader():
         :param hadm_id the hospital admission to apply this method to
         :param endbound the last time, in hours, to take into account data; if None
             all data from all time of the hospital admission is taken into account
-        :return dataframe containing count of events for each feature
+        :return dataframe containing count of events for each feature or None if the hadm_id is not found
         '''
         if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
             return None;
@@ -99,6 +110,17 @@ class Hadm_Id_Reader():
             if eventCounts is not None:
                 toConcat.append(pd.DataFrame(eventCounts, index=[int(hadm_id)]))
         return (pd.concat(toConcat))
+    def countAllImputedWindows(self):
+        '''
+        This method counts the number of 6 hour windows imputed for each variable
+        '''
+        toConcat = []
+        for hadm_id in self.hadms:
+            if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+                continue;
+            (_, missingData) = self.resample_fixed_length(hadm_id)
+            toConcat.append(missingData)
+        return pd.concat(toConcat)
     def avg(self, hadm_id, endbound = None):
         '''
         This method provides no analysis over time and instead only provides the average
@@ -155,6 +177,7 @@ class Hadm_Id_Reader():
         '''
         if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
             return None;
+
         data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
         charttime = data["CHARTTIME"]
         data.set_index(pd.DatetimeIndex(charttime), inplace=True)
@@ -162,10 +185,16 @@ class Hadm_Id_Reader():
         for var in self.__ranges.index:
             if var not in data.columns:
                 data[var] = pd.Series(index=data.index).apply(lambda a: self.__ranges["IMPUTE"][var])
+        missingData = pd.DataFrame(columns=data.columns, index=[hadm_id])
         for var in data.columns:
             if var not in self.__ranges.index: #drop any columns that isn't an actual variable in Ranges i.e. we cannot impute
                 data = data.drop(var, axis=1)
+                try:
+                    missingData = missingData.drop(var, axis=1)
+                except:
+                    print("Hack") #TODO: make a better way to count 6 hour windows imputed?
                 continue
+            missingData.loc[hadm_id, var] = data[var].isnull().sum() #Hack for now TODO: fix this
             if data[var].isnull().all():
                 if self.__vars_to_keep is None or var in self.__vars_to_keep:
                     data[var] = data[var].fillna(self.__ranges["IMPUTE"][var]) # for variables that are completely missing, just use the imputed variable
@@ -179,7 +208,7 @@ class Hadm_Id_Reader():
         data = data.set_index(hours).sort_index()
         if self.__vars_to_keep is not None:
             data = data[self.__vars_to_keep]
-        return data
+        return (data, missingData)
     def resample_fixed_length(self, hadm_id, total_time = 24, timeUnit = 6):
         '''
         This method is similar to resample but forward fills such that the resulting DataFrame
@@ -193,10 +222,10 @@ class Hadm_Id_Reader():
         '''
         if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
             return None;
-        data = self.resample(timeUnit=timeUnit, hadm_id = hadm_id)
+        (data, missingData) = self.resample(timeUnit=timeUnit, hadm_id = hadm_id)
         while (data.index.max() < total_time):
             data.loc[data.index.max() + timeUnit] = data.loc[data.index.max()]
-        return data.loc[data.index <= total_time]
+        return (data.loc[data.index <= total_time], missingData)
 
     def next_hadm():
         '''

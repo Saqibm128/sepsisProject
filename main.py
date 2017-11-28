@@ -17,30 +17,31 @@ print("beginning to read all files in")
 reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID/")
 # testTrainSet = reader.getFullAvg()
 #
-# testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID/full_data_matrix.csv")
-# classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
-testTrainSet = reader.traditional_time_event_matrix()
-testTrainSet.to_csv("./data/rawdatafiles/byHadmID/full_data_matrix.csv")
-testTrainSet["angus"] = classified["angus"][testTrainSet.index]
-testTrainSet.to_csv("./data/rawdatafiles/byHadmID/full_data_matrix_with_angus.csv")
-print("beginning logReg grid search")
-result = logReg.test_train_validation(testTrainSet)
-
-print(result.best_score)
-cv_results = pd.DataFrame(result.cv_results)
-cv_results.to_csv("data/rawdatafiles/byHadmID/full_data_lr_cv_results.csv")
-
-fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
-fullScores.to_csv("data/rawdatafiles/byHadmID/full_data_lr_full_scores.csv")
-# print("beginning svm gridsearch")
-# result = learning.svm.test_train_validation(testTrainSet)
+testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID/full_data_matrix.csv")
+classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
+# testTrainSet = reader.traditional_time_event_matrix()
+# testTrainSet.to_csv("./data/rawdatafiles/byHadmID/full_data_matrix.csv")
+# testTrainSet["angus"] = classified["angus"][testTrainSet.index]
+# testTrainSet.to_csv("./data/rawdatafiles/byHadmID/full_data_matrix_with_angus.csv")
+testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID/full_data_matrix_with_angus.csv")
+# print("beginning logReg grid search")
+# result = logReg.test_train_validation(testTrainSet)
 
 # print(result.best_score)
 # cv_results = pd.DataFrame(result.cv_results)
-# cv_results.to_csv("data/rawdatafiles/svm_cv_results.csv")
-#
+# cv_results.to_csv("data/rawdatafiles/byHadmID/full_data_lr_cv_results.csv")
+
 # fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
-# fullScores.to_csv("data/rawdatafiles/svm_full_scores.csv")
+# fullScores.to_csv("data/rawdatafiles/byHadmID/full_data_lr_full_scores.csv")
+print("beginning svm gridsearch")
+result = learning.svm.test_train_validation(testTrainSet)
+
+print(result.best_score)
+cv_results = pd.DataFrame(result.cv_results)
+cv_results.to_csv("data/rawdatafiles/svm_cv_results.csv")
+
+fullScores = learning.util.test(trainTuple=result.trainTuple, testTuple=result.testTuple, predictor=result.predictor)
+fullScores.to_csv("data/rawdatafiles/svm_full_scores.csv")
 # data = wfutil.compareAdmitToWF()
 # data.to_csv("data/rawdatafiles/wfdetails.csv")
 

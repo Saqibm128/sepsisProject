@@ -34,7 +34,7 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     polyParams.kernel = ["poly"]
     polyParams.degree = [1, 2, 3, 4, 5]
     polyParams.coef0 = [0, 1, 5, -1, -5]
-    svm = sklearn.svm.SVC()
+    svm = sklearn.svm.SVC(cache_size=7000)
     predef_split = modSel.PredefinedSplit(Xvalid)
     gridSearcher = modSel.GridSearchCV(svm, [params, polyParams], n_jobs=10, cv=predef_split)
     gridSearcher.fit(Xtrain, Ytrain)
