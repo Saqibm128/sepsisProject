@@ -3,7 +3,7 @@ This project provides key tools for predicting the onset of sepsis in ICU patien
 
 # Key resources
 I found the MIMIC3 benchmark repo by the YerevaNN group to be very helpful.
-In fact, I used Significant portions of their scripts for my project.
+In fact, I used significant portions of their scripts for my project.
 
 ## Dependencies
 Use
@@ -18,10 +18,29 @@ conda install -f requirements.txt
 ```
 
 ## Structure
-dataCollect holds the scripts I used to develop the data collection process before I found
-the MIMIC3 benchmark repo
+commonDB.py holds multiple functions to access mimic3 sql db (general queries, etc.)
 
-## Building the dataset
+event_count.py is responsible for generating statistics for comparison of preprocessed and postprocessed input data
+
+categorization.py holds code for Angus criterion (sql script taken from MIMIC3 code repo https://github.com/MIT-LCP/mimic-code)
+
+dataCollect holds the scripts I used to develop the data collection process before I found
+the MIMIC3 benchmark repo (now deprecated)
+
+pipeline holds files to read timeseries that was segmented by hadmid into a directory structure
+
+learning holds machine learning gridsearch modules that depend on being passed dataframes with an "angus" columns
+the "angus" column is set as the Y while X is all other columns (TODO: generalize to other forms of data?)
+
+data holds sql scripts, some of which are preprocessed by python scripts before being send to mimic3 database
+
+readWaveform holds scripts in order to read waveform data.
+waveformUtil.py holds primarily scripts for reading data from the online server (very spotty service btw)
+waveform_reader.py is a work in progress to read data from qdqc:/data/mimic3wdb/matched
+
+## Building the dataset locally
 Use extract_subjects.py to gain access to the data partitioned by subjects.
 Afterwards, I partition events during a hospital admission using split_subjects_into_events.py.
 This cleans the data and fixes outliers.
+
+Use hadmid_reader to access timeseries of data.
