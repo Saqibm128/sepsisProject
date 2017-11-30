@@ -43,7 +43,7 @@ class Hadm_Id_Reader():
         :param hadm_id
         :return a traditional feature vector
         '''
-        ts = self.resample_fixed_length(hadm_id=hadm_id)
+        ts, _ = self.resample_fixed_length(hadm_id=hadm_id)
         if ts is None:
             return None;
         numericCols = []
@@ -71,10 +71,12 @@ class Hadm_Id_Reader():
                 continue;
             (data, _) = self.resample_fixed_length(hadm_id)
             data.to_csv(os.path.join(self.hadm_dir, hadm_id, "processed.csv"))
-            
+
     def traditional_time_event_matrix(self):
         toReturn = []
         for hadm_id in self.hadms:
+            if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+                continue;
             print(hadm_id)
             toAppend = (self.traditional_time_event_vector(hadm_id))
             if toAppend is not None:
@@ -103,6 +105,8 @@ class Hadm_Id_Reader():
         toConcat = []
         i = 0
         for hadm_id in self.hadms:
+            if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+                continue;
             if i % 100 == 0:
                 print(i)
             i+=1
