@@ -23,13 +23,15 @@ for var in high_level_vars:
     events = commonDB.read_sql("SELECT VALUE FROM CHARTEVENTS WHERE ITEMID in " + commonDB.convertListToSQL(itemids))
     events.columns = events.columns.str.upper()
     print(var)
+    todrop = []
     for irow in range(events.shape[0]):
         try:
             float(events.loc[irow, "VALUE"])
         except:
-            events = events.drop(irow)
+            todrop.append(irow)
+    events = events.drop(todrop)
     events["VALUE"] = events["VALUE"].astype(np.number)
-    for i in [0, .25, .5, .75, 1]:
+    for i in [0, .01, .02, .25, .5, .75, .98, .99, 1]:
         quantiles.loc[var, str(i)] = events["VALUE"].quantile(i)
     quantiles.loc[var, "number_of_events"] = events.shape[0]
 quantiles.to_csv("data/rawdatafiles/rawdata_distribution.csv")
@@ -45,6 +47,6 @@ fullProcessed = pd.concat(toConcat)
 variable_quantiles = pd.DataFrame()
 for col in fullProcessed:
     print(col)
-    for i in [0, .25, .5, .75, 1]:
+    for i in [0, .01, .02, .25, .5, .75, .98, .99, 1]:
         variable_quantiles.loc[i, col] = fullProcessed[col].quantile(i)
 variable_quantiles.to_csv("data/rawdatafiles/postprocessQuantiles.csv")

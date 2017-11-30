@@ -8,6 +8,7 @@ import datetime
 import commonDB
 import math
 import os
+import wfdb
 
 class Waveform_Reader():
 
@@ -32,4 +33,6 @@ class Waveform_Reader():
         files = os.listdir(os.path.join(self.file_path, subject_id[0:3], subject_id))
         return [f.split('.')[0] for f in files if f != "RECORDS" and "dat" in f]
 
-    def get_record():
+    def get_record(self, subject_id, record):
+        sig, fields = wfdb.srdsamp(os.path.join(self.file_path, subject_id[0:3], subject_id, record))
+        return sig, fields

@@ -254,7 +254,6 @@ def clean_events(events, ranges=None):
             print(("Exception in clean_events:", clean_fn.__name__))
             print(("number of rows:", np.sum(idx)))
             print(("values:", events.ix[idx]))
-            # raise BaseException
-        if ranges is not None:
-            events = remove_outliers_for_variable(events, var_name, ranges)
+            raise BaseException
+        events = remove_outliers_for_variable(events, var_name.upper(), ranges)
     return events

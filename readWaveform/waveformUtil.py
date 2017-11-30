@@ -10,6 +10,23 @@ import datetime
 import commonDB
 import math
 
+def preliminaryCompareTimesICU(num_days=1):
+    '''
+    This method is another sanity check method similar to preliminaryCompareTimes but uses ICUSTAYS instead of ADMISSIONS
+    '''
+    icustays = commonDB.read_sql("SELECT * FROM ICUSTAYS")
+    (subjects, times) = listAllMatchedWFSubjects()
+    matchedWF = pd.DataFrame({"subject_id":subjects, "wfStartTime": times}) #times is when the start of recording for each wf
+    matchedWF["subject_id"] = matchedWF["subject_id"].astype(np.number)
+    matchedWF["wfStartTime"] = matchedWF["wfStartTime"].apply(preliminaryCompareTimesHelper) #convert weird time format into useful data
+    admWfMerge = pd.merge(matchedWF, icustays, left_on="subject_id", right_on="subject_id")
+    admWfMerge["timeDiff"] = admWfMerge["wfStartTime"].subtract(admWfMerge["intime"])
+    admWfMerge = admWfMerge[(admWfMerge["timeDiff"] > pd.Timedelta(0))]
+    admWfMerge = admWfMerge[(admWfMerge["timeDiff"] < pd.Timedelta(str(num_days) + " days"))] #don't consider waveform older than 15 days
+    admWfMerge["rawTimeDiff"] = admWfMerge["timeDiff"].astype(np.int64)
+    print(pd.Timedelta(admWfMerge["timeDiff"].astype(np.int64).mean()))
+    return admWfMerge
+
 def preliminaryCompareTimes(num_days=1):
     '''
     This method is a sanity check method to compare the admittime of patients to the waveform start time.
