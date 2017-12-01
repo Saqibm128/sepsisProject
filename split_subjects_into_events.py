@@ -191,7 +191,7 @@ if __name__ == '__main__':
     #     p.start()
     subject_ids = os.listdir(subjects_root_path)
     print("beginning to process", len(subject_ids))
-    num_process = 12
+    num_process = 14
     for i in range(0, num_process):
         portion = int(len(subject_ids) / num_process)
         if i != num_process - 1:

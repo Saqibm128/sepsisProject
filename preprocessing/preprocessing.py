@@ -255,5 +255,5 @@ def clean_events(events, ranges=None):
             print(("number of rows:", np.sum(idx)))
             print(("values:", events.ix[idx]))
             raise BaseException
-        events = remove_outliers_for_variable(events, var_name.upper(), ranges)
+    events = remove_outliers_for_variable(events, var_name.upper(), ranges)
     return events
