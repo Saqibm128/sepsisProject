@@ -50,6 +50,9 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     '''
     Does a test, train, and validation split, uses cross validation on the validation split
     and returns the results based on the test split
+
+    Wrapper around gridsearch
+
     :param joinedDataframe a dataframe with the binary classifier having column of "angus"
     :param train_validation_size how to split between train set and test set and validation set
     :return a dictionary of results for each param combination, the best LogisticRegression estimator, and the score on the test set
@@ -58,6 +61,24 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     Y = joinedDataframe["angus"]
     #https://stackoverflow.com/questions/34842405/parameter-stratify-from-method-train-test-split-scikit-learn
     Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_size + validation_size, stratify = Y)
+    return gridsearch(Xtrain, Xtest, Ytrain, Ytest)
+
+def gridsearch(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1):
+    '''
+    Given a test, train split, does the validation split itself. Unlike test_train_validation,
+    needs to be given the explicit train and test split (for featureSelection to avoid info leak)
+    Does validation split itself based on Ytrain on the trainset
+
+    Wrapper around gridsearch
+
+    Returns the best model based on gridseraching as well as score of the best model on the test value
+    :param Xtrain the training feature vectors (instances)
+    :param Ytrain the training answers/classlabels
+    :param Xtest
+    :param Ytest
+    :param validation_size how to split
+    :return a dictionary of results for each param combination, the best estimator
+    '''
     XvalidIndices, _ = modSel.train_test_split(list(range(0, len(Xtrain))), train_size = validation_size, stratify = Ytrain)
     Xvalid = np.full(len(Xtrain), -1)
     for index in XvalidIndices:

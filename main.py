@@ -14,16 +14,16 @@ from preprocessing import preprocessing
 from pipeline.hadmid_reader import Hadm_Id_Reader
 
 print("beginning to read all files in")
-reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID/")
-# testTrainSet = reader.getFullAvg()
+reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID0/")
+testTrainSet = reader.getFullAvg()
 #
-testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID/full_data_matrix.csv")
+# testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID0/full_data_matrix.csv") ## cached copy
 classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
-testTrainSet = reader.traditional_time_event_matrix()
-testTrainSet.to_csv("./data/rawdatafiles/byHadmID/full_data_matrix.csv")
+# testTrainSet = reader.traditional_time_event_matrix()
+testTrainSet.to_csv("./data/rawdatafiles/byHadmID0/full_avg_matrix.csv") ## cached copy
 testTrainSet["angus"] = classified["angus"][testTrainSet.index]
-testTrainSet.to_csv("./data/rawdatafiles/byHadmID/full_data_matrix_with_angus.csv")
-testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID/full_data_matrix_with_angus.csv")
+testTrainSet.to_csv("./data/rawdatafiles/byHadmID0/full_data_matrix_with_angus.csv") ## caching some info
+# testTrainSet = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID0/full_data_matrix_with_angus.csv")
 print("beginning logReg grid search")
 result = logReg.test_train_validation(testTrainSet)
 
