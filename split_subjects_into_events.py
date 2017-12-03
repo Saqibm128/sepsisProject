@@ -16,7 +16,7 @@ subjects_root_path = "data/rawdatafiles/benchmarkData"
 var_map = preprocessing.read_itemid_to_variable_map(
     "preprocessing/resources/itemid_to_variable_map.csv")
 ranges = preprocessing.read_variable_ranges("preprocessing/resources/variable_ranges.csv")
-new_path = "data/rawdatafiles/byHadmID"
+new_path = "data/rawdatafiles/byHadmID0"
 variables = var_map.VARIABLE.unique()
 
 def read_events(subject_path, remove_null=True):
@@ -191,7 +191,7 @@ if __name__ == '__main__':
     #     p.start()
     subject_ids = os.listdir(subjects_root_path)
     print("beginning to process", len(subject_ids))
-    num_process = 14
+    num_process = 16
     for i in range(0, num_process):
         portion = int(len(subject_ids) / num_process)
         if i != num_process - 1:

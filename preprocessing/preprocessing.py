@@ -122,7 +122,7 @@ def remove_outliers_for_variable(events, variable, ranges):
     except:
         print(variable)
         traceback.print_exc()
-        # raise BaseException
+        raise BaseException
     V.loc[V < ranges.OUTLIER_LOW[variable]]  = np.nan
     V.loc[V > ranges.OUTLIER_HIGH[variable]] = np.nan
     V.loc[V < ranges.VALID_LOW[variable]]    = ranges.VALID_LOW[variable]
@@ -142,7 +142,7 @@ def val_as_num(v):
         try:
             float(v[i])
         except:
-            v[i] = np.NaN
+            v.loc[i] = np.NaN
     v = v.astype(np.number)
     return v;
 def clean_dbp(df):
@@ -255,5 +255,8 @@ def clean_events(events, ranges=None):
             print(("number of rows:", np.sum(idx)))
             print(("values:", events.ix[idx]))
             raise BaseException
-    events = remove_outliers_for_variable(events, var_name.upper(), ranges)
+    if ranges is not None:
+        for var in ranges.index:
+            events.loc[events["VARIABLE"] == var, "VALUE"] = val_as_num(events.loc[events["VARIABLE"] == var, "VALUE"])
+            events = remove_outliers_for_variable(events, str(var).upper(), ranges)
     return events

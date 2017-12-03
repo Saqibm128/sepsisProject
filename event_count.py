@@ -6,11 +6,11 @@ import os
 import numpy as np
 
 print("beginning to read all files in")
-reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID/")
+reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID0/")
 
-reader.countEventsPerHospitalAdmission().to_csv("data/rawdatafiles/byHadmID/countsByHadmid.csv")
-reader.traditional_time_event_matrix().to_csv("data/rawdatafiles/full_data_matrix.csv")
-reader.countAllImputedWindows().to_csv("data/rawdatafiles/byHadmID/impute_count.csv")
+reader.countEventsPerHospitalAdmission().to_csv("data/rawdatafiles/byHadmID0/countsByHadmid.csv")
+reader.traditional_time_event_matrix().to_csv("data/rawdatafiles/byHadmID0/full_data_matrix.csv")
+reader.countAllImputedWindows().to_csv("data/rawdatafiles/byHadmID0/impute_count.csv")
 reader.populate_all_hadms();
 
 mapping = preprocessing.read_itemid_to_variable_map("preprocessing/resources/itemid_to_variable_map.csv")
@@ -31,10 +31,10 @@ for var in high_level_vars:
             todrop.append(irow)
     events = events.drop(todrop)
     events["VALUE"] = events["VALUE"].astype(np.number)
-    for i in [0, .01, .02, .25, .5, .75, .98, .99, 1]:
+    for i in [0, .0001, .01, .02, .25, .5, .75, .98, .99, .9999, 1]:
         quantiles.loc[var, str(i)] = events["VALUE"].quantile(i)
     quantiles.loc[var, "number_of_events"] = events.shape[0]
-quantiles.to_csv("data/rawdatafiles/rawdata_distribution.csv")
+quantiles.to_csv("data/rawdatafiles/byHadmID0/rawdata_distribution.csv")
 
 toConcat = []
 for hadm_id in reader.hadms:
@@ -49,4 +49,4 @@ for col in fullProcessed:
     print(col)
     for i in [0, .01, .02, .25, .5, .75, .98, .99, 1]:
         variable_quantiles.loc[i, col] = fullProcessed[col].quantile(i)
-variable_quantiles.to_csv("data/rawdatafiles/postprocessQuantiles.csv")
+variable_quantiles.to_csv("data/rawdatafiles/byHadmID0/postprocessQuantiles.csv")
