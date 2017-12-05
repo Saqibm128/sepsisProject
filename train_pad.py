@@ -60,6 +60,17 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
+class MIMIC3Dataset(Dataset):
+    def __init__(self, hadm_dir, hadm_file_name):
+        """
+        :param hadm_dir the directory where the hospital admission files are stored
+        :param hadm_file_name the name of each admission file
+        """
+        self.reader =
+    def __len__(self):
+
+    def __getitem__(self):
+
 class PhysionetChallengeDataset(Dataset):
     """Physionet Challenge 2017 dataset."""
 
@@ -394,13 +405,3 @@ for train_index, valid_index in sss.split(train_plus_set['data'], train_plus_set
 
 best_model = torch.load(str(args.folder) + str(args.model) +'_' + str(args.model_num)  + '.pt')
 evaluate(best_model, split='test', verbose=True)
-
-
-
-
-
-
-
-
-
-

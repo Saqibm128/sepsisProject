@@ -15,6 +15,7 @@ import numpy
 from preprocessing import preprocessing
 from pipeline.hadmid_reader import Hadm_Id_Reader
 import sklearn.model_selection
+from sklearn.preprocessing import MinMaxScaler
 
 print("beginning to read all files in")
 reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID0/")
