@@ -3,10 +3,13 @@ import numpy as np
 import os
 from preprocessing.preprocessing import read_variable_ranges
 from addict import Dict
+from multiprocessing import Process
+from multiprocessing import Queue
+from multiprocessing import Manager
 
 class Hadm_Id_Reader():
 
-    def __init__(self, hadm_dir, file_name="episode_timeseries.csv", vars_to_keep=None, variable_ranges="preprocessing/resources/variable_ranges.csv"):
+    def __init__(self, hadm_dir, file_name="episode_timeseries.csv", variable_ranges="preprocessing/resources/variable_ranges.csv"):
         '''
         :param hadm_dir the directory where each folder holding hadm_id data is located
         :param file_name the name of the file inside each directory that holds data
@@ -16,11 +19,14 @@ class Hadm_Id_Reader():
         '''
         self.hadm_dir = hadm_dir
         self.file_name = file_name
-        self.hadms = os.listdir(os.path.join(hadm_dir))
+        ## Because I save some results in hadm directory (bad decision), I check to see we don't add results into here
+        self.hadms = [hadmid for hadmid in os.listdir(os.path.join(hadm_dir)) if os.path.exists(os.path.join(self.hadm_dir, hadmid, self.file_name))]
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)
-        self.__vars_to_keep = vars_to_keep
+        self.__vars_to_keep = self.__ranges.index ## keep originally all variables that have imputed vals
+        self.__n_workers = 1
+        self.manager = Manager()
     def __convert_timeseries_to_features(self, timeseries):
         '''
         A simple method to convert timeseries data into a format which can be taken
@@ -35,15 +41,32 @@ class Hadm_Id_Reader():
             for col in timeseries.columns:
                 toReturn.loc[0, str(col) + ", " + str(hour)] = timeseries.loc[hour, col]
         return toReturn
-    def traditional_time_event_vector(self, hadm_id):
+    def use_multiprocessing(self, num_process):
+        '''
+        TODO implement this?
+        :num_process how many processes to use to read and process data
+        '''
+        self.__n_workers = num_process
+    def set_features(self, features):
+        '''
+        Sets the variables, in case of feature selection, to keep in processed dataset
+        :precondition all feature in features has impute value available in variable_ranges
+        :param features to keep in processed data returned by hadmid_reader
+        :postcondition should include only features from this vector/arraylike passed in
+        '''
+        self.__vars_to_keep = features
+    def traditional_time_event_vector(self, hadm_id, include_var=False, total_time=24, time_unit=6):
         '''
         Preprocess a single hadm_id for analysis with a traditional ML technique
         include some hand engineered features, such as standard deviation of features
         as well as change over time of features
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param total_time total hours the final df should span
         :param hadm_id
+        :param include_var include variance from within each 6 hour bin
         :return a traditional feature vector
         '''
-        ts, _ = self.resample_fixed_length(hadm_id=hadm_id)
+        ts, _ = self.resample_fixed_length(hadm_id=hadm_id, include_var=include_var, total_time=24, time_unit=6)
         if ts is None:
             return None;
         numericCols = []
@@ -60,7 +83,9 @@ class Hadm_Id_Reader():
         deltaInd = pd.Series(delta.index).apply(lambda s: s + " DELTA")
         delta = pd.DataFrame(delta).set_index(deltaInd).transpose()
         vec = self.__convert_timeseries_to_features(ts)
-        return pd.concat([vec, var_std, delta], axis=1)
+        toReturn = pd.concat([vec, var_std, delta], axis=1)
+        toReturn.index=[int(hadm_id)]
+        return toReturn
     def populate_all_hadms(self):
         '''
         This function goes through and writes a copy of the final data time by features matrix
@@ -71,18 +96,44 @@ class Hadm_Id_Reader():
                 continue;
             (data, _) = self.resample_fixed_length(hadm_id)
             data.to_csv(os.path.join(self.hadm_dir, hadm_id, "processed.csv"))
+    def traditional_time_event_matrix_helper(self, toRun, toReturn, include_var=False, total_time=24, time_unit=6):
+        '''
+        A helper method to run through all of the hadms, primarily for multiprocessing needs
+        used for parallelism
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param total_time total hours the final df should span
+        :param toRun a queue of hadmid followed by None to stop this process
+        :param to return a queue to post result
 
-    def traditional_time_event_matrix(self):
-        toReturn = []
-        for hadm_id in self.hadms:
-            if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
-                continue;
-            print(hadm_id)
-            toAppend = (self.traditional_time_event_vector(hadm_id))
-            if toAppend is not None:
-                toReturn.append(toAppend.set_index(pd.Series([int(hadm_id)])))
-        toReturn = pd.concat(toReturn)
-        return toReturn
+        '''
+        for hadm in iter(toRun.get, None): #https://stackoverflow.com/questions/6672525/multiprocessing-queue-in-python
+            toReturn.put(self.traditional_time_event_vector(hadm, include_var=include_var, total_time=total_time, time_unit=time_unit))
+        return
+    def traditional_time_event_matrix(self, include_var=False, total_time=24, time_unit=6):
+        '''
+        This function returns the time event matrix, resampled currently for 24 hours with 6 hour periods,
+        in a format such that each row is one hadmid, and columns are 'pseudofeatures' ie features with time bins
+
+        If use_multiprocessing was used, the hadmids will be read
+
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param total_time total hours the final df should span
+        :param include_var include variance from within each 6 hour bin
+        :return a properly formatted a matrix
+        '''
+        toReturn = self.manager.Queue()
+        toRun = self.manager.Queue()
+        [toRun.put(hadm) for hadm in self.hadms]
+        [toRun.put(None) for i in range(self.__n_workers)]
+        running = [Process(target=self.traditional_time_event_matrix_helper, args=(toRun, toReturn, include_var, total_time, time_unit)) for i in range(self.__n_workers)]
+        [runner.start() for runner in running]
+        [runner.join() for runner in running]
+        toConcat = []
+        toConcatIndex = []
+        while not toReturn.empty():
+            df = toReturn.get()
+            toConcat.append(df)
+        return pd.concat(toConcat)
     def countEvents(self, hadm_id, endbound=None):
         '''
         This method provides the counts of events for a certain hadm_id for each variable
@@ -140,13 +191,27 @@ class Hadm_Id_Reader():
         if data is None:
             return None;
         return data.mean()
+    def getFullAvgHelper(self, toRun, toReturn, idnum):
+        '''
+        Helper method for use_multiprocessing
+        :toRun queue that holds hadm, endbound, then None to signify end
+        :toReturn to put tuple of hadmid, and average vector in
+        '''
+        for hadm_id, endbound in iter(toRun.get, None):
+            toReturn.put((hadm_id, self.avg(hadm_id, endbound=endbound)))
     def getFullAvg(self, endbound = None):
-        toReturn = {}
-        for hadm_id in self.hadms:
-            toAppend = (self.avg(hadm_id, endbound=endbound))
-            if toAppend is not None:
-                toReturn[int(hadm_id)] = (self.avg(hadm_id, endbound=endbound))
-        toReturn = pd.DataFrame(toReturn).transpose().dropna(axis=1, how="any") #drop the nonnumeric columns due to inabilty to deal with mean()
+        toReturn = self.manager.Queue()
+        toRun = self.manager.Queue()
+        [toRun.put((hadm_id, endbound)) for hadm_id in self.hadms]
+        [toRun.put(None) for i in range(self.__n_workers)]
+        runners = [Process(target=self.getFullAvgHelper, args=(toRun, toReturn, i)) for i in range(self.__n_workers)]
+        [runner.start() for runner in runners]
+        [runner.join() for runner in runners]
+        hadmDict = Dict()
+        while not toReturn.empty():
+            hadm_id, avgVect = (toReturn.get())
+            hadmDict[int(hadm_id)] = avgVect
+        toReturn = pd.DataFrame(hadmDict).transpose().dropna(axis=1, how="any") #drop the nonnumeric columns due to inabilty to deal with mean()
         return toReturn
     def __get_data(self, hadm_id, endbound=None):
         '''
@@ -162,21 +227,22 @@ class Hadm_Id_Reader():
         if endbound is not None:
             data = data.loc[data.index <= endbound] #Exclude any data after the last end
         for var in data.columns:
-            if var not in self.__ranges.index:
+            if var not in self.__vars_to_keep:
                 data = data.drop(var, axis=1)
                 continue
             if data[var].isnull().all():
                 if self.__vars_to_keep is None or var in self.__vars_to_keep:
                     data[var] = self.__ranges["IMPUTE"][var]
         return data
-    def resample(self, hadm_id, timeUnit = 6):
+    def resample(self, hadm_id, time_unit = 6, include_var = False):
         '''
         This method provides the correct dataframe for an object which corresponds to the
         properly filled out df. The DF will be forwardfilled, unless if there is no value to use,
         in which case the value is backfilled. If the data is entirely missing, we should use
         physiologically appropriate data
-        :param timeUnit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
         :param hadm_id the events of the correct hadm_id to sample
+        :param include_var whether or not to include the variance within the bin
         :return the properly resampled df
         '''
         if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
@@ -185,23 +251,27 @@ class Hadm_Id_Reader():
         data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
         charttime = data["CHARTTIME"]
         data.set_index(pd.DatetimeIndex(charttime), inplace=True)
-        data = data.resample(str(60 * timeUnit) + "T").mean() #https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
-        for var in self.__ranges.index:
+        data = data.resample(str(60 * time_unit) + "T").mean() #https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
+        for var in self.__vars_to_keep:
             if var not in data.columns:
                 data[var] = pd.Series(index=data.index).apply(lambda a: self.__ranges["IMPUTE"][var])
         missingData = pd.DataFrame(columns=data.columns, index=[hadm_id])
         for var in data.columns:
-            if var not in self.__ranges.index: #drop any columns that isn't an actual variable in Ranges i.e. we cannot impute
+            if var not in self.__vars_to_keep: #drop any columns that isn't an actual variable in Ranges i.e. we cannot impute
                 data = data.drop(var, axis=1)
                 try:
                     missingData = missingData.drop(var, axis=1)
                 except:
-                    print("Hack") #TODO: make a better way to count 6 hour windows imputed?
+                    print("Could not drop variable") #TODO: make a better way to count 6 hour windows imputed?
                 continue
             missingData.loc[hadm_id, var] = data[var].isnull().sum() #Hack for now TODO: fix this
             if data[var].isnull().all():
                 if self.__vars_to_keep is None or var in self.__vars_to_keep:
                     data[var] = data[var].fillna(self.__ranges["IMPUTE"][var]) # for variables that are completely missing, just use the imputed variable
+        if include_var:
+            data_stdev = data.resample(str(60 * time_unit) + "T").std()
+            data_stdev = data_stdev.rename(columns=lambda s: str(s) + " stdev")
+            data = pd.concat([data, data_stdev], axis=1, verify_integrity=True)
         data = data.fillna(method="ffill") # Forward fill
         data = data.fillna(method="bfill") # any remaining NaN, fill with backfilling
 
@@ -213,22 +283,23 @@ class Hadm_Id_Reader():
         if self.__vars_to_keep is not None:
             data = data[self.__vars_to_keep]
         return (data, missingData)
-    def resample_fixed_length(self, hadm_id, total_time = 24, timeUnit = 6):
+    def resample_fixed_length(self, hadm_id, total_time = 24, time_unit = 6, include_var=False):
         '''
         This method is similar to resample but forward fills such that the resulting DataFrame
         is as long as the total_time parameter given ie if an admission had events spanning
         only 12 hours, this method extends the last 12 using the last observed values of previous
         12 hours
-        :param timeUnit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
         :param hadm_id the events of the correct hadm_id to sample
         :param total_time total hours the final df should span
+        :param include_var include variance from within each 6 hour bin
         :return the properly resampled df of correct size
         '''
         if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
             return None;
-        (data, missingData) = self.resample(timeUnit=timeUnit, hadm_id = hadm_id)
+        (data, missingData) = self.resample(time_unit=time_unit, hadm_id = hadm_id, include_var=include_var)
         while (data.index.max() < total_time):
-            data.loc[data.index.max() + timeUnit] = data.loc[data.index.max()]
+            data.loc[data.index.max() + time_unit] = data.loc[data.index.max()]
         return (data.loc[data.index <= total_time], missingData)
 
     def next_hadm():
