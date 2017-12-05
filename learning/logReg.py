@@ -61,15 +61,15 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     Y = joinedDataframe["angus"]
     #https://stackoverflow.com/questions/34842405/parameter-stratify-from-method-train-test-split-scikit-learn
     Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_size + validation_size, stratify = Y)
-    return gridsearch(Xtrain, Xtest, Ytrain, Ytest)
+    return test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest)
 
-def gridsearch(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1):
+def test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1, n_jobs=2):
     '''
     Given a test, train split, does the validation split itself. Unlike test_train_validation,
     needs to be given the explicit train and test split (for featureSelection to avoid info leak)
     Does validation split itself based on Ytrain on the trainset
 
-    Wrapper around gridsearch
+    Wrapper around util.gridsearchCV which itself wraps around sklearn.gridsearchCV
 
     Returns the best model based on gridseraching as well as score of the best model on the test value
     :param Xtrain the training feature vectors (instances)
@@ -79,26 +79,12 @@ def gridsearch(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1):
     :param validation_size how to split
     :return a dictionary of results for each param combination, the best estimator
     '''
-    XvalidIndices, _ = modSel.train_test_split(list(range(0, len(Xtrain))), train_size = validation_size, stratify = Ytrain)
-    Xvalid = np.full(len(Xtrain), -1)
-    for index in XvalidIndices:
-        Xvalid[index] = 0
     #we set up parameter search space here to look up
     params = Dict()
-    params.tol = np.arange(10 ** -4, 10 ** -3, 10** -4)
+    params.tol = [.001, .0001]
     params.solver = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     params.penalty = ['l2']
+    params.n_jobs = [1]
     params.C = [.1, .2, .4, .8, 1.6, 3.2, 6.4]
     logReg = linMod.LogisticRegression();
-
-    predef_split = modSel.PredefinedSplit(Xvalid)
-    gridSearcher = modSel.GridSearchCV(logReg, params, n_jobs=1, cv=predef_split)
-    gridSearcher.fit(Xtrain, Ytrain)
-    bestLogReg = gridSearcher.best_estimator_
-    bestLogReg.fit(Xtrain, Ytrain)
-    score = bestLogReg.score(Xtest, Ytest)
-    return Dict({"cv_results": gridSearcher.cv_results_, \
-            "predictor":bestLogReg, \
-            "best_score":score, \
-            "testTuple": (Xtest, Ytest), \
-            "trainTuple": (Xtrain, Ytrain)})
+    return util.gridsearch_CV_wrapper(params, logReg, Xtrain, Ytrain, Xtest, Ytest, validation_size, n_jobs=n_jobs)

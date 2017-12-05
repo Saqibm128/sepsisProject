@@ -1,24 +1,32 @@
 '''
-alters through a self
-Provides verification of the location of waveform data's start time and if it falls within the first 24 hours of the hospital admission
+This script provides key preliminary analysis on data to ensure some of the assumptions we make actually works
+It provides analysis on the two or more itemids for 1 variable problem, as well as
+providing verification of the location of waveform data's start time and if it falls within the first 24 hours of the hospital admission
 '''
 import pandas as pd
+import numpy as np
 import commonDB
 from readWaveform import waveformUtil as wfutil
+import sklearn.feature_selection
 
 # wfutil.preliminaryCompareTimes().to_csv("data/rawdatafiles/comparedTimes.csv")
-labelDF = pd.read_csv("preprocessing/resources/itemid_to_variable_map_only_labeled.csv")
-countsDF = pd.read_csv("data/rawdatafiles/counts.csv")
-countsDF.columns = countsDF.columns.str.upper()
-mergedDF = labelDF.merge(countsDF, left_on="ITEMID", right_on="ITEMID")
-for variable in mergedDF["LEVEL2"]:
-    idx = (mergedDF["LEVEL2"] == variable)
-    totalCount = mergedDF["COUNTPERADMISSION"][idx].sum()
-    firstRow = mergedDF[idx]
-    firstRow["COUNTPERADMISSION"] = totalCount
-    mergedDF = mergedDF[mergedDF["LEVEL2"] != variable]
-    mergedDF.append(firstRow)
-mergedDF.to_csv("data/rawdatafiles/mergedCountsLabel.csv")
+
+def countCheck2():
+    '''
+    This function provides analysis on counts between itemids map and the counts that were cached already
+    '''
+    labelDF = pd.read_csv("preprocessing/resources/itemid_to_variable_map_only_labeled.csv")
+    countsDF = pd.read_csv("data/rawdatafiles/counts.csv")
+    countsDF.columns = countsDF.columns.str.upper()
+    mergedDF = labelDF.merge(countsDF, left_on="ITEMID", right_on="ITEMID")
+    for variable in mergedDF["LEVEL2"]:
+        idx = (mergedDF["LEVEL2"] == variable)
+        totalCount = mergedDF["COUNTPERADMISSION"][idx].sum()
+        firstRow = mergedDF[idx]
+        firstRow["COUNTPERADMISSION"] = totalCount
+        mergedDF = mergedDF[mergedDF["LEVEL2"] != variable]
+        mergedDF.append(firstRow)
+    mergedDF.to_csv("data/rawdatafiles/mergedCountsLabel.csv")
 
 def selfJoinFix(data):
     '''
@@ -40,5 +48,14 @@ def selfJoinFix(data):
     return selfJoin
 
 
-selfJoin = selfJoinFix("data/rawdatafiles/counts.csv")
-selfJoin.to_csv("data/rawdatafiles/selfCounts.csv")
+
+# selfJoin = selfJoinFix("data/rawdatafiles/counts.csv")
+# selfJoin.to_csv("data/rawdatafiles/selfCounts.csv")
+X = pd.DataFrame.from_csv("./data/rawdatafiles/byHadmID0/full_avg_matrix.csv")
+Y = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")["angus"][X.index]
+
+(chi2, pval) = sklearn.feature_selection.chi2(X, Y)
+features = pd.DataFrame(index=X.columns)
+features['chi2'] = pd.Series(chi2, index=X.columns)
+features['pval'] = pd.Series(pval, index=X.columns)
+features.to_csv("data/rawdatafiles/features.csv")
