@@ -63,7 +63,7 @@ def test_train_validation(joinedDataframe, train_size = .8, validation_size=.1):
     Xtrain, Xtest, Ytrain, Ytest = modSel.train_test_split(X, Y, train_size = train_size + validation_size, stratify = Y)
     return test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest)
 
-def test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1, n_jobs=2):
+def test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1, n_jobs=1):
     '''
     Given a test, train split, does the validation split itself. Unlike test_train_validation,
     needs to be given the explicit train and test split (for featureSelection to avoid info leak)
@@ -81,7 +81,7 @@ def test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1, 
     '''
     #we set up parameter search space here to look up
     params = Dict()
-    params.tol = [.001, .0001]
+    params.tol = [.001, .0001, .00001]
     params.solver = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     params.penalty = ['l2']
     params.n_jobs = [1]

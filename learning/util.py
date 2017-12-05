@@ -28,7 +28,7 @@ def test(trainTuple, testTuple, predictor=None, name=0):
     scores.loc[name, "recall"] = sklearn.metrics.recall_score(Ytest, Ypred)
     return scores
 
-def gridsearch_CV_wrapper(params, model, Xtrain, Ytrain, Xtest, Ytest, validation_size=.1, n_jobs=5):
+def gridsearch_CV_wrapper(params, model, Xtrain, Ytrain, Xtest, Ytest, validation_size=.1, n_jobs=1):
     '''
     Wrapper around gridsearch
     '''
@@ -37,7 +37,7 @@ def gridsearch_CV_wrapper(params, model, Xtrain, Ytrain, Xtest, Ytest, validatio
     for index in XvalidIndices:
         Xvalid[index] = 0
     predef_split = modSel.PredefinedSplit(Xvalid)
-    gridSearcher = modSel.GridSearchCV(model, params, n_jobs=5, cv=predef_split)
+    gridSearcher = modSel.GridSearchCV(model, params, n_jobs=n_jobs, cv=predef_split)
     gridSearcher.fit(Xtrain, Ytrain)
     bestLogReg = gridSearcher.best_estimator_
     bestLogReg.fit(Xtrain, Ytrain)

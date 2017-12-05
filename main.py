@@ -18,7 +18,7 @@ import sklearn.model_selection
 
 print("beginning to read all files in")
 reader = Hadm_Id_Reader("./data/rawdatafiles/byHadmID0/")
-reader.use_multiprocessing(12)
+reader.use_multiprocessing(6)
 testTrainSet = reader.getFullAvg(endbound=24)
 testTrainSet.to_csv("./data/rawdatafiles/byHadmID0/avg_data.csv") #cached copy
 classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
