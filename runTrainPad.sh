@@ -1,0 +1,9 @@
+nice python train_pad.py --model LSTM --model-num LSTM1Layer10H --num-rnn-layers 1 --hidden-dim 10
+nice python train_pad.py --model LSTM --model-num LSTM1Layer50H --num-rnn-layers 1 --hidden-dim 50
+nice python train_pad.py --model LSTM --model-num LSTM1Layer100H --num-rnn-layers 1 --hidden-dim 100
+nice python train_pad.py --model LSTM --model-num LSTM2Layer10H --num-rnn-layers 2 --hidden-dim 10
+nice python train_pad.py --model LSTM --model-num LSTM2Layer50H --num-rnn-layers 2 --hidden-dim 50
+nice python train_pad.py --model LSTM --model-num LSTM2Layer100H --num-rnn-layers 2 --hidden-dim 100
+nice python train_pad.py --model LSTM --model-num LSTM3Layer10H --num-rnn-layers 3 --hidden-dim 10
+nice python train_pad.py --model LSTM --model-num LSTM3Layer50H --num-rnn-layers 3 --hidden-dim 50
+nice python train_pad.py --model LSTM --model-num LSTM3Layer100H --num-rnn-layers 3 --hidden-dim 100

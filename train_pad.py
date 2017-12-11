@@ -69,7 +69,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 class MIMIC3Dataset(Dataset):
-    def __init__(self, hadm_dir, label_file, hadm_file_name="episode_timeseries.csv", idx=None, n_jobs_reading=5, transform=None):
+    def __init__(self, hadm_dir, label_file, hadm_file_name="episode_timeseries.csv", idx=None, n_jobs_reading=12, transform=None):
         """
         This is a class for directly reading in the data from a directory structures where the events have been transformed
             into timeseries data and segmented into folders with the hospital admission id (hadm_id) as the name of the folders
@@ -324,6 +324,8 @@ def evaluate(model, split, verbose=False, n_batches=None):
     f1 = f1_score(final_target, final_pred) #, average='macro')
     auc = sklearn.metrics.roc_auc_score(final_target, final_pred)
     mcc = sklearn.metrics.matthews_corrcoef(final_target, final_pred)
+    prec = sklearn.metrics.precision_score(final_target, final_pred)
+    recall = sklearn.metrics.recall_score(final_target, final_pred)
     # Neglect noisy class
     # f1 = np.mean(f1_score(final_target, final_pred, average=None)[0:3]) # not really a thing with sepsis data.
     '''
@@ -336,8 +338,8 @@ plot_confusion_matrix(cnf_matrix, classes=None, normalize=True,
 plt.show()
     '''
     if verbose:
-        print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%), F1: {:.6f}, AUC: {:.6f}, MCC: {:.6f})\n'.format(
-            split, loss, correct, n_examples, acc, f1, auc, mcc))
+        print('\nModel: {}, {} set, Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%), F1: {:.6f}, AUC: {:.6f}, MCC: {:.6f}), Precision: {:.6f}, Recall: {:.6f}\n'.format(
+            args.model_num, split, loss, correct, n_examples, acc, f1, auc, mcc, prec, recall))
     return loss, acc, f1
 
 
@@ -382,16 +384,16 @@ criterion = nn.CrossEntropyLoss()
 
 # Define model
 if args.model == "LSTM":
-    model = rnn_pad.LSTMModel(input_size=seq_size, n_classes=4, hidden_dim=args.hidden_dim,
+    model = rnn_pad.LSTMModel(input_size=seq_size, n_classes=2, hidden_dim=args.hidden_dim,
                                     num_layers=args.num_rnn_layers, bidirection=0, flag_cuda=args.cuda)
 elif args.model == "AttnLSTM":
-    model = attention_rnn_pad.AttentionRecurrentModel(input_size=seq_size, n_classes=4, hidden_dim=args.hidden_dim,
+    model = attention_rnn_pad.AttentionRecurrentModel(input_size=seq_size, n_classes=2, hidden_dim=args.hidden_dim,
                                                             flag_cuda=args.cuda, num_layers=args.num_rnn_layers)
 elif args.model == 'CNNLSTM':
-    model = cnn_rnn_pad.RecurrentConvModel(input_size = seq_size, n_classes=4, rnn_hidden_dim=args.hidden_dim,
+    model = cnn_rnn_pad.RecurrentConvModel(input_size = seq_size, n_classes=2, rnn_hidden_dim=args.hidden_dim,
                                                  cnn_kernel_size=9,cnn_output_channels=32, flag_cuda=args.cuda)
 elif args.model == 'AttnCNNLSTM':
-    model =  attention_cnn_rnn_pad.AttentionRecurrentConvModel(input_size = seq_size, n_classes=4, rnn_hidden_dim=args.hidden_dim,
+    model =  attention_cnn_rnn_pad.AttentionRecurrentConvModel(input_size = seq_size, n_classes=2, rnn_hidden_dim=args.hidden_dim,
                                                  cnn_kernel_size=9,cnn_output_channels=32, flag_cuda=args.cuda)
 
 if args.cuda:
@@ -462,4 +464,4 @@ best_model = torch.load(str(args.folder) + str(args.model) +'_' + str(args.model
 evaluate(best_model, split='test', verbose=True)
 
 endTime = time.time()
-print("Total time elapsed (in hours)", (startTime - endTime) / 3600)
+print("Total time elapsed (in hours)", (endTime - startTime) / 3600)
