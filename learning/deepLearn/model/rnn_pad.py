@@ -38,16 +38,15 @@ class LSTMModel(nn.Module):
         :param batch_size:
         :return: initial hidden and cell states, both are tensors in (num_layers * num_directions, batch, hidden_size)
         '''
-        h0, c0 = (Variable(torch.zeros(self.num_direction*self.num_layers, batch_size, self.hidden_dim)), Variable(torch.zeros(self.num_direction*self.num_layers, batch_size, self.hidden_dim)))
-        if self.cuda:
+        h0, c0 = (Variable(torch.zeros(self.num_direction*self.num_layers, batch_size, self.hidden_dim).float()), Variable(torch.zeros(self.num_direction*self.num_layers, batch_size, self.hidden_dim).float()))
+        if self.flag_cuda:
             h0, c0 = h0.cuda(), c0.cuda()
         return h0, c0
 
     def forward(self, x, lengths):
         batch_size = len(x)
         h, c = self.init_hidden(batch_size)
-        sequence = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True)
+        sequence = nn.utils.rnn.pack_padded_sequence(x.float(), lengths, batch_first=True)
         output, (hn, cn) = self.lstm_layer(sequence, (h, c))
         score = self.fc_layer(self.dropout_layer(hn[-1,:,:]))
         return score
-

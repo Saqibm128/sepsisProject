@@ -2,22 +2,30 @@ from __future__ import print_function
 import argparse
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim import lr_scheduler
 from torchvision import transforms
 from torch.autograd import Variable
 import torch.multiprocessing as mp
-import matplotlib.pyplot as plt
-from torch.utils.data import Dataset, DataLoader
-from sklearn.model_selection import train_test_split
+import pandas as pd
+
+from torch.utils.data import Dataset, DataLoader, TensorDataset
+import sklearn.model_selection
 from sklearn.metrics import f1_score, confusion_matrix
-import model.rnn_pad
-import model.attention_rnn_pad
-import model.cnn_rnn_pad
-import model.attention_cnn_rnn_pad
+import sklearn.metrics
+from pipeline.hadmid_reader import Hadm_Id_Reader
+import learning.deepLearn.model.rnn_pad as rnn_pad
+import learning.deepLearn.model.attention_rnn_pad as attention_rnn_pad
+import learning.deepLearn.model.cnn_rnn_pad as cnn_rnn_pad
+import learning.deepLearn.model.attention_cnn_rnn_pad as attention_cnn_rnn_pad
 from sklearn.model_selection import StratifiedShuffleSplit
 import itertools
+import time
+
+startTime = time.time()
 
 # Training settings
 parser = argparse.ArgumentParser(description='Physionet Challenge 2017')
@@ -61,15 +69,46 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 class MIMIC3Dataset(Dataset):
-    def __init__(self, hadm_dir, hadm_file_name):
+    def __init__(self, hadm_dir, label_file, hadm_file_name="episode_timeseries.csv", idx=None, n_jobs_reading=5, transform=None):
         """
-        :param hadm_dir the directory where the hospital admission files are stored
-        :param hadm_file_name the name of each admission file
-        """
-        self.reader =
-    def __len__(self):
+        This is a class for directly reading in the data from a directory structures where the events have been transformed
+            into timeseries data and segmented into folders with the hospital admission id (hadm_id) as the name of the folders
 
-    def __getitem__(self):
+
+        :param hadm_dir the directory where the hospital admission files are stored
+        :param label_file the location where the labels (angus) for hospital admissions are located
+        :param hadm_file_name the name of each admission file
+        :param n_jobs_reading represents the number of jobs to use to read and reformat in the data
+        :param idx a list of actual hospital admissions to use. If set to None, not considered
+        :param transform an optional transforming function
+        """
+        self.reader = Hadm_Id_Reader(hadm_dir, file_name=hadm_file_name)
+        self.reader.use_multiprocessing(n_jobs_reading)
+
+        if idx is not None:
+            self.reader.hadms = [self.reader.hadms[i] for i in idx]
+        self.label = pd.DataFrame.from_csv(label_file)["angus"].loc[ \
+                                [int(hadm) for hadm in self.reader.hadms]]
+        self.hadmToData = self.reader.get_time_matrices()
+        self.transform = transform
+    def __len__(self):
+        return len(self.reader.hadms)
+
+
+    def __getitem__(self, idx):
+        hadms_to_return = [int(self.reader.hadms[i]) for i in idx]
+        labels = self.label.loc[hadms_to_return]
+        #turn from dictionary format into correct order in ndarray type
+        # data = np.zeros((5, len(list(idx)), len(self.reader.__vars_to_keep)))
+        # for i in range(5):
+        #     for j in range(len(list(idx))):
+        #         data[i, j, :] = self.hadmToData[int(self.reader.hadms[idx[j]])].iloc[i].as_matrix()
+        data = np.array([self.hadmToData[hadm].as_matrix() for hadm in hadms_to_return])
+        sample = {'data': data, 'label': labels.as_matrix(), 'lengths': np.array([datum.shape[0] for datum in data])}
+        if self.transform is not None:
+            return self.transform(sample)
+        return sample
+
 
 class PhysionetChallengeDataset(Dataset):
     """Physionet Challenge 2017 dataset."""
@@ -132,8 +171,8 @@ class ToTensor(object):
         data, label, lengths = sample['data'], sample['label'],sample['lengths']
 
         return {'data': torch.from_numpy(data),
-                'label': torch.from_numpy(np.array([label])),
-                'lengths': torch.from_numpy(np.array([lengths]))}
+                'label': torch.from_numpy(np.array(label)),
+                'lengths': torch.from_numpy(np.array(lengths))}
 
     # Truncate to keep the keep_length of every sequence (self. data in 2D) and then reshape it to 3D with predefined
     # timesteps, update valid lengths
@@ -185,13 +224,26 @@ def train(epoch):
     # train loop
     for batch_idx, batch in enumerate(trainloader):
         # Sort the input X in descending order in terms of the valid length of timesteps
-        sorted, indices = torch.sort(batch['lengths'], 0, descending=True)
+        # sorted, indices = torch.sort(batch[], 0, descending=True)
 
         # prepare data
-        X, y, l = torch.index_select(batch['data'],0,torch.squeeze(indices)),torch.index_select(batch['label'],0,torch.squeeze(indices)),\
-                  torch.index_select(batch['lengths'],0,torch.squeeze(indices))
-        input, targets = Variable(X), Variable(y)
-        l=torch.squeeze(l)
+        # X, y, l = torch.index_select(batch['data'],0,torch.squeeze(indices)),torch.index_select(batch['label'],0,torch.squeeze(indices)),\
+        #           torch.index_select(batch['lengths'],0,torch.squeeze(indices))
+        X = batch[0]
+        y = batch[1]
+        l = [X.size(1) for i in range(X.size(0))]
+        #batch first is a thing... nvm....
+
+        # newX = np.zeros((X.size(1), X.size(0), X.size(2))) #apparently its time by instance by features
+        # for i in range(X.size(1)):
+        #     for j in range(X.size(0)):
+        #         # print(newX[i,j,:])
+        #         # print(X[j, i, :])
+        #         # print(X.size())
+        #         newX[i,j,:] = X[j, i, :].numpy()
+        # newY = torch.from_numpy(np.array([label for label in y for i in range(X.size(1))]))
+        input, targets = Variable(X.float()), Variable(y)
+        # l=torch.squeeze(l)
         if args.cuda:
             input, targets = input.cuda(), targets.cuda()
 
@@ -200,7 +252,7 @@ def train(epoch):
 
         # Update the parameters in model using the optimizer from above.
         optimizer.zero_grad()
-        output = model(input,list(l.numpy()))
+        output = model(input.float(), l)
         loss = criterion(output, torch.squeeze(targets))
         loss.backward()
         optimizer.step()
@@ -235,18 +287,20 @@ def evaluate(model, split, verbose=False, n_batches=None):
     final_pred = []
     for batch_i, batch in enumerate(loader):
         # Sort the input X in descending order in terms of the valid length of timesteps
-        sorted, indices = torch.sort(batch['lengths'], 0, descending=True)
+        # sorted, indices = torch.sort(batch['lengths'], 0, descending=True)
 
         # prepare data
-        X, y, l = torch.index_select(batch['data'], 0, torch.squeeze(indices)), torch.index_select(batch['label'], 0,
-                                                                    torch.squeeze( indices)), torch.index_select(batch['lengths'], 0, torch.squeeze(indices))
+        # X, y, l = torch.index_select(batch['data'], 0, torch.squeeze(indices)), torch.index_select(batch['label'], 0,
+                                                                    # torch.squeeze( indices)), torch.index_select(batch['lengths'], 0, torch.squeeze(indices))
+        X, y = batch[0], batch[1],
+        l = torch.FloatTensor([X.size(1) for i in range(X.size(0))])
         data, target = Variable(X, volatile= True), Variable(y)
         l = torch.squeeze(l)
 
         if args.cuda:
             data, target = data.cuda(), target.cuda()
 
-        output = model(data, list(l.numpy()))
+        output = model(data, l.numpy())
         loss += criterion(output, torch.squeeze(target)).data[0]
 
         # predict the argmax of the log-probabilities
@@ -267,9 +321,11 @@ def evaluate(model, split, verbose=False, n_batches=None):
     acc = 100. * correct / n_examples
     final_pred = [item for sublist in final_pred for item in sublist]
     final_target = [item for sublist in final_target for item in sublist]
-    f1 = f1_score(final_target, final_pred, average='macro')
+    f1 = f1_score(final_target, final_pred) #, average='macro')
+    auc = sklearn.metrics.roc_auc_score(final_target, final_pred)
+    mcc = sklearn.metrics.matthews_corrcoef(final_target, final_pred)
     # Neglect noisy class
-    f1 = np.mean(f1_score(final_target, final_pred, average=None)[0:3])
+    # f1 = np.mean(f1_score(final_target, final_pred, average=None)[0:3]) # not really a thing with sepsis data.
     '''
 cnf_matrix = confusion_matrix(final_target, final_pred)
 np.set_printoptions(precision=2)
@@ -280,8 +336,8 @@ plot_confusion_matrix(cnf_matrix, classes=None, normalize=True,
 plt.show()
     '''
     if verbose:
-        print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%), F1: {:.6f})\n'.format(
-            split, loss, correct, n_examples, acc, f1))
+        print('\n{} set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%), F1: {:.6f}, AUC: {:.6f}, MCC: {:.6f})\n'.format(
+            split, loss, correct, n_examples, acc, f1, auc, mcc))
     return loss, acc, f1
 
 
@@ -301,24 +357,24 @@ def adjust_learning_rate_by_epoch(optimizer, epoch):
 
 
 # create training and testing vars and split train and test sets
-raw_data = pickle.load(open('../data/raw_data.pkl','rb'))
-length_list = [len(a) for a in raw_data]
-order_index = sorted(range(len(length_list)), key=lambda k: length_list[k], reverse =True)
-new_lengths = [length_list[i] for i in order_index]
-challenge_dataset = PhysionetChallengeDataset(label_file='../data/new_labels.pkl',
-                                              data_file='../data/new_padded_data.pkl', lengths=np.asarray(new_lengths), normalize=True)
-
+# raw_data = pickle.load(open('../data/raw_data.pkl','rb'))
+# length_list = [len(a) for a in raw_data]
+# order_index = sorted(range(len(length_list)), key=lambda k: length_list[k], reverse =True)
+# new_lengths = [length_list[i] for i in order_index]
+# challenge_dataset = PhysionetChallengeDataset(label_file='../data/new_labels.pkl',
+                                              # data_file='../data/new_padded_data.pkl', lengths=np.asarray(new_lengths), normalize=True)
+challenge_dataset = MIMIC3Dataset(hadm_dir="data/rawdatafiles/byHadmID0", label_file="data/rawdatafiles/classifiedAngusSepsis.csv", transform=transforms.Compose([ToTensor()]))
 # Keep the first 9000 values and reshape it to (N, 30, 3000)
-challenge_dataset.truncate_and_reshape(9000, 30)
+# challenge_dataset.truncate_and_reshape(9000, 30)
 
 # Binary classification
 #challenge_dataset.label[challenge_dataset.label != 1] = 0
 
-train_plus_idx, test_idx = train_test_split(list(range(len(challenge_dataset))), test_size=0.2, stratify = challenge_dataset.label, random_state=args.seed)
+train_plus_idx, test_idx = sklearn.model_selection.train_test_split(list(range(len(challenge_dataset))), test_size=0.2, stratify = challenge_dataset.label, random_state=args.seed)
 train_plus_set, test_set = challenge_dataset[train_plus_idx], challenge_dataset[test_idx]
 
 # Input size
-seq_size =(args.batch_size, 30, 300)
+seq_size =(args.batch_size, 5, 47)
 
 # Loss
 criterion = nn.CrossEntropyLoss()
@@ -326,16 +382,16 @@ criterion = nn.CrossEntropyLoss()
 
 # Define model
 if args.model == "LSTM":
-    model = model.rnn_pad.LSTMModel(input_size=seq_size, n_classes=4, hidden_dim=args.hidden_dim,
+    model = rnn_pad.LSTMModel(input_size=seq_size, n_classes=4, hidden_dim=args.hidden_dim,
                                     num_layers=args.num_rnn_layers, bidirection=0, flag_cuda=args.cuda)
 elif args.model == "AttnLSTM":
-    model = model.attention_rnn_pad.AttentionRecurrentModel(input_size=seq_size, n_classes=4, hidden_dim=args.hidden_dim,
+    model = attention_rnn_pad.AttentionRecurrentModel(input_size=seq_size, n_classes=4, hidden_dim=args.hidden_dim,
                                                             flag_cuda=args.cuda, num_layers=args.num_rnn_layers)
 elif args.model == 'CNNLSTM':
-    model = model.cnn_rnn_pad.RecurrentConvModel(input_size = seq_size, n_classes=4, rnn_hidden_dim=args.hidden_dim,
+    model = cnn_rnn_pad.RecurrentConvModel(input_size = seq_size, n_classes=4, rnn_hidden_dim=args.hidden_dim,
                                                  cnn_kernel_size=9,cnn_output_channels=32, flag_cuda=args.cuda)
 elif args.model == 'AttnCNNLSTM':
-    model =  model.attention_cnn_rnn_pad.AttentionRecurrentConvModel(input_size = seq_size, n_classes=4, rnn_hidden_dim=args.hidden_dim,
+    model =  attention_cnn_rnn_pad.AttentionRecurrentConvModel(input_size = seq_size, n_classes=4, rnn_hidden_dim=args.hidden_dim,
                                                  cnn_kernel_size=9,cnn_output_channels=32, flag_cuda=args.cuda)
 
 if args.cuda:
@@ -346,12 +402,12 @@ if args.cuda:
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
 # Create TensorData and Dataloader
-test_tensor = PhysionetChallengeDataset(data=test_set['data'], label=test_set['label'], lengths=test_set['lengths'], transform=transforms.Compose([ToTensor()]))
+test_tensor = TensorDataset(test_set['data'], test_set['label'])
 testloader = DataLoader(test_tensor, batch_size=args.batch_size, shuffle=False)
 
 #TEST
-best_model = torch.load('../saved_model/AttnLSTM_1.pt')
-evaluate(best_model, split='test', verbose=True)
+# best_model = torch.load('../saved_model/AttnLSTM_1.pt')
+# evaluate(best_model, split='test', verbose=True)
 
 # Stratified shuffle split to multiple sets of train - validation, set to one since we can just run multiple times
 # Require numpy 0.18.0+ for this step
@@ -360,10 +416,10 @@ sss = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
 # watch the change of learning rate, for early stopping
 lr_watch = args.lr
 
-for train_index, valid_index in sss.split(train_plus_set['data'], train_plus_set['label']):
-
-    train_tensor = PhysionetChallengeDataset(data=train_plus_set['data'][train_index], label=train_plus_set['label'][train_index],
-                                             lengths=train_plus_set['lengths'][train_index], transform=transforms.Compose([ToTensor()]))
+for train_index, valid_index in sss.split(train_plus_set['data'], list(train_plus_set['label'])):
+    train_index = torch.from_numpy(train_index)
+    valid_index = torch.from_numpy(valid_index)
+    train_tensor = TensorDataset(train_plus_set['data'][train_index], train_plus_set['label'][train_index])
 
     '''
     # See whether model can overfit a small set of data
@@ -372,8 +428,7 @@ for train_index, valid_index in sss.split(train_plus_set['data'], train_plus_set
                                              lengths=train_plus_set['lengths'][train_index[0:100]],
                                              transform=transforms.Compose([ToTensor()]))
    '''
-    valid_tensor = PhysionetChallengeDataset(data=train_plus_set['data'][valid_index], label=train_plus_set['label'][valid_index],
-                                             lengths=train_plus_set['lengths'][valid_index], transform=transforms.Compose([ToTensor()]))
+    valid_tensor = TensorDataset(train_plus_set['data'][valid_index], train_plus_set['label'][valid_index])
     trainloader = DataLoader(train_tensor, batch_size=args.batch_size, shuffle=True)
     validloader = DataLoader(valid_tensor, batch_size=args.batch_size, shuffle=False)
 
@@ -382,7 +437,7 @@ for train_index, valid_index in sss.split(train_plus_set['data'], train_plus_set
     last_improved = 0
 
     # learning rate decay
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
     for epoch in range(1, args.epochs + 1):
         val_score = train(epoch)
         if val_score > max_metric:
@@ -405,3 +460,6 @@ for train_index, valid_index in sss.split(train_plus_set['data'], train_plus_set
 
 best_model = torch.load(str(args.folder) + str(args.model) +'_' + str(args.model_num)  + '.pt')
 evaluate(best_model, split='test', verbose=True)
+
+endTime = time.time()
+print("Total time elapsed (in hours)", (startTime - endTime) / 3600)

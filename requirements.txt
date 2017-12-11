@@ -5,3 +5,5 @@ sklearn
 matplotlib
 psycopg2
 wfdb
+pytorch
+torchvision

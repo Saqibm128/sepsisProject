@@ -25,7 +25,7 @@ def test_train_valid_explicit(Xtrain, Ytrain, Xtest, Ytest, validation_size=.1, 
     '''
     params = Dict()
     params.criterion = ['gini', 'entropy']
-    params.n_estimators = [20, 40, 80, 160]
+    params.n_estimators = [20, 40, 60, 80, 160, 300]
     params.max_features = ['auto', 'log2', .1, .4, .8]
     params.max_depth = [None, 1, 4]
     params.min_samples_split = [2, 8]

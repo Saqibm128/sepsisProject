@@ -86,6 +86,30 @@ class Hadm_Id_Reader():
         toReturn = pd.concat([vec, var_std, delta], axis=1)
         toReturn.index=[int(hadm_id)]
         return toReturn
+
+    def get_time_matrices_helper(self, toRun, toReturn, total_time=24, time_unit=6):
+        '''
+        '''
+        for hadm_id in iter(toRun.get, None):
+            #place a tuple with the data as well as the hospital admission identifying the data
+            toReturn.put((int(hadm_id), self.resample_fixed_length(hadm_id=hadm_id, total_time=total_time, time_unit=time_unit)[0]))
+    def get_time_matrices(self, hadm_ids=None, total_time=24, time_unit=6):
+        '''
+        '''
+        toRun = self.manager.Queue()
+        toReturn = self.manager.Queue()
+        if hadm_ids is None:
+            hadm_ids = self.hadms
+        [toRun.put(hadm_id) for hadm_id in hadm_ids]
+        [toRun.put(None) for i in range(self.__n_workers)]
+        processes = [Process(target=self.get_time_matrices_helper, args=(toRun, toReturn, total_time, time_unit)) for i in range(self.__n_workers)]
+        [process.start() for process in processes]
+        [process.join() for process in processes]
+        hadmToData = Dict()
+        while not toReturn.empty():
+            (hadm_id, data) = toReturn.get()
+            hadmToData[hadm_id] = data
+        return hadmToData
     def populate_all_hadms(self):
         '''
         This function goes through and writes a copy of the final data time by features matrix
