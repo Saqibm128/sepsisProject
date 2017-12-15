@@ -43,7 +43,6 @@ class Hadm_Id_Reader():
         return toReturn
     def use_multiprocessing(self, num_process):
         '''
-        TODO implement this?
         :num_process how many processes to use to read and process data
         '''
         self.__n_workers = num_process
@@ -324,7 +323,7 @@ class Hadm_Id_Reader():
         (data, missingData) = self.resample(time_unit=time_unit, hadm_id = hadm_id, include_var=include_var)
         while (data.index.max() < total_time):
             data.loc[data.index.max() + time_unit] = data.loc[data.index.max()]
-        return (data.loc[data.index <= total_time], missingData)
+        return (data.loc[data.index < total_time], missingData)
 
     def next_hadm():
         '''

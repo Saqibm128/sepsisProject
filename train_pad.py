@@ -84,7 +84,7 @@ class MIMIC3Dataset(Dataset):
         """
         self.reader = Hadm_Id_Reader(hadm_dir, file_name=hadm_file_name)
         self.reader.use_multiprocessing(n_jobs_reading)
-
+        print("beginning reading")
         if idx is not None:
             self.reader.hadms = [self.reader.hadms[i] for i in idx]
         self.label = pd.DataFrame.from_csv(label_file)["angus"].loc[ \

@@ -31,6 +31,6 @@ def test_train_valid_explicit(Xtrain, Ytrain, Xtest, Ytest, validation_size=.1, 
     params.min_samples_split = [2, 8]
     params.min_weight_fraction_leaf = [0, .2, .5]
     params.min_impurity_decrease = [0, .5, 1]
-    params.n_jobs = [1]
+    params.n_jobs = [4]
     rf = sklearn.ensemble.RandomForestClassifier()
     return util.gridsearch_CV_wrapper(params=params, model=rf, Xtrain = Xtrain, Ytrain=Ytrain, Xtest=Xtest, Ytest=Ytest, validation_size=validation_size, n_jobs=n_jobs)
