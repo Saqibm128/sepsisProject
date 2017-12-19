@@ -3,6 +3,7 @@ import numpy as np
 import sklearn.metrics
 import sklearn.model_selection as modSel
 from addict import Dict
+
 def test(trainTuple, testTuple, predictor=None, name=0):
     '''
     removes nonnumeric data, then fully trains with set and provides key metrics back
@@ -37,7 +38,8 @@ def gridsearch_CV_wrapper(params, model, Xtrain, Ytrain, Xtest, Ytest, validatio
     for index in XvalidIndices:
         Xvalid[index] = 0
     predef_split = modSel.PredefinedSplit(Xvalid)
-    gridSearcher = modSel.GridSearchCV(model, params, n_jobs=n_jobs, cv=predef_split)
+    scorer = sklearn.metrics.make_scorer(sklearn.metrics.f1_score)
+    gridSearcher = modSel.GridSearchCV(model, params, n_jobs=n_jobs, cv=predef_split, scoring=scorer)
     gridSearcher.fit(Xtrain, Ytrain)
     bestLogReg = gridSearcher.best_estimator_
     bestLogReg.fit(Xtrain, Ytrain)
