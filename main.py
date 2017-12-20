@@ -393,7 +393,7 @@ fullScores = pd.concat([learning.util.test(trainTuple=result.trainTuple, \
 endTime = time.time()
 runningTimes.loc[model_name, "run"] = endTime - startTime
 
-fullScores.to_csv("data/rawdatafiles/byHadmID0/final_scores.csv")
+fullScores.to_csv("data/rawdatafiles/final_scores.csv")
 runningTimes.to_csv("data/rawdatafiles/runningTimes.csv")
 features_weights.to_csv("data/rawdatafiles/features_weights.csv")
 

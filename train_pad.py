@@ -11,6 +11,7 @@ from torchvision import transforms
 from torch.autograd import Variable
 import torch.multiprocessing as mp
 import pandas as pd
+import os.path
 
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 import sklearn.model_selection
@@ -33,17 +34,17 @@ parser = argparse.ArgumentParser(description='Physionet Challenge 2017')
 parser.add_argument('--model', type=str, metavar='M', default='AttnCNNLSTM',
                     choices=['LSTM', 'AttnLSTM','CNNLSTM','AttnCNNLSTM'],
                     help='which model to train/evaluate')
-parser.add_argument('--lr', type=float, metavar='LR', default=1,
+parser.add_argument('--lr', type=float, metavar='LR', default=0.5,
                     help='learning rate')
 parser.add_argument('--weight-decay', type=float, default=0.0,
                     help='Weight decay hyperparameter')
-parser.add_argument('--momentum', type=float, metavar='M', default=0.9,
+parser.add_argument('--momentum', type=float, metavar='M', default=0.5,
                     help='SGD momentum')
 parser.add_argument('--batch-size', type=int, metavar='N', default=1000,
                     help='input batch size for training')
 parser.add_argument('--num-rnn-layers',type=int, default=1,
                     help='number of rnn layers')
-parser.add_argument('--epochs', type=int, metavar='N', default=1000,
+parser.add_argument('--epochs', type=int, metavar='N', default=10000,
                     help='number of epochs to train')
 parser.add_argument('--hidden-dim', type=int, default=50,
                     help='number of hidden features/activations')
@@ -267,7 +268,7 @@ def train(epoch):
                 epoch, examples_this_epoch, len(trainloader.dataset),
                 epoch_progress, train_loss, val_loss, val_acc, val_f1))
 
-    return val_f1
+    return {'val_f1':val_f1, 'train_loss':train_loss}
 
 def evaluate(model, split, verbose=False, n_batches=None):
     '''
@@ -372,7 +373,7 @@ challenge_dataset = MIMIC3Dataset(hadm_dir="data/rawdatafiles/byHadmID0", label_
 # Binary classification
 #challenge_dataset.label[challenge_dataset.label != 1] = 0
 
-train_plus_idx, test_idx = sklearn.model_selection.train_test_split(list(range(len(challenge_dataset))), test_size=0.2, stratify = challenge_dataset.label, random_state=args.seed)
+train_plus_idx, test_idx = sklearn.model_selection.train_test_split(list(range(len(challenge_dataset))), test_size=0.1, stratify = challenge_dataset.label, random_state=args.seed)
 train_plus_set, test_set = challenge_dataset[train_plus_idx], challenge_dataset[test_idx]
 
 # Input size
@@ -440,8 +441,12 @@ for train_index, valid_index in sss.split(train_plus_set['data'], list(train_plu
 
     # learning rate decay
     scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+    results_to_write = pd.DataFrame(index=list(range(1, args.epochs + 1)), columns=['val_f1', 'train_loss'])
     for epoch in range(1, args.epochs + 1):
-        val_score = train(epoch)
+        result = train(epoch)
+        val_score = result["val_f1"]
+        results_to_write.loc[epoch, 'val_f1'] = result["val_f1"]
+        results_to_write.loc[epoch, 'train_loss'] = result["train_loss"]
         if val_score > max_metric:
             last_improved = epoch
             max_metric = val_score
@@ -459,7 +464,7 @@ for train_index, valid_index in sss.split(train_plus_set['data'], list(train_plu
         else:
             scheduler.step()
     evaluate(model, split='val', verbose=True)
-
+    results_to_write.to_csv(os.path.join("data/rawdatafiles", "lstm", str(args.model_num)))
 best_model = torch.load(str(args.folder) + str(args.model) +'_' + str(args.model_num)  + '.pt')
 evaluate(best_model, split='test', verbose=True)
 
