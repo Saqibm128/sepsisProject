@@ -20,7 +20,7 @@ class Hadm_Id_Reader():
         self.hadm_dir = hadm_dir
         self.file_name = file_name
         ## Because I save some results in hadm directory (bad decision), I check to see we don't add results into here
-        self.hadms = [hadmid for hadmid in os.listdir(os.path.join(hadm_dir)) if os.path.exists(os.path.join(self.hadm_dir, hadmid, self.file_name))]
+        self.hadms = [hadmid for hadmid in os.listdir(os.path.join(hadm_dir)) if os.path.exists(os.path.join(self.hadm_dir, hadmid, self.file_name))][0:50]
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)

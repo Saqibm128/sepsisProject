@@ -13,6 +13,8 @@ import torch.multiprocessing as mp
 import pandas as pd
 import os.path
 
+import pipeline.feature_selection_wrapper as feat_sel
+
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 import sklearn.model_selection
 from sklearn.metrics import f1_score, confusion_matrix
@@ -70,7 +72,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 class MIMIC3Dataset(Dataset):
-    def __init__(self, hadm_dir, label_file, hadm_file_name="episode_timeseries.csv", idx=None, n_jobs_reading=12, transform=None):
+    def __init__(self, hadm_dir, label_file, hadm_file_name="episode_timeseries.csv", idx=None, n_jobs_reading=20, transform=None):
         """
         This is a class for directly reading in the data from a directory structures where the events have been transformed
             into timeseries data and segmented into folders with the hospital admission id (hadm_id) as the name of the folders
@@ -80,18 +82,25 @@ class MIMIC3Dataset(Dataset):
         :param label_file the location where the labels (angus) for hospital admissions are located
         :param hadm_file_name the name of each admission file
         :param n_jobs_reading represents the number of jobs to use to read and reformat in the data
-        :param idx a list of actual hospital admissions to use. If set to None, not considered
+        :param idx a list of actual hospital admissions to use (by index, not actual hadm_id). If set to None, not considered
         :param transform an optional transforming function
         """
         self.reader = Hadm_Id_Reader(hadm_dir, file_name=hadm_file_name)
         self.reader.use_multiprocessing(n_jobs_reading)
-        print("beginning reading")
         if idx is not None:
             self.reader.hadms = [self.reader.hadms[i] for i in idx]
         self.label = pd.DataFrame.from_csv(label_file)["angus"].loc[ \
                                 [int(hadm) for hadm in self.reader.hadms]]
+        print("beginning feature selection on training + validation set")
+        X = self.reader.getFullAvg(endbound=24)
+        train_plus_idx, test_idx = sklearn.model_selection.train_test_split(X.index,\
+                                                    test_size=0.1, stratify = self.label, random_state=args.seed)
+        toKeep = feat_sel.chi2test(X.loc[train_plus_idx], self.label.loc[train_plus_idx], pval_thresh=.05)
+        self.reader.set_features(toKeep.index)
+        print("beginning reading")
         self.hadmToData = self.reader.get_time_matrices()
         self.transform = transform
+        self.num_features = len(toKeep.index)
     def __len__(self):
         return len(self.reader.hadms)
 
@@ -138,6 +147,7 @@ class PhysionetChallengeDataset(Dataset):
         self.normalize = normalize
         self.isTensor = isTensor
         self.transform = transform
+
 
 
     def __len__(self):
@@ -223,6 +233,7 @@ def train(epoch):
     # (as opposed to eval mode) so it knows which one to use.
     model.train()
     # train loop
+    runningLoss = 0;
     for batch_idx, batch in enumerate(trainloader):
         # Sort the input X in descending order in terms of the valid length of timesteps
         # sorted, indices = torch.sort(batch[], 0, descending=True)
@@ -261,6 +272,7 @@ def train(epoch):
         if batch_idx % args.log_interval == 0:
             val_loss, val_acc, val_f1 = evaluate(model, 'val', n_batches=4)
             train_loss = loss.data[0]
+            runningLoss += train_loss
             examples_this_epoch = batch_idx * len(input)
             epoch_progress = 100. * batch_idx / len(trainloader)
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\t'
@@ -268,7 +280,7 @@ def train(epoch):
                 epoch, examples_this_epoch, len(trainloader.dataset),
                 epoch_progress, train_loss, val_loss, val_acc, val_f1))
 
-    return {'val_f1':val_f1, 'train_loss':train_loss}
+    return {'val_f1':val_f1, 'train_loss':runningLoss, "val_loss": val_loss}
 
 def evaluate(model, split, verbose=False, n_batches=None):
     '''
@@ -278,10 +290,13 @@ def evaluate(model, split, verbose=False, n_batches=None):
     loss = 0
     correct = 0
     n_examples = 0
+    old_dropout_layer = model.dropout_layer
     if split == 'val':
         loader = validloader
+        model.dropout_layer = nn.Dropout(p=0.0) #Don't do dropout while validation or testing
     if split == 'test':
         loader = testloader
+        model.dropout_layer = nn.Dropout(p=0.0) #Don't do dropout while validation or testing
     if split == 'train':
         loader = trainloader
     final_target = []
@@ -317,7 +332,7 @@ def evaluate(model, split, verbose=False, n_batches=None):
         n_examples += pred.size(0)
         if n_batches and (batch_i >= n_batches):
             break
-
+    model.dropout_layer = old_dropout_layer
     loss /= n_examples
     acc = 100. * correct / n_examples
     final_pred = [item for sublist in final_pred for item in sublist]
@@ -373,11 +388,11 @@ challenge_dataset = MIMIC3Dataset(hadm_dir="data/rawdatafiles/byHadmID0", label_
 # Binary classification
 #challenge_dataset.label[challenge_dataset.label != 1] = 0
 
-train_plus_idx, test_idx = sklearn.model_selection.train_test_split(list(range(len(challenge_dataset))), test_size=0.1, stratify = challenge_dataset.label, random_state=args.seed)
-train_plus_set, test_set = challenge_dataset[train_plus_idx], challenge_dataset[test_idx]
+
 
 # Input size
-seq_size =(args.batch_size, 5, 47)
+# TODO: fix hardcoded portion
+seq_size =(args.batch_size, 4, challenge_dataset.num_features)
 
 # Loss
 criterion = nn.CrossEntropyLoss()
@@ -405,6 +420,8 @@ if args.cuda:
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
 # Create TensorData and Dataloader
+train_plus_idx, test_idx = sklearn.model_selection.train_test_split(list(range(len(challenge_dataset))), test_size=0.1, stratify = challenge_dataset.label, random_state=args.seed)
+train_plus_set, test_set = challenge_dataset[train_plus_idx], challenge_dataset[test_idx]
 test_tensor = TensorDataset(test_set['data'], test_set['label'])
 testloader = DataLoader(test_tensor, batch_size=args.batch_size, shuffle=False)
 
@@ -441,18 +458,18 @@ for train_index, valid_index in sss.split(train_plus_set['data'], list(train_plu
 
     # learning rate decay
     scheduler = lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
-    results_to_write = pd.DataFrame(index=list(range(1, args.epochs + 1)), columns=['val_f1', 'train_loss'])
+    results_to_write = pd.DataFrame(index=list(range(1, args.epochs + 1)), columns=['val_f1', 'train_loss', "val_loss"])
     for epoch in range(1, args.epochs + 1):
         result = train(epoch)
         val_score = result["val_f1"]
         results_to_write.loc[epoch, 'val_f1'] = result["val_f1"]
         results_to_write.loc[epoch, 'train_loss'] = result["train_loss"]
+        results_to_write.loc[epoch, 'val_loss'] = result["val_loss"]
         if val_score > max_metric:
             last_improved = epoch
             max_metric = val_score
             # Save the model with largest val_score, currently set to F1 score, hardcoded
-            torch.save(model, str(args.folder) + str(args.model) + '_' + str(
-                args.model_num) + '.pt')
+            torch.save(model, str(args.folder) + str(args.model) + '_' + str(args.model_num) + '.pt')
         if args.do_early_stopping is True:
             if (epoch - last_improved) > args.patience:
                 lr_watch /= 2
@@ -464,9 +481,9 @@ for train_index, valid_index in sss.split(train_plus_set['data'], list(train_plu
         else:
             scheduler.step()
     evaluate(model, split='val', verbose=True)
-    results_to_write.to_csv(os.path.join("data/rawdatafiles", "lstm", str(args.model_num)))
+    results_to_write.to_csv(os.path.join("data/rawdatafiles", "lstm", str(args.model_num) + ".csv"))
 best_model = torch.load(str(args.folder) + str(args.model) +'_' + str(args.model_num)  + '.pt')
 evaluate(best_model, split='test', verbose=True)
 
 endTime = time.time()
-print("Total time elapsed (in hours)", (endTime - startTime) / 3600)
+print("Model:", args.model_num, ", Total time elapsed (in hours)", (endTime - startTime) / 3600)
