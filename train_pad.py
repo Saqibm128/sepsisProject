@@ -52,6 +52,7 @@ parser.add_argument('--hidden-dim', type=int, default=50,
                     help='number of hidden features/activations')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
+parser.add_argument('--totaltime', type=int, default=24, help='Total time to consider for reader. Must be divisible by 6')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
 parser.add_argument('--log-interval', type=int, default=1, metavar='N',
@@ -92,13 +93,13 @@ class MIMIC3Dataset(Dataset):
         self.label = pd.DataFrame.from_csv(label_file)["angus"].loc[ \
                                 [int(hadm) for hadm in self.reader.hadms]]
         print("beginning feature selection on training + validation set")
-        X = self.reader.getFullAvg(endbound=24)
+        X = self.reader.getFullAvg(endbound=args.totaltime)
         train_plus_idx, test_idx = sklearn.model_selection.train_test_split(X.index,\
                                                     test_size=0.1, stratify = self.label, random_state=args.seed)
         toKeep = feat_sel.chi2test(X.loc[train_plus_idx], self.label.loc[train_plus_idx], pval_thresh=.05)
         self.reader.set_features(toKeep.index)
         print("beginning reading")
-        self.hadmToData = self.reader.get_time_matrices()
+        self.hadmToData = self.reader.get_time_matrices(total_time=args.totaltime)
         self.transform = transform
         self.num_features = len(toKeep.index)
     def __len__(self):
@@ -392,7 +393,7 @@ challenge_dataset = MIMIC3Dataset(hadm_dir="data/rawdatafiles/byHadmID0", label_
 
 # Input size
 # TODO: fix hardcoded portion
-seq_size =(args.batch_size, 4, challenge_dataset.num_features)
+seq_size =(args.batch_size, args.totaltime / 6, challenge_dataset.num_features)
 
 # Loss
 criterion = nn.CrossEntropyLoss()

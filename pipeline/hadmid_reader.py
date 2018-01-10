@@ -20,7 +20,7 @@ class Hadm_Id_Reader():
         self.hadm_dir = hadm_dir
         self.file_name = file_name
         ## Because I save some results in hadm directory (bad decision), I check to see we don't add results into here
-        self.hadms = [hadmid for hadmid in os.listdir(os.path.join(hadm_dir)) if os.path.exists(os.path.join(self.hadm_dir, hadmid, self.file_name))][0:50]
+        self.hadms = [hadmid for hadmid in os.listdir(os.path.join(hadm_dir)) if os.path.exists(os.path.join(self.hadm_dir, hadmid, self.file_name))]
         self.__current_hadm = self.hadms[0] #to use when Hadm_Id_Reader is used like an iterator
         self.__index = 0 #to use when Hadm_Id_Reader is used like an iterator
         self.__ranges = read_variable_ranges(variable_ranges)
@@ -223,6 +223,10 @@ class Hadm_Id_Reader():
         for hadm_id, endbound in iter(toRun.get, None):
             toReturn.put((hadm_id, self.avg(hadm_id, endbound=endbound)))
     def getFullAvg(self, endbound = None):
+        '''
+        Returns a dataframe of hospital admission hadm_id by average features
+        :param endbound how long to keep. If none, use as much of the record as possible
+        '''
         toReturn = self.manager.Queue()
         toRun = self.manager.Queue()
         [toRun.put((hadm_id, endbound)) for hadm_id in self.hadms]
