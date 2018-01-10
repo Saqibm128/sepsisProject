@@ -50,7 +50,7 @@ class AttentionRecurrentModel(nn.Module):
     def forward(self, x, lengths):
         batch_size = len(x)
         h, c = self.init_hidden(batch_size)
-        sequence = nn.utils.rnn.pack_padded_sequence(x, lengths, batch_first=True)
+        sequence = nn.utils.rnn.pack_padded_sequence(x.float(), lengths, batch_first=True)
         hx_seq, (hn, cn) = self.lstm_layer(sequence, (h, c)) #hx_seq ( N, T, D)
         output, length_list = nn.utils.rnn.pad_packed_sequence(hx_seq, batch_first=True)
         (N, T, D) = output.size()
@@ -78,6 +78,3 @@ class AttentionRecurrentModel(nn.Module):
         weighted = torch.sum(attn_applied, dim=1)
         score = self.fc_layer(self.dropout_layer(torch.squeeze(weighted, dim=1)))
         return score
-
-
-
