@@ -157,6 +157,47 @@ class Hadm_Id_Reader():
             df = toReturn.get()
             toConcat.append(df)
         return pd.concat(toConcat)
+
+
+    def num_imputed_helper(self, toRun, toReturn, include_var=False, total_time=24, time_unit=6):
+        '''
+        A helper method to run through all of the hadms, primarily for multiprocessing needs
+        used for parallelism
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param total_time total hours the final df should span
+        :param toRun a queue of hadmid followed by None to stop this process
+        :param to return a queue to post result
+
+        '''
+        for hadm in iter(toRun.get, None): #https://stackoverflow.com/questions/6672525/multiprocessing-queue-in-python
+            toReturn.put(self.findNumBackAndForwardFilled(hadm, include_var=include_var, total_time=total_time, time_unit=time_unit))
+        return
+    def num_imputed(self, include_var=False, total_time=24, time_unit=6):
+        '''
+        This function returns the number of backfilled and forwardfilled bins
+        If use_multiprocessing was used, the hadmids will be read
+
+        :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
+        :param total_time total hours the final df should span
+        :param include_var include variance from within each 6 hour bin
+        :return a properly formatted a matrix
+        '''
+        toReturn = self.manager.Queue()
+        toRun = self.manager.Queue()
+        [toRun.put(hadm) for hadm in self.hadms]
+        [toRun.put(None) for i in range(self.__n_workers)]
+        running = [Process(target=self.num_imputed_helper, args=(toRun, toReturn, include_var, total_time, time_unit)) for i in range(self.__n_workers)]
+        [runner.start() for runner in running]
+        [runner.join() for runner in running]
+        backFilledToConcat = []
+        missingSomeDataToConcat = []
+        forwardFilledToConcat = []
+        while not toReturn.empty():
+            _, missingSomeData, backFilled, forwardFilled = toReturn.get()
+            missingSomeDataToConcat.append(missingSomeData)
+            backFilledToConcat.append(backFilled)
+            forwardFilledToConcat.append(forwardFilled)
+        return pd.concat(missingSomeDataToConcat), pd.concat(backFilledToConcat), pd.concat(forwardFilledToConcat)
     def countEvents(self, hadm_id, endbound=None):
         '''
         This method provides the counts of events for a certain hadm_id for each variable
@@ -261,6 +302,79 @@ class Hadm_Id_Reader():
                 if self.__vars_to_keep is None or var in self.__vars_to_keep:
                     data[var] = self.__ranges["IMPUTE"][var]
         return data
+
+    def findNumBackAndForwardFilled(self, hadm_id, time_unit = 6, include_var = False, total_time=24):
+        '''
+        Hadm_Id_Reader.resample was original method to resample data, but relied on prepackaged pd.DF.fillna methods
+            This keeps resample functionality, but allows for window into how imputation occurred
+            :param time_unit hours to resample by. For example, doing every 6 hours will resample events as such
+            :param hadm_id the events of the correct hadm_id to sample
+            :param include_var whether or not to include the variance within the bin
+            :return tuple of resampled df, df of missing variables originally, df of number forwardfilled, and df of number of backfilled
+        '''
+        if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
+            return None;
+
+        data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
+        charttime = data["CHARTTIME"]
+        data.set_index(pd.DatetimeIndex(charttime), inplace=True)
+        data = data.resample(str(60 * time_unit) + "T").mean() #https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
+        missingEntirely = pd.DataFrame(index=[hadm_id], columns=data.columns)
+        for var in self.__vars_to_keep:
+            if var not in data.columns:
+                missingEntirely.loc[hadm_id, var] = 1
+                data[var] = pd.Series(index=data.index).apply(lambda a: self.__ranges["IMPUTE"][var])
+            else:
+                missingEntirely.loc[hadm_id, var] = 0
+        missingSomeData = pd.DataFrame(columns=data.columns, index=[hadm_id])
+        for var in data.columns:
+            if var not in self.__vars_to_keep: #drop any columns that isn't an actual variable in Ranges i.e. we cannot impute
+                data = data.drop(var, axis=1)
+                try:
+                    missingSomeData = missingSomeData.drop(var, axis=1)
+                except:
+                    print("Could not drop variable") #TODO: make a better way to count 6 hour windows imputed?
+                continue
+            time = pd.Series(data.index).apply(pd.Timestamp) - pd.Series(data.index).apply(pd.Timestamp).min()
+            time.index = data.index
+            missingSomeData.loc[hadm_id, var] = data.loc[(time.astype('timedelta64[s]')/60/60 < total_time), var].isnull().sum()
+            if data[var].isnull().all():
+                if self.__vars_to_keep is None or var in self.__vars_to_keep:
+                    data[var] = data[var].fillna(self.__ranges["IMPUTE"][var]) # for variables that are completely missing, just use the imputed variable
+        if include_var:
+            data_stdev = data.resample(str(60 * time_unit) + "T").std()
+            data_stdev = data_stdev.rename(columns=lambda s: str(s) + " stdev")
+            data = pd.concat([data, data_stdev], axis=1, verify_integrity=True)
+
+
+        numForwardFilled = pd.DataFrame(columns=data.columns, index=[hadm_id])
+        numForwardFilled.loc[:,:] = 0
+        numBackFilled = pd.DataFrame(columns=data.columns, index=[hadm_id])
+        numBackFilled.loc[:,:] = 0
+        for var in data.columns:
+            foundVarToUseFF = False
+            numHoursSinceFirst = pd.Series(data.index).apply(pd.Timestamp) - pd.Series(data.index).apply(pd.Timestamp).min()
+            numHoursSinceFirst.index = data.index
+            for binTimeIndex in data.index:
+                if numHoursSinceFirst[binTimeIndex].total_seconds()/60/60 < total_time:
+                    if not np.isnan(data[var][binTimeIndex]):
+                        foundVarToUseFF = True
+                    elif foundVarToUseFF:
+                        numForwardFilled.loc[hadm_id, var] = numForwardFilled.loc[hadm_id, var] + 1
+        data = data.fillna(method="ffill") # Forward fill
+        data = data.fillna(method="bfill") # any remaining NaN, fill with backfilling
+
+        # add back in the hours column and sort by it
+        charttime = pd.Series(data.index)
+        hours = charttime.apply(pd.Timestamp) - charttime.apply(pd.Timestamp).min()
+        hours = hours.astype('timedelta64[s]')/60/60 # set it to hours
+        data = data.set_index(hours).sort_index()
+        if self.__vars_to_keep is not None:
+            data = data[self.__vars_to_keep]
+        while (data.index.max() < total_time):
+            data.loc[data.index.max() + time_unit] = data.loc[data.index.max()]
+        return (data, missingSomeData, numForwardFilled, numBackFilled)
+
     def resample(self, hadm_id, time_unit = 6, include_var = False):
         '''
         This method provides the correct dataframe for an object which corresponds to the
@@ -272,43 +386,7 @@ class Hadm_Id_Reader():
         :param include_var whether or not to include the variance within the bin
         :return the properly resampled df
         '''
-        if not os.path.exists(os.path.join(self.hadm_dir, hadm_id, self.file_name)):
-            return None;
-
-        data = pd.read_csv(os.path.join(self.hadm_dir, hadm_id, self.file_name))
-        charttime = data["CHARTTIME"]
-        data.set_index(pd.DatetimeIndex(charttime), inplace=True)
-        data = data.resample(str(60 * time_unit) + "T").mean() #https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.resample.html
-        for var in self.__vars_to_keep:
-            if var not in data.columns:
-                data[var] = pd.Series(index=data.index).apply(lambda a: self.__ranges["IMPUTE"][var])
-        missingData = pd.DataFrame(columns=data.columns, index=[hadm_id])
-        for var in data.columns:
-            if var not in self.__vars_to_keep: #drop any columns that isn't an actual variable in Ranges i.e. we cannot impute
-                data = data.drop(var, axis=1)
-                try:
-                    missingData = missingData.drop(var, axis=1)
-                except:
-                    print("Could not drop variable") #TODO: make a better way to count 6 hour windows imputed?
-                continue
-            missingData.loc[hadm_id, var] = data[var].isnull().sum() #Hack for now TODO: fix this
-            if data[var].isnull().all():
-                if self.__vars_to_keep is None or var in self.__vars_to_keep:
-                    data[var] = data[var].fillna(self.__ranges["IMPUTE"][var]) # for variables that are completely missing, just use the imputed variable
-        if include_var:
-            data_stdev = data.resample(str(60 * time_unit) + "T").std()
-            data_stdev = data_stdev.rename(columns=lambda s: str(s) + " stdev")
-            data = pd.concat([data, data_stdev], axis=1, verify_integrity=True)
-        data = data.fillna(method="ffill") # Forward fill
-        data = data.fillna(method="bfill") # any remaining NaN, fill with backfilling
-
-        # add back in the hours column and sort by it
-        charttime = pd.Series(data.index)
-        hours = charttime.apply(pd.Timestamp) - charttime.apply(pd.Timestamp).min()
-        hours = hours.astype('timedelta64[s]')/60/60 # set it to hours
-        data = data.set_index(hours).sort_index()
-        if self.__vars_to_keep is not None:
-            data = data[self.__vars_to_keep]
+        data, missingData, _, _ = self.findNumBackAndForwardFilled(hadm_id, time_unit, include_var)
         return (data, missingData)
     def resample_fixed_length(self, hadm_id, total_time = 24, time_unit = 6, include_var=False):
         '''

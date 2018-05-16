@@ -44,3 +44,6 @@ Afterwards, I partition events during a hospital admission using split_subjects_
 This cleans the data and fixes outliers.
 
 Use hadmid_reader to access timeseries of data.
+
+main.py runs LogisticRegression and random_forest classifiers.
+runTrainpad.sh runs the NN.

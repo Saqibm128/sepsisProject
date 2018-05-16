@@ -1,8 +1,9 @@
 import sklearn.feature_selection
 import pandas as pd
 
-def chi2test(X, Y, pval_thresh=.01):
+def chi2test(X, Y, pval_thresh=.05, num_features=47):
     '''
+    With respect to Bonferroni correction
     '''
     print(X.shape)
     print(Y.shape)
@@ -10,4 +11,4 @@ def chi2test(X, Y, pval_thresh=.01):
     features = pd.DataFrame(index=X.columns)
     features['chi2'] = pd.Series(chi2, index=X.columns)
     features['pval'] = pd.Series(pval, index=X.columns)
-    return features.loc[features['pval'] < pval_thresh];
+    return features.loc[features['pval'] < pval_thresh / num_features];
