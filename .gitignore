@@ -9,3 +9,4 @@ preprocessing/config.json
 
 *.out
 nohup.out
+secrets.json
