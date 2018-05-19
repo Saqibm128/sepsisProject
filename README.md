@@ -39,11 +39,21 @@ waveformUtil.py holds primarily scripts for reading data from the online server 
 waveform_reader.py is a work in progress to read data from qdqc:/data/mimic3wdb/matched
 
 ## Building the dataset locally
-Use extract_subjects.py to gain access to the data partitioned by subjects.
+```
+python ./preprocessing/extract_subjects.py csvFiles data/rawdatafiles/benchmarkData
+#or if using a db
+python ./preprocessing/extract_subjects.py doesntMatter data/rawdatafiles/benchmarkData --use_db
+```
+Use extract_subjects.py to gain access to the data partitioned by subjects, so that subjects below age of 18 at time of icu stay are excluded.
+(Code taken from mimic3 benchmark group https://github.com/YerevaNN/mimic3-benchmarks)
 Afterwards, I partition events during a hospital admission using split_subjects_into_events.py.
+```
+python ./split_subjects_into_events
+```
 This cleans the data and fixes outliers.
 
-Use hadmid_reader to access timeseries of data.
+Use hadmid_reader object to access timeseries of data.
 
 main.py runs LogisticRegression and random_forest classifiers.
 runTrainpad.sh runs the NN.
+runTrainpad2.sh runs more configurations of the NN.

@@ -100,8 +100,9 @@ def getConnection(port=5432):
     """
     try:
         with open("secrets.json") as file:
-            dbCreds = json.load("secrets.json")
+            dbCreds = json.load(file)
             conn = psycopg2.connect(dbname=dbCreds["db"], user=dbCreds["user"], host=dbCreds["host"], password=dbCreds["password"], port=port )
+            file.close()
     except:
     	raise
     cur = conn.cursor()
