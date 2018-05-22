@@ -9,30 +9,51 @@ import commonDB
 import math
 import os
 import wfdb
+from readWaveform.waveform_traverser import WaveformFileTraverser
 
-class Waveform_Reader():
+class WaveformReader():
 
-    def __init__(self, file_path):
-        self.file_path = file_path;
-
-    def list_all_subjects(self):
+    def __init__(self, traverser = WaveformFileTraverser()):
         '''
-        Retrieve a list of all subjects who are contained within file path
-        :precondition assume that the directory structure is p**/pSUBJECT_ID
+        @param traverser is the object which provides paths and info about files
         '''
-        folders = [f for f in os.listdir(self.file_path) if f[0] == 'p' and f != 'p09']
-        subjects = [os.listdir(os.path.join(self.file_path, folder)) for folder in folders]
-        return subjects
+        self.traverser = traverser
 
-    def access_subject(self, subject_id):
+    def getRecord(self, subject_id, record):
         '''
-        Retrieve a subject by subject_id
-        :param subject_id in format (p + subjectid padded to length 6)
-        :return waveform record names
+        Numerical records is a minute by minute summary of the data
+        @param subject_id
+        @param record
+        @return the numerical record df
         '''
-        files = os.listdir(os.path.join(self.file_path, subject_id[0:3], subject_id))
-        return [f.split('.')[0] for f in files if f != "RECORDS" and "dat" in f]
+        path = self.traverser.getSubjectPath(subject_id, False)
+        sig, fields = wfdb.rdsamp(path + "/" + record)
+        sig = pd.DataFrame(sig)
+        sig.columns = fields["sig_name"]
+        # Convert datetime and date.date into timestamp for a timeseries
+        baseDate = fields["base_date"]
+        baseTime = fields["base_time"]
+        baseTimestamp = pd.Timestamp(year=baseDate.year, month=baseDate.month, day=baseDate.day, hour=baseTime.hour, minute=baseTime.minute, second=baseTime.second, microsecond=baseTime.microsecond)
+        ts = pd.date_range(baseTimestamp, periods=len(sig), freq=pd.Timedelta(seconds=60))
+        sig.index = ts
+        return sig, fields
 
-    def get_record(self, subject_id, record):
-        sig, fields = wfdb.srdsamp(os.path.join(self.file_path, subject_id[0:3], subject_id, record))
+
+    def getWaveform(self, subject_id, record):
+        '''
+        Waveform is 125 hz data
+        @param subject_id
+        @param record
+        @return the waveform df
+        '''
+        path = self.traverser.getSubjectPath(subject_id, False)
+        sig, fields = wfdb.rdsamp(path + "/" + record)
+        sig = pd.DataFrame(sig)
+        sig.columns = fields["sig_name"]
+        # Convert datetime and date.date into timestamp for a timeseries
+        baseDate = fields["base_date"]
+        baseTime = fields["base_time"]
+        baseTimestamp = pd.Timestamp(year=baseDate.year, month=baseDate.month, day=baseDate.day, hour=baseTime.hour, minute=baseTime.minute, second=baseTime.second, microsecond=baseTime.microsecond)
+        ts = pd.date_range(baseTimestamp, periods=len(sig), freq=pd.Timedelta(seconds=1/125))
+        sig.index = ts
         return sig, fields

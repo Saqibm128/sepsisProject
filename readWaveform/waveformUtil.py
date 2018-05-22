@@ -95,13 +95,9 @@ def compareAdmitToWF():
     4. if the first 24 hours after an admission are covered by the waveforms
     :return a dataframe summarizing these results
     '''
-    conn = commonDB.getConnection()
-    admissions = pd.read_sql("SELECT subject_id, hadm_id, admittime FROM admissions", conn)
+    admissions = pd.read_sql("SELECT subject_id, hadm_id, admittime FROM admissions limit 5")
     wfSub = listAllMatchedWFSubjects()
-    # randomOrder = list(range(0, len(wfSub[0])))
-    # random.shuffle(randomOrder)
-    # randomOrder = randomOrder[0:200]
-    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:3000] #TODO: Just use this subset until physionet api works or data downloads
+    wfSub = pd.DataFrame({"subject_id": wfSub[0], "startWFTime": wfSub[1]})[0:1] #TODO: Just use this subset until physionet api works or data downloads
     wfSub["endWFTime"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["percentMissing"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
     wfSub["numberOfWaveforms"] = pd.Series(np.full([wfSub.shape[0]], np.nan), index=wfSub.index)
