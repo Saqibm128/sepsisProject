@@ -4,6 +4,7 @@ from multiprocessing import Process
 from multiprocessing import Queue
 from multiprocessing import Manager
 from addict import Dict
+from commonDB import read_sql
 import pandas as pd
 import numpy as np
 
@@ -19,16 +20,26 @@ def processSubjectID(subject_id):
         singleRecord = pd.DataFrame(index=[multiRecord])
         singleRecord["HADM_MAPPING"] = fileToHADMID[multiRecord] # Maps file to hadmid
         singleRecord["SUBJECT_ID"] = subject_id
-        try:
-            data, fields = reader.getRecord(subject_id, multiRecord)
-            for sig_name in data.columns:
-                if (~(data[sig_name].apply(np.isnan))).all():
-                    singleRecord[sig_name + "_PERCENT_MISSING"] = 0
-                else:
-                    singleRecord[sig_name + "_PERCENT_MISSING"] = data[sig_name].apply(np.isnan).value_counts()[True] / len(data)
-            singleRecord["length"] = len(data) / 125
-        except: #hack
-            singleRecord["Error"] = "Length was set to end" #Note: apparently some numeric records were incorrectly saved (i.e. p052848-2172-03-03-09-04n)
+        if fileToHADMID[multiRecord] != "NOT FOUND":
+            admittime = read_sql("SELECT ADMITTIME from ADMISSIONS WHERE HADM_ID = " + str(fileToHADMID[multiRecord])).iloc[0, 0]
+        data, fields = reader.getRecord(subject_id, multiRecord)
+        for sig_name in data.columns:
+            if (~(data[sig_name].apply(np.isnan))).all():
+                singleRecord[sig_name + "_PERCENT_MISSING"] = 0
+            else:
+                singleRecord[sig_name + "_PERCENT_MISSING"] = data[sig_name].apply(np.isnan).value_counts()[True] / len(data)
+        singleRecord["length"] = len(data)
+        #For each signal, find the percentage that is filled in the first 24 hours after admission
+        if fileToHADMID[multiRecord] != "NOT FOUND":
+            admittime = pd.Timestamp(admittime)
+            firstDay = data.iloc[data.index < admittime + pd.Timedelta("1 days")]
+            if (~(firstDay[sig_name].apply(np.isnan))).all():
+                singleRecord[sig_name + "_PERCENT_MISSING_FIRST_24_HOURS"] = 0
+            else:
+                singleRecord[sig_name + "_PERCENT_MISSING_FIRST_24_HOURS"] = firstDay[sig_name].apply(np.isnan).value_counts()[True] / len(firstDay)
+
+        # except: #hack
+        #     singleRecord["Error"] = "Length was set to end" #Note: apparently some numeric records were incorrectly saved (i.e. p052848-2172-03-03-09-04n)
         toReturn = pd.concat([toReturn,singleRecord])
     return toReturn
 
@@ -38,8 +49,8 @@ def helperWaveformRunner(toRunQueue, toReturnQueue):
     Uses queues to analyze waveforms for key prelim stats
     '''
     for subject_id in iter(toRunQueue.get, None):
-        toReturn = processSubjectID(subject_id)
         print(toRunQueue.qsize())
+        toReturn = processSubjectID(subject_id)
         toReturnQueue.put(toReturn)
 
 
@@ -70,7 +81,6 @@ if __name__ == "__main__":
     while not outQueue.empty():
         allResults = pd.concat([outQueue.get(), allResults])
     allResults = allResults.fillna(100) #missing 100 % if we didnt find the waveform
-    print(allResults)
     allResults.to_csv("data/rawdatafiles/numeric_prelim_analysis.csv")
 
 

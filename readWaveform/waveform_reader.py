@@ -36,6 +36,7 @@ class WaveformReader():
         baseTimestamp = pd.Timestamp(year=baseDate.year, month=baseDate.month, day=baseDate.day, hour=baseTime.hour, minute=baseTime.minute, second=baseTime.second, microsecond=baseTime.microsecond)
         ts = pd.date_range(baseTimestamp, periods=len(sig), freq=pd.Timedelta(seconds=60))
         sig.index = ts
+        sig = sig.loc[:,~sig.columns.duplicated()]
         return sig, fields
 
 
