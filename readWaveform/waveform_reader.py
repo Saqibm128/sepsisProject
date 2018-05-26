@@ -13,11 +13,17 @@ from readWaveform.waveform_traverser import WaveformFileTraverser
 
 class WaveformReader():
 
-    def __init__(self, traverser = WaveformFileTraverser()):
+    def __init__(self, traverser = WaveformFileTraverser(), numericMapping=None):
         '''
         @param traverser is the object which provides paths and info about files
+        @param numericMapping is the dataframe which maps the signal names to high level variables
+                if None, don't use
         '''
         self.traverser = traverser
+        if numericMapping is not None:
+            numericMapping["numeric"] = numericMapping["numeric"].str.upper()
+            numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
+        self.numericMapping = numericMapping
 
     def getRecord(self, subject_id, record):
         '''
@@ -29,7 +35,12 @@ class WaveformReader():
         path = self.traverser.getSubjectPath(subject_id, False)
         sig, fields = wfdb.rdsamp(path + "/" + record)
         sig = pd.DataFrame(sig)
-        sig.columns = fields["sig_name"]
+        columns = fields["sig_name"]
+        for i in range(len(columns)):
+            columns[i] = columns[i].upper()
+            if (self.numericMapping["numeric"] == columns[i]).any():
+                columns[i] = self.numericMapping["high_level_var"][self.numericMapping["numeric"] == columns[i]].iloc[0]
+        sig.columns = columns
         # Convert datetime and date.date into timestamp for a timeseries
         baseDate = fields["base_date"]
         baseTime = fields["base_time"]

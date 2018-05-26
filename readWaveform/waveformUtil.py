@@ -14,7 +14,7 @@ def preliminaryCompareTimesICU(num_days=1):
     '''
     This method is another sanity check method similar to preliminaryCompareTimes but uses ICUSTAYS instead of ADMISSIONS
     '''
-    icustays = commonDB.read_sql("SELECT * FROM ICUSTAYS")
+    icustays = commonDB.read_sql("SELECT * FROM ICUSTAYS", uppercase=False)
     (subjects, times) = listAllMatchedWFSubjects()
     matchedWF = pd.DataFrame({"subject_id":subjects, "wfStartTime": times}) #times is when the start of recording for each wf
     matchedWF["subject_id"] = matchedWF["subject_id"].astype(np.number)
@@ -39,16 +39,18 @@ def preliminaryCompareTimes(num_days=1):
             the wfStartTime has to be to be considered allowed, default= 15
     :return a dataframe to characterize results
     '''
-    admissions = commonDB.read_sql("SELECT * FROM admissions")
+    admissions = commonDB.read_sql("SELECT subject_id, admittime FROM admissions", uppercase=False)
     (subjects, times) = listAllMatchedWFSubjects()
     matchedWF = pd.DataFrame({"subject_id":subjects, "wfStartTime": times}) #times is when the start of recording for each wf
     matchedWF["subject_id"] = matchedWF["subject_id"].astype(np.number)
     matchedWF["wfStartTime"] = matchedWF["wfStartTime"].apply(preliminaryCompareTimesHelper) #convert weird time format into useful data
+    print(admissions.columns, matchedWF.columns)
     admWfMerge = pd.merge(matchedWF, admissions, left_on="subject_id", right_on="subject_id")
     admWfMerge["timeDiff"] = admWfMerge["wfStartTime"].subtract(admWfMerge["admittime"])
     admWfMerge = admWfMerge[(admWfMerge["timeDiff"] > pd.Timedelta(0))]
     admWfMerge = admWfMerge[(admWfMerge["timeDiff"] < pd.Timedelta(str(num_days) + " days"))] #don't consider waveform older than 15 days
     admWfMerge["rawTimeDiff"] = admWfMerge["timeDiff"].astype(np.int64)
+    print(admWfMerge.shape)
     print(pd.Timedelta(admWfMerge["timeDiff"].astype(np.int64).mean()))
     return admWfMerge
 

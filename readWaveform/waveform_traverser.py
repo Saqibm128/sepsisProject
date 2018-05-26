@@ -4,7 +4,7 @@ import os
 import os.path as path
 import re
 from addict import Dict
-from pandas import Timestamp
+from pandas import Timestamp, Timedelta
 from commonDB import read_sql
 
 class WaveformFileTraverser():
@@ -50,9 +50,10 @@ class WaveformFileTraverser():
         subjectPath = self.getSubjectPath(subjectid, p_appended)
         return [file[:-4] for file in os.listdir(subjectPath) if re.match(fileRegex, file) is not None]
 
-    def matchWithHADMID(self, subjectid, p_appended=False):
+    def matchWithHADMID(self, subjectid, p_appended=False, time_error="6 hours"):
         '''
         Goes through each fileDateMap entry to match each key (waveform file) to hospital admission
+        time_error is the amount of time before admittime and after DISCHTIME to consider for admissions
         @return a dictionary which matches hadm_id with the waveform file
         '''
         subjectFiles = self.getMultiRecordFiles(subjectid, p_appended)
@@ -68,7 +69,7 @@ class WaveformFileTraverser():
 
         for waveform in fileDateMap.keys():
             time = fileDateMap[waveform]
-            matching = admissions["HADM_ID"][(admissions["ADMITTIME"] < time) & (admissions["DISCHTIME"] > time)]
+            matching = admissions["HADM_ID"][(admissions["ADMITTIME"] - Timedelta(time_error) < time) & (admissions["DISCHTIME"] + Timedelta(time_error) > time)]
             if (len(matching.values) != 0):
                 fileAdmissionMap[waveform] = matching.iloc[0] #assume that admissions don't overlap for a single subject id
             else:
