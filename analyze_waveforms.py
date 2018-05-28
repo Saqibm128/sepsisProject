@@ -9,8 +9,10 @@ import pandas as pd
 import numpy as np
 import re
 import matplotlib as mpl
-mpl.use('Agg')
+# mpl.use('Agg')
 import matplotlib.pyplot as plt
+plt.switch_backend('agg')
+
 from matplotlib.pyplot import plot, show, savefig, xlim, figure, \
                 hold, ylim, legend, boxplot, setp, axes
 
@@ -40,15 +42,15 @@ def processSubjectID(subject_id):
                 if (~(data[sig_name].apply(np.isnan))).all():
                     singleRecord[sig_name + "_PERCENT_MISSING"] = 0
                 else:
-                    singleRecord[sig_name + "_PERCENT_MISSING"] = pd.isnull(data[sig_name]).value_counts()[True] / len(data)
+                    singleRecord[sig_name + "_PERCENT_MISSING"] = pd.isnull(data[sig_name]).value_counts()[True] / len(data[sig_name])
                 #For each signal, find the percentage that is filled in the first 24 hours after admission
                 if fileToHADMID[multiRecord] != "NOT FOUND":
                     admittime = pd.Timestamp(admittime)
-                    firstDay = data.iloc[data.index < admittime + pd.Timedelta("1 days")]
+                    firstDay = data.iloc[(data.index < admittime + pd.Timedelta("1 days")) & (data.index > admittime)]
                     if (pd.isnull(firstDay[sig_name])).all():
                         singleRecord[sig_name + "_PERCENT_MISSING_FIRST_24_HOURS"] = 1
                     else:
-                        singleRecord[sig_name + "_PERCENT_MISSING_FIRST_24_HOURS"] =  1 - pd.isnull(firstDay[sig_name]).value_counts()[False] / (60*60*24*60)
+                        singleRecord[sig_name + "_PERCENT_MISSING_FIRST_24_HOURS"] =  1 - pd.isnull(firstDay[sig_name]).value_counts()[False] / (60*24) # 60 minutes in an hour, 24 hours in a day
             singleRecord["length"] = len(data)
         except:
             singleRecord["comment"] = "Could not getRecord"
@@ -70,6 +72,8 @@ def helperWaveformRunner(toRunQueue, toReturnQueue):
 
 if __name__ == "__main__":
 
+    ## preliminary analysis based solely on file names
+    ##  Using this because files were not downloaded yet onto server, so depending on internet slow speed
     # icuComp = waveformUtil.preliminaryCompareTimes()
     # icuComp.to_csv("data/rawdatafiles/prelimTimeCompare.csv")
     # careunits = icuComp["first_careunit"].unique()
@@ -79,34 +83,78 @@ if __name__ == "__main__":
     #     careunitFreq[unit] = (icuComp["first_careunit"]==unit).value_counts()
     # careunitFreq.to_csv("data/rawdatafiles/icustay_waveform_freq.csv")
 
+    # Specific file reader for waveform files on /data/mimic3wdb
+    #   Generates a set of statistics for each waveform
+    # reader = WaveformReader(numericMapping=numericMapping)
+    # reader.traverser.numeric = True
     #
-    reader = WaveformReader(numericMapping=numericMapping)
-    reader.traverser.numeric = True
+    # manager = Manager()
+    # inQueue = manager.Queue()
+    # outQueue = manager.Queue()
+    # subjects = reader.traverser.getSubjects()
+    # [inQueue.put(subject) for subject in subjects]
+    # [inQueue.put(None) for i in range(__n_workers)]
+    # processes = [Process(target=helperWaveformRunner, args=(inQueue, outQueue)) for i in range(__n_workers)]
+    # [process.start() for process in processes]
+    # [process.join() for process in processes]
+    # allResults = []
+    # while not outQueue.empty():
+    #     allResults.append(outQueue.get())
+    # allResults = pd.concat(allResults)
+    # allResults = allResults.fillna(1) #missing 100 % if we didnt find the waveform
+    # allResults.to_csv("data/rawdatafiles/numeric_prelim_analysis.csv")
+    allResults = pd.read_csv("data/rawdatafiles/numeric_prelim_analysis.csv")
+    #
+    # # Further analysis of statistics to provide average data
+    # # 22461 by 600 matrix is hard to parse, so we just use mean
+    # numericStats = pd.DataFrame(index=allResults.columns, columns=["Average Missing", "Num Missing"])
+    # twentyFourHourCoverage = []
+    # for col in allResults.columns:
+    #     if re.search(r"_PERCENT_MISSING", col) is not None:
+    #         numericStats["Average Missing"][col] = allResults[allResults[col] < threshold][col].mean() #Mean of all columns that measure amount of info missing
+    #         numericStats["Num Missing"][col] =  allResults[~(allResults[col] < threshold)].shape[0] #Counts number of waveforms that don't have the signal
+    #     if re.search(r"_PERCENT_MISSING_FIRST_24_HOURS$", col) is not None:
+    #         twentyFourHourCoverage.append(pd.DataFrame({"Average Missing": [allResults[col].mean()]}, index=[col]))
+    # numericStats.to_csv("data/rawdatafiles/summarized_numeric_prelim_analysis.csv")
+    # (pd.concat(twentyFourHourCoverage)).to_csv("data/rawdatafiles/numeric_24_hour_analysis.csv")
 
-    manager = Manager()
-    inQueue = manager.Queue()
-    outQueue = manager.Queue()
-    subjects = reader.traverser.getSubjects()
-    [inQueue.put(subject) for subject in subjects]
-    [inQueue.put(None) for i in range(__n_workers)]
-    processes = [Process(target=helperWaveformRunner, args=(inQueue, outQueue)) for i in range(__n_workers)]
-    [process.start() for process in processes]
-    [process.join() for process in processes]
-    allResults = []
-    while not outQueue.empty():
-        allResults.append(outQueue.get())
-    allResults = pd.concat(allResults)
-    allResults = allResults.fillna(1) #missing 100 % if we didnt find the waveform
-    allResults.to_csv("data/rawdatafiles/numeric_prelim_analysis.csv")
-    # allResults = pd.read_csv("data/rawdatafiles/numeric_prelim_analysis.csv")
+    # Continuing off of last section, now we get
+    #   representative stats for a well represented cohort of waveforms
+    threshold = .8
+    ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) & \
+           (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) & \
+           (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) &\
+           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"] < threshold)
+           )
+    plt.hist(allResults[ind]["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
+    plt.xlabel("Percent Missing in First 24 Hours")
+    plt.title("Heart Rate")
+    plt.ylabel("Number of Signals")
+    plt.savefig("data/rawdatafiles/heartrate.png", dpi=300, bottom=-.1)
+    plt.gcf().clear()
 
-    numericStats = pd.DataFrame(index=allResults.columns, columns=["Average Missing", "Num Missing"])
-    twentyFourHourCoverage = []
-    for col in allResults.columns:
-        if re.search(r"_PERCENT_MISSING", col) is not None:
-            numericStats["Average Missing"][col] = allResults[allResults[col] < threshold][col].mean() #Mean of all columns that measure amount of info missing
-            numericStats["Num Missing"][col] =  allResults[~(allResults[col] < threshold)].shape[0] #Counts number of waveforms that don't have the signal
-        if re.search(r"_PERCENT_MISSING_FIRST_24_HOURS$", col) is not None:
-            twentyFourHourCoverage.append(pd.DataFrame({"Average Missing": [allResults[col].mean()]}, index=[col]))
-    numericStats.to_csv("data/rawdatafiles/summarized_numeric_prelim_analysis.csv")
-    (pd.concat(twentyFourHourCoverage)).to_csv("data/rawdatafiles/numeric_24_hour_analysis.csv")
+    plt.hist(allResults[ind]["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
+    plt.xlabel("Percent Missing in First 24 Hours")
+    plt.title("Oxygen Saturation")
+    plt.ylabel("Number of Signals")
+    plt.savefig("data/rawdatafiles/oxygen.png", dpi=300, bottom=-.1)
+    plt.gcf().clear()
+
+    plt.hist(allResults[ind]["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
+    plt.xlabel("Percent Missing in First 24 Hours")
+    plt.title("Diastolic Blood Pressure")
+    plt.ylabel("Number of Signals")
+    plt.savefig("data/rawdatafiles/diastolic.png", dpi=300, bottom=-.1)
+    plt.gcf().clear()
+
+    plt.hist(allResults[ind]["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
+    plt.xlabel("Percent Missing in First 24 Hours")
+    plt.title("Systolic Blood Pressure")
+    plt.ylabel("Number of Signals")
+    plt.savefig("data/rawdatafiles/systolic.png", dpi=300, bottom=-.1)
+    plt.gcf().clear()
+
+    print(allResults[ind][["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS", \
+                           "OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS", \
+                           "DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS", \
+                           "SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"]].mean())
