@@ -71,7 +71,13 @@ class WaveformFileTraverser():
             time = fileDateMap[waveform]
             matching = admissions["HADM_ID"][(admissions["ADMITTIME"] - Timedelta(time_error) < time) & (admissions["DISCHTIME"] + Timedelta(time_error) > time)]
             if (len(matching.values) != 0):
-                fileAdmissionMap[waveform] = matching.iloc[0] #assume that admissions don't overlap for a single subject id
+                admittime = admissions[admissions["HADM_ID"] == matching.iloc[0]]["ADMITTIME"].iloc[0]
+                fileAdmissionMap[waveform].hadmid = matching.iloc[0] #assume that admissions don't overlap for a single subject id
+                #store either the admittime from sql or the start of records for admittimes
+                if (admittime > time):
+                    fileAdmissionMap[waveform].admittime = time
+                else:
+                    fileAdmissionMap[waveform].admittime = time
             else:
-                fileAdmissionMap[waveform] = "NOT FOUND"
+                fileAdmissionMap[waveform].hadmid = "NOT FOUND"
         return fileAdmissionMap

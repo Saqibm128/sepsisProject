@@ -25,13 +25,15 @@ class WaveformReader():
             numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
         self.numericMapping = numericMapping
 
-    def getRecord(self, subject_id, record):
+    def getRecord(self, record, subject_id=None):
         '''
         Numerical records is a minute by minute summary of the data
-        @param subject_id
+        @param subject_id if None, will try to extract from record name
         @param record
         @return the numerical record df
         '''
+        if subject_id == None:
+            subject_id = record[1:7]
         path = self.traverser.getSubjectPath(subject_id, False)
         sig, fields = wfdb.rdsamp(path + "/" + record)
         sig = pd.DataFrame(sig)
