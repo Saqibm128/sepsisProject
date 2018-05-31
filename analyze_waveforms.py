@@ -21,6 +21,7 @@ threshold = 1 # threshold is which section of the subjects to consider for a sin
 numericMapping = pd.read_csv("preprocessing/resources/numeric_waveform_to_variable_map.csv")
 numericMapping["numeric"] = numericMapping["numeric"].str.upper()
 numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
+numericMapping = None
 
 def processSubjectID(subject_id, numHours = 24):
     reader = WaveformReader(numericMapping=numericMapping)
@@ -67,6 +68,13 @@ def helperWaveformRunner(toRunQueue, toReturnQueue):
         toReturn = processSubjectID(subject_id)
         toReturnQueue.put(toReturn)
 
+def plotRecord(allResults, ind, name, filename):
+    plt.hist(allResults[ind][name.upper() + "_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
+    plt.xlabel("Percent Missing in First 24 Hours")
+    plt.title(name)
+    plt.ylabel("Number of Numeric Records")
+    plt.savefig("data/rawdatafiles/" + filename + ".png", dpi=300, bottom=-.1)
+    plt.gcf().clear()
 
 
 
@@ -91,7 +99,7 @@ if __name__ == "__main__":
     manager = Manager()
     inQueue = manager.Queue()
     outQueue = manager.Queue()
-    subjects = reader.traverser.getSubjects()
+    subjects = reader.traverser.getSubjects()[0:500]
     [inQueue.put(subject) for subject in subjects]
     [inQueue.put(None) for i in range(__n_workers)]
     processes = [Process(target=helperWaveformRunner, args=(inQueue, outQueue)) for i in range(__n_workers)]
@@ -123,7 +131,8 @@ if __name__ == "__main__":
         ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) & \
                (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) & \
                (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) &\
-               (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"] < threshold)
+               (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) &\
+               (allResults["RESPIRATION RATE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold)
                )
         print("Threshold:", threshold)
         print("Number of sample records:", ind.value_counts()[True])
@@ -135,40 +144,23 @@ if __name__ == "__main__":
     ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) & \
            (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) & \
            (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) &\
-           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"] < threshold)
+           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) &\
+           (allResults["RESPIRATION RATE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold)
            )
-    plt.hist(allResults[ind]["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Heart Rate")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/heartrate.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
 
-    plt.hist(allResults[ind]["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Oxygen Saturation")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/oxygen.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
 
-    plt.hist(allResults[ind]["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Diastolic Blood Pressure")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/diastolic.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
+    plotRecord(allResults, ind, "Heart Rate", "heartrate")
+    plotRecord(allResults, ind, "Respiration Rate", "respirationrate")
+    plotRecord(allResults, ind, "Oxygen Saturation", "oxygen")
+    plotRecord(allResults, ind, "Diastolic Blood Pressure", "diastolic")
+    plotRecord(allResults, ind, "Systolic Blood Pressure", "systolic")
 
-    plt.hist(allResults[ind]["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Systolic Blood Pressure")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/systolic.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
 
     print(allResults[ind][["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS", \
                            "OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS", \
                            "DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS", \
-                           "SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"]].mean())
+                           "SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS", \
+                           "RESPIRATION RATE_PERCENT_MISSING_FIRST_24_HOURS"]].mean())
 
     # for non filtered
     threshold = 10000 # too lazy to fix this, so just did copy pasta and huge threshold
@@ -177,30 +169,8 @@ if __name__ == "__main__":
            (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"] < threshold) &\
            (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"] < threshold)
            )
-    plt.hist(allResults[ind]["HEART RATE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Heart Rate")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/no_filtered_heartrate.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
-
-    plt.hist(allResults[ind]["OXYGEN SATURATION_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Oxygen Saturation")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/no_filtered_oxygen.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
-
-    plt.hist(allResults[ind]["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Diastolic Blood Pressure")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/no_filtered_diastolic.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
-
-    plt.hist(allResults[ind]["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_24_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First 24 Hours")
-    plt.title("Systolic Blood Pressure")
-    plt.ylabel("Number of Signals")
-    plt.savefig("data/rawdatafiles/no_filtered_systolic.png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
+    plotRecord(allResults, ind, "Heart Rate", "filtered_heartrate")
+    plotRecord(allResults, ind, "Respiration Rate", "filtered_respirationrate")
+    plotRecord(allResults, ind, "Oxygen Saturation", "filtered_oxygen")
+    plotRecord(allResults, ind, "Diastolic Blood Pressure", "filtered_diastolic")
+    plotRecord(allResults, ind, "Systolic Blood Pressure", "filtered_systolic")

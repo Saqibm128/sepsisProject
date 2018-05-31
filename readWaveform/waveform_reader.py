@@ -40,8 +40,9 @@ class WaveformReader():
         columns = fields["sig_name"]
         for i in range(len(columns)):
             columns[i] = columns[i].upper()
-            if (self.numericMapping["numeric"] == columns[i]).any():
-                columns[i] = self.numericMapping["high_level_var"][self.numericMapping["numeric"] == columns[i]].iloc[0]
+            if (self.numericMapping is not None):
+                if (self.numericMapping["numeric"] == columns[i]).any():
+                    columns[i] = self.numericMapping["high_level_var"][self.numericMapping["numeric"] == columns[i]].iloc[0]
         sig.columns = columns
         # Convert datetime and date.date into timestamp for a timeseries
         baseDate = fields["base_date"]
