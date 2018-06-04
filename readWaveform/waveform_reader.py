@@ -43,6 +43,8 @@ class WaveformReader():
             if (self.numericMapping is not None):
                 if (self.numericMapping["numeric"] == columns[i]).any():
                     columns[i] = self.numericMapping["high_level_var"][self.numericMapping["numeric"] == columns[i]].iloc[0]
+        for col in sig.columns[sig.columns.duplicated()]:
+            sig[col] = sig[col].iloc[:,0].fillna(sig[col].iloc[:,1]) #if two numerics signals exist with same name, use fillna to correctly fill in
         sig.columns = columns
         # Convert datetime and date.date into timestamp for a timeseries
         baseDate = fields["base_date"]

@@ -9,7 +9,20 @@ import time
 import datetime
 import commonDB
 import math
+from readWaveform.waveform_reader import WaveformReader
+from multiprocessing import Process
+from multiprocessing import Queue
+from multiprocessing import Manager
+from addict import Dict
+from commonDB import read_sql
+import re
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as plt
+plt.switch_backend('agg')
 
+from matplotlib.pyplot import plot, show, savefig, xlim, figure, \
+                hold, ylim
 def preliminaryCompareTimesICU(num_days=1):
     '''
     This method is another sanity check method similar to preliminaryCompareTimes but uses ICUSTAYS instead of ADMISSIONS
@@ -227,6 +240,71 @@ def applyInIntervals(applier, waveform, freq = 125, time=6):
     for i in range(0, len(waveform)/(hour * time) - 1):
         toRet.append(applier(waveform[segment*i:segment*(i+1)]))
     return toRet
+
+def processSubjectID(subject_id, numericMapping, numHours):
+    reader = WaveformReader(numericMapping=numericMapping)
+    reader.traverser.numeric = True
+    toReturn = [pd.DataFrame()]
+    fileToHADMID = reader.traverser.matchWithHADMID(subject_id)
+    multiRecords = reader.traverser.getMultiRecordFiles(subject_id)
+    if len(multiRecords) == 0:
+        return pd.DataFrame() #if there are not numeric record files, we just skip
+    for multiRecord in multiRecords:
+        singRecStats = pd.DataFrame(index=[multiRecord])
+        singRecStats["HADM_MAPPING"] = fileToHADMID[multiRecord].hadmid # Maps file to hadmid
+        singRecStats["SUBJECT_ID"] = subject_id
+        if fileToHADMID[multiRecord].hadmid != "NOT FOUND": #could not be matched for some reason
+            admittime = fileToHADMID[multiRecord].admittime
+        try:
+            data, fields = reader.getRecord(multiRecord, subject_id=subject_id)
+            for sig_name in data.columns:
+                if (~(data[sig_name].apply(np.isnan))).all():
+                    singRecStats[sig_name + "_PERCENT_MISSING"] = 0
+                else:
+                    singRecStats[sig_name + "_PERCENT_MISSING"] = pd.isnull(data[sig_name]).value_counts()[True] / len(data[sig_name])
+                #For each signal, find the percentage that is filled in the first 24 hours after admission
+                if fileToHADMID[multiRecord].hadmid != "NOT FOUND":
+                    singRecStats = percentMissing(data, admittime, numHours, sig_name, singRecStats)
+            singRecStats["length"] = len(data)
+        except:
+            singRecStats["comment"] = "Could not getRecord"
+        toReturn.append(singRecStats)
+    return pd.concat(toReturn)
+
+def percentMissing(data, admittime, numHours, sig_name, singRecStats):
+    '''
+    Represent the amount of data missing for the number of hours noted, then writes to singRecStats (single record stats)
+    :param data to analyzie
+    :param admittime the admission time of a specific data record
+    :param sig_name specific signal to consider
+    :param numHours the exact number of hours after the admission to consider. if it is an array of number of hours, will iterate through that
+    :param singRecStats the dataframe to write to
+    '''
+    if not isinstance(numHours, list):
+        numHours = [numHours]
+    for numHour in numHours:
+        admittime = pd.Timestamp(admittime)
+        firstDay = data.iloc[(data.index < admittime + pd.Timedelta(str(numHour) + " hours")) & (data.index > admittime)]
+        # print(pd.isnull(firstDay[sig_name]).value_counts()[False])
+        if (pd.isnull(firstDay[sig_name])).all(): #edge case where False is not a key
+            singRecStats[sig_name + "_PERCENT_MISSING_FIRST_" + str(numHour) + "_HOURS"] = 1
+        else:
+            singRecStats[sig_name + "_PERCENT_MISSING_FIRST_" + str(numHour) + "_HOURS"] =  1 - pd.isnull(firstDay[sig_name]).value_counts()[False] / (60*numHour) # 60 minutes in an hour, 24 hours in a day
+    return singRecStats
+
+
+
+
+
+def plotRecord(allResults, ind, name, filename, numHour = 24):
+    plt.hist(allResults[ind][name.upper() + "_PERCENT_MISSING_FIRST_" + str(numHour) + "_HOURS"], bins=20, rwidth=.5)
+    plt.xlabel("Percent Missing in First " + str(numHour) + " Hours")
+    plt.title(name)
+    plt.ylabel("Number of Numeric Records")
+    plt.savefig("data/rawdatafiles/" + filename + ".png", dpi=300, bottom=-.1)
+    plt.gcf().clear()
+
+
 if __name__ == "__main__":
     # print(ListAllMatchedSubjectsWaveforms()[1:10])
     print(wfdb.srdsamp(recordname='3141595', pbdir='mimic3wdb/31/3141595/', sampfrom=0, sampto=100))

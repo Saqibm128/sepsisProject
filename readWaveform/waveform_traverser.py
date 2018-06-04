@@ -64,7 +64,8 @@ class WaveformFileTraverser():
             fileDateMap[subjectFile] = time
         if p_appended:
             subjectid = subjectid[1:] #drop the p
-        admissions = read_sql("SELECT HADM_ID, ADMITTIME, DISCHTIME from ADMISSIONS where subject_id = " + subjectid)
+        #We remove any admissions which are death times
+        admissions = read_sql("SELECT HADM_ID, ADMITTIME, DISCHTIME from ADMISSIONS where subject_id = {} and DISCHTIME > ADMITTIME".format(subjectid))
         fileAdmissionMap = Dict()
 
         for waveform in fileDateMap.keys():
