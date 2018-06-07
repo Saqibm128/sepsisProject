@@ -1,6 +1,6 @@
 from readWaveform.waveform_reader import WaveformReader
 from readWaveform import waveformUtil
-from readWaveform.waveformUtil import percentMissing, processSubjectID, plotRecord
+from readWaveform.waveformUtil import percentMissingFirstNHours, processSubjectID, plotRecord
 from multiprocessing import Process
 from multiprocessing import Queue
 from multiprocessing import Manager
@@ -13,6 +13,7 @@ import matplotlib as mpl
 # mpl.use('Agg')
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
+from functools import reduce
 
 from matplotlib.pyplot import plot, show, savefig, xlim, figure, \
                 hold, ylim, legend, boxplot, setp, axes
@@ -24,6 +25,7 @@ numericMapping["numeric"] = numericMapping["numeric"].str.upper()
 numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
 hoursAfterAdmit = [12, 24, 36, 48] #Hours after admission
 # numericMapping = None
+columnsToAnalyze = ["RESPIRATORY RATE", "HEART RATE", "DIASTOLIC BLOOD PRESSURE", "SYSTOLIC BLOOD PRESSURE", "OXYGEN SATURATION"]
 reader = WaveformReader(numericMapping=numericMapping)
 reader.traverser.numeric = True
 
@@ -37,8 +39,7 @@ def helperWaveformRunner(toRunQueue, toReturnQueue, numericMapping):
         toReturn = processSubjectID(subject_id, numHours = hoursAfterAdmit, numericMapping=numericMapping)
         toReturnQueue.put(toReturn)
 
-
-def waveformStats(toRunQueue, toReturnQueue, numericMapping, columns):
+def waveformStats(toRunQueue, toReturnQueue, numericMapping, columns=columnsToAnalyze):
     for recordName in iter(toRunQueue.get, None):
         print(toRunQueue.qsize())
         toReturn = pd.DataFrame(column=columns, index=[recordName])
@@ -63,8 +64,8 @@ if __name__ == "__main__":
 
     # Specific file reader for waveform files on /data/mimic3wdb
     #   Generates a set of statistics for each waveform
-
-
+    #
+    #
     # manager = Manager()
     # inQueue = manager.Queue()
     # outQueue = manager.Queue()
@@ -81,81 +82,123 @@ if __name__ == "__main__":
     # allResults = allResults.fillna(1) #missing 100 % if we didnt find the waveform
     # allResults.to_csv("data/rawdatafiles/numeric_prelim_analysis.csv")
     allResults = pd.read_csv("data/rawdatafiles/numeric_prelim_analysis.csv", index_col=0)
-
-    # Further analysis of statistics to provide average data
-    # 22461 by 600 matrix is hard to parse, so we just use mean
-    numericStats = pd.DataFrame(index=allResults.columns, columns=["Average Missing", "Num Missing"])
-    twentyFourHourCoverage = []
-    for col in allResults.columns:
-        if re.search(r"_PERCENT_MISSING", col) is not None:
-            numericStats["Average Missing"][col] = allResults[allResults[col] < threshold][col].mean() #Mean of all columns that measure amount of info missing
-            numericStats["Num Missing"][col] =  allResults[~(allResults[col] < threshold)].shape[0] #Counts number of waveforms that don't have the signal
-        if re.search(r"_PERCENT_MISSING_FIRST_\d+_HOURS$", col) is not None:
-            twentyFourHourCoverage.append(pd.DataFrame({"Average Missing": [allResults[col].mean()]}, index=[col]))
-    numericStats.to_csv("data/rawdatafiles/summarized_numeric_prelim_analysis.csv")
-    (pd.concat(twentyFourHourCoverage)).to_csv("data/rawdatafiles/numeric_24_hour_analysis.csv")
-
-    # Let's go through and find out how many samples remain depending on how we filter
-    for hour in hoursAfterAdmit:
-        for threshold in [.2, .4, .6, .8, 1]:
-            ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-                   (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-                   (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
-                   (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-                   # &\
-                   # (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-                   )
-            print("Threshold:", threshold, "Hours after Admit:", hour)
-            print("Number of sample records:", len(ind) - ind.value_counts()[False]) #If all are false, value counts fails
-        print()
-
-    # Continuing off of last section, now we get
-    #   representative stats for a well represented cohort of waveforms
-
+    # classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
+    #
+    #
+    # # Further analysis of statistics to provide average data
+    # # 22461 by 600 matrix is hard to parse, so we just use mean
+    # numericStats = pd.DataFrame(index=allResults.columns, columns=["Average Missing", "Num Missing"])
+    # twentyFourHourCoverage = []
+    # for col in allResults.columns:
+    #     if re.search(r"_PERCENT_MISSING", col) is not None:
+    #         numericStats["Average Missing"][col] = allResults[allResults[col] < threshold][col].mean() #Mean of all columns that measure amount of info missing
+    #         numericStats["Num Missing"][col] =  allResults[~(allResults[col] < threshold)].shape[0] #Counts number of waveforms that don't have the signal
+    #     if re.search(r"_PERCENT_MISSING_FIRST_\d+_HOURS$", col) is not None:
+    #         twentyFourHourCoverage.append(pd.DataFrame({"Average Missing": [allResults[col].mean()]}, index=[col]))
+    # numericStats.to_csv("data/rawdatafiles/summarized_numeric_prelim_analysis.csv")
+    # (pd.concat(twentyFourHourCoverage)).to_csv("data/rawdatafiles/numeric_24_hour_analysis.csv")
+    #
+    # toConcat = []
+    # # Let's go through and find out how many samples remain depending on how we filter
+    # for hour in hoursAfterAdmit:
+    #     for threshold in [.2, .4, .6, .8, 1]:
+    #         toAppend = pd.DataFrame(index=["HOUR: " + str(hour) + "THRESHOLD: " + str(threshold)])
+    #         ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+    #                (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+    #                (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
+    #                (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
+    #                (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
+    #                )
+    #         print("Hours after Admit:", hour, "Threshold:", threshold)
+    #         print("Number of sample records:", ind.value_counts()[True]) #If all are false, value counts fails
+    #         toAppend["NUM RECORDS"] = ind.value_counts()[True]
+    #         Y = classified["angus"].loc[allResults[ind]["HADM_MAPPING"].apply(int)]
+    #         sepsis = allResults[ind]["HADM_MAPPING"].apply(lambda x: int(x) in Y[Y == 1].index)
+    #         print("Number of Sepsis Cases:", sepsis.value_counts()[True])
+    #         toAppend["ANGUS"] = sepsis.value_counts()[True]
+    #         nonSepsis = allResults[ind][~sepsis]
+    #         sepsis = allResults[ind][sepsis]
+    #         for col in columnsToAnalyze:
+    #             colStr = col + " MEAN"
+    #             toAppend["SEPSIS:" + col] = sepsis[colStr].mean()
+    #             print("sepsis: ", col, " -> ", sepsis[colStr].mean())
+    #             toAppend["NONSEPSIS:" + col] = nonSepsis[colStr].mean()
+    #             print("nonsepsis: ", col, " -> ", nonSepsis[colStr].mean())
+    #     print()
+    #
+    # # Continuing off of last section, now we get
+    # #   representative stats for a well represented cohort of waveforms
+    #
     hour = 24
 
     threshold = .8
     ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
            (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
            (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
-           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-           # &\
-           # (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
+           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
+           (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
            )
+    #
+    #
+    # plotRecord(allResults, ind, "Heart Rate", "heartrate", numHour = hour)
+    # plotRecord(allResults, ind, "Respiratory Rate", "respirationrate", numHour = hour)
+    # plotRecord(allResults, ind, "Oxygen Saturation", "oxygen", numHour = hour)
+    # plotRecord(allResults, ind, "Diastolic Blood Pressure", "diastolic", numHour = hour)
+    # plotRecord(allResults, ind, "Systolic Blood Pressure", "systolic", numHour = hour)
+    #
+    #
+    # print(allResults[ind][["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
+    #                        "OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
+    #                        "DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
+    #                        "SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
+    #                        "RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)]].mean())
+    #
+    # # for non filtered
+    # threshold = 1.1
+    # ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+    #        (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+    #        (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
+    #        (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)   &\
+    #        (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
+    #        )
+    #
+    #
+    #
+    # plotRecord(allResults, ind, "Heart Rate", "filtered_heartrate", numHour = hour)
+    # plotRecord(allResults, ind, "Respiratory Rate", "filtered_respirationrate", numHour = hour)
+    # plotRecord(allResults, ind, "Oxygen Saturation", "filtered_oxygen", numHour = hour)
+    # plotRecord(allResults, ind, "Diastolic Blood Pressure", "filtered_diastolic", numHour = hour)
+    # plotRecord(allResults, ind, "Systolic Blood Pressure", "filtered_systolic", numHour = hour)
+    #
+    # Y = classified["angus"].loc[allResults[ind]["HADM_MAPPING"].apply(int)]
+    # sepsis = allResults[ind]["HADM_MAPPING"].apply(lambda x: int(x) in Y[Y == 1].index)
+    # print("Number of Sepsis Cases:", sepsis.value_counts()[True])
+    # print("Number of NonSepsis Cases:", len(Y) - sepsis.value_counts()[True])
 
+    reader = WaveformReader(numericMapping=numericMapping)
+    reader.traverser.numeric = True
 
-    plotRecord(allResults, ind, "Heart Rate", "heartrate", numHour = hour)
-    plotRecord(allResults, ind, "Respiratory Rate", "respirationrate", numHour = hour)
-    plotRecord(allResults, ind, "Oxygen Saturation", "oxygen", numHour = hour)
-    plotRecord(allResults, ind, "Diastolic Blood Pressure", "diastolic", numHour = hour)
-    plotRecord(allResults, ind, "Systolic Blood Pressure", "systolic", numHour = hour)
-
-
-    print(allResults[ind][["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
-                           "OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
-                           "DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
-                           "SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour), \
-                           "RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)]].mean())
-
-    # for non filtered
-    threshold = .8
-    ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-           (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-           (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
-           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-           )
-    #  &\
-    # (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-
-
-    plotRecord(allResults, ind, "Heart Rate", "filtered_heartrate", numHour = hour)
-    plotRecord(allResults, ind, "Respiratory Rate", "filtered_respirationrate", numHour = hour)
-    plotRecord(allResults, ind, "Oxygen Saturation", "filtered_oxygen", numHour = hour)
-    plotRecord(allResults, ind, "Diastolic Blood Pressure", "filtered_diastolic", numHour = hour)
-    plotRecord(allResults, ind, "Systolic Blood Pressure", "filtered_systolic", numHour = hour)
-
-    classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
-    Y = classified["angus"].loc[allResults[ind]["HADM_MAPPING"].apply(int)]
-    sepsis = allResults[ind]["HADM_MAPPING"].apply(lambda x: int(x) in Y[Y == 1].index)
-    print("Number of Sepsis Cases:", len(sepsis))
-    print("Number of NonSepsis Cases:", len(Y) - len(sepsis))
+    toConcat = []
+    #deal with the duplicated hospital admission id issue and get some stats on how many are actually duplicated
+    duplicated = allResults[ind].loc[allResults[ind]["HADM_MAPPING"].duplicated()]["HADM_MAPPING"].unique()
+    for hadm in duplicated:
+        duplicatedStats = pd.DataFrame(index=[hadm])
+        duplicatedRecords = allResults[ind][allResults[ind]["HADM_MAPPING"] == hadm]
+        duplicatedDataColumns = Dict()
+        for column in columnsToAnalyze:
+            duplicatedDataColumns[column] = []
+        for duplicatedRecordID in duplicatedRecords.index:
+            data, fields = reader.getRecord(duplicatedRecordID)
+            firstHours = data[(data.index < pd.Timestamp(duplicatedRecords["ADMITTIME"].iloc[0]) + pd.Timedelta("{} hours".format(hour)))] #since these share hadmids, they share the same admittime
+            for column in columnsToAnalyze:
+                if column in firstHours.columns:
+                    duplicatedDataColumns[column].append(firstHours[column])
+        # go through each column and count amount of overlap
+        for column in columnsToAnalyze:
+            if len(duplicatedDataColumns[column]) != 0:
+                toAnd = [~pd.isnull(data) for data in duplicatedDataColumns[column]]
+                overlapping = reduce(lambda x, y: x & y, toAnd)
+                duplicatedStats[column + "Number of Overlaps"] = overlapping.sum()
+        toConcat.append(duplicatedStats)
+    fullDuplicatedStats = pd.concat(toConcat)
+    print(fullDuplicatedStats.mean())

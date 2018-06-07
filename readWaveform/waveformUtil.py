@@ -241,7 +241,10 @@ def applyInIntervals(applier, waveform, freq = 125, time=6):
         toRet.append(applier(waveform[segment*i:segment*(i+1)]))
     return toRet
 
-def processSubjectID(subject_id, numericMapping, numHours):
+def processSubjectID(subject_id, numericMapping=None, numHours=24):
+    '''
+    Provides representative statistics for all records under a subjectid
+    '''
     reader = WaveformReader(numericMapping=numericMapping)
     reader.traverser.numeric = True
     toReturn = [pd.DataFrame()]
@@ -255,23 +258,25 @@ def processSubjectID(subject_id, numericMapping, numHours):
         singRecStats["SUBJECT_ID"] = subject_id
         if fileToHADMID[multiRecord].hadmid != "NOT FOUND": #could not be matched for some reason
             admittime = fileToHADMID[multiRecord].admittime
-        try:
+        try: #some records are illformed
             data, fields = reader.getRecord(multiRecord, subject_id=subject_id)
             for sig_name in data.columns:
+                singRecStats[sig_name + " MEAN"] = data[sig_name].mean()
                 if (~(data[sig_name].apply(np.isnan))).all():
                     singRecStats[sig_name + "_PERCENT_MISSING"] = 0
                 else:
                     singRecStats[sig_name + "_PERCENT_MISSING"] = pd.isnull(data[sig_name]).value_counts()[True] / len(data[sig_name])
                 #For each signal, find the percentage that is filled in the first 24 hours after admission
                 if fileToHADMID[multiRecord].hadmid != "NOT FOUND":
-                    singRecStats = percentMissing(data, admittime, numHours, sig_name, singRecStats)
-            singRecStats["length"] = len(data)
+                    singRecStats = percentMissingFirstNHours(data, admittime, numHours, sig_name, singRecStats)
+                    singRecStats["ADMITTIME"] = admittime
+            singRecStats["LENGTH"] = len(data)
         except:
             singRecStats["comment"] = "Could not getRecord"
         toReturn.append(singRecStats)
     return pd.concat(toReturn)
 
-def percentMissing(data, admittime, numHours, sig_name, singRecStats):
+def percentMissingFirstNHours(data, admittime, numHours, sig_name, singRecStats):
     '''
     Represent the amount of data missing for the number of hours noted, then writes to singRecStats (single record stats)
     :param data to analyzie
@@ -291,9 +296,6 @@ def percentMissing(data, admittime, numHours, sig_name, singRecStats):
         else:
             singRecStats[sig_name + "_PERCENT_MISSING_FIRST_" + str(numHour) + "_HOURS"] =  1 - pd.isnull(firstDay[sig_name]).value_counts()[False] / (60*numHour) # 60 minutes in an hour, 24 hours in a day
     return singRecStats
-
-
-
 
 
 def plotRecord(allResults, ind, name, filename, numHour = 24):
