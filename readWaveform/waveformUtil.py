@@ -240,6 +240,27 @@ def applyInIntervals(applier, waveform, freq = 125, time=6):
     for i in range(0, len(waveform)/(hour * time) - 1):
         toRet.append(applier(waveform[segment*i:segment*(i+1)]))
     return toRet
+def nameToTimestamp(recordName):
+    time = pd.Timestamp(year=int(recordName[8:12]), month=int(recordName[13:15]), day=int(recordName[16:18]), \
+                     hour=int(recordName[19:21]), minute=int(recordName[22:24]))
+    return time
+
+def matchRecordNameWithHADMID(recordName, time_error = '6 hours'):
+    '''
+    Unlike waveform_traverser, which maps all records under a subject id to a hospital admission at one time,
+    this only maps one record to a hadm_id.
+    :param recordName string containing subject id and time of record, as per mimic3wdb convention
+    :param time_error the amount of leeway we give to matching to a hospital admission
+    '''
+    subjectid = recordName[1:7]
+    admissions = read_sql("SELECT HADM_ID, ADMITTIME, DISCHTIME from ADMISSIONS where subject_id = {} and DISCHTIME > ADMITTIME".format(subjectid))
+    time = nameToTimestamp(recordName)
+    matching = admissions[(admissions["ADMITTIME"] - pd.Timedelta(time_error) < time) & (admissions["DISCHTIME"] + pd.Timedelta(time_error) > time)]
+    if matching["ADMITTIME"].iloc[0] > time:
+        admittime = time
+    else:
+        admittime = matching["ADMITTIME"].iloc[0]
+    return matching["HADM_ID"].iloc[0], admittime
 
 def processSubjectID(subject_id, numericMapping=None, numHours=24):
     '''

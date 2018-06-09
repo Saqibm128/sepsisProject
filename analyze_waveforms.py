@@ -1,6 +1,7 @@
 from readWaveform.waveform_reader import WaveformReader
 from readWaveform import waveformUtil
 from readWaveform.waveformUtil import percentMissingFirstNHours, processSubjectID, plotRecord
+from readWaveform.record_cleaner import Record_Cleaner
 from multiprocessing import Process
 from multiprocessing import Queue
 from multiprocessing import Manager
@@ -155,12 +156,12 @@ if __name__ == "__main__":
     #
     # # for non filtered
     # threshold = 1.1
-    # ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-    #        (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-    #        (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
-    #        (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)   &\
-    #        (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-    #        )
+    ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+           (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+           (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
+           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)   &\
+           (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
+           )
     #
     #
     #
@@ -175,30 +176,32 @@ if __name__ == "__main__":
     # print("Number of Sepsis Cases:", sepsis.value_counts()[True])
     # print("Number of NonSepsis Cases:", len(Y) - sepsis.value_counts()[True])
 
-    reader = WaveformReader(numericMapping=numericMapping)
-    reader.traverser.numeric = True
-
-    toConcat = []
-    #deal with the duplicated hospital admission id issue and get some stats on how many are actually duplicated
-    duplicated = allResults[ind].loc[allResults[ind]["HADM_MAPPING"].duplicated()]["HADM_MAPPING"].unique()
-    for hadm in duplicated:
-        duplicatedStats = pd.DataFrame(index=[hadm])
-        duplicatedRecords = allResults[ind][allResults[ind]["HADM_MAPPING"] == hadm]
-        duplicatedDataColumns = Dict()
-        for column in columnsToAnalyze:
-            duplicatedDataColumns[column] = []
-        for duplicatedRecordID in duplicatedRecords.index:
-            data, fields = reader.getRecord(duplicatedRecordID)
-            firstHours = data[(data.index < pd.Timestamp(duplicatedRecords["ADMITTIME"].iloc[0]) + pd.Timedelta("{} hours".format(hour)))] #since these share hadmids, they share the same admittime
-            for column in columnsToAnalyze:
-                if column in firstHours.columns:
-                    duplicatedDataColumns[column].append(firstHours[column])
-        # go through each column and count amount of overlap
-        for column in columnsToAnalyze:
-            if len(duplicatedDataColumns[column]) != 0:
-                toAnd = [~pd.isnull(data) for data in duplicatedDataColumns[column]]
-                overlapping = reduce(lambda x, y: x & y, toAnd)
-                duplicatedStats[column + "Number of Overlaps"] = overlapping.sum()
-        toConcat.append(duplicatedStats)
-    fullDuplicatedStats = pd.concat(toConcat)
-    print(fullDuplicatedStats.mean())
+    # reader = WaveformReader(numericMapping=numericMapping)
+    # reader.traverser.numeric = True
+    #
+    # toConcat = []
+    # #deal with the duplicated hospital admission id issue and get some stats on how many are actually duplicated
+    # duplicated = allResults[ind].loc[allResults[ind]["HADM_MAPPING"].duplicated()]["HADM_MAPPING"].unique()
+    # for hadm in duplicated:
+    #     duplicatedStats = pd.DataFrame(index=[hadm])
+    #     duplicatedRecords = allResults[ind][allResults[ind]["HADM_MAPPING"] == hadm]
+    #     duplicatedDataColumns = Dict()
+    #     for column in columnsToAnalyze:
+    #         duplicatedDataColumns[column] = []
+    #     for duplicatedRecordID in duplicatedRecords.index:
+    #         data, fields = reader.getRecord(duplicatedRecordID)
+    #         firstHours = data[(data.index < pd.Timestamp(duplicatedRecords["ADMITTIME"].iloc[0]) + pd.Timedelta("{} hours".format(hour)))] #since these share hadmids, they share the same admittime
+    #         for column in columnsToAnalyze:
+    #             if column in firstHours.columns:
+    #                 duplicatedDataColumns[column].append(firstHours[column])
+    #     # go through each column and count amount of overlap
+    #     for column in columnsToAnalyze:
+    #         if len(duplicatedDataColumns[column]) != 0:
+    #             toAnd = [~pd.isnull(data) for data in duplicatedDataColumns[column]]
+    #             overlapping = reduce(lambda x, y: x & y, toAnd)
+    #             duplicatedStats[column + "Number of Overlaps"] = overlapping.sum()
+    #     toConcat.append(duplicatedStats)
+    # fullDuplicatedStats = pd.concat(toConcat)
+    # print(fullDuplicatedStats.mean())
+    rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index) [0:30], reader=reader)
+    print(rc.cleanAll())

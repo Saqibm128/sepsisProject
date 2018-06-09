@@ -13,17 +13,20 @@ from readWaveform.waveform_traverser import WaveformFileTraverser
 
 class WaveformReader():
 
-    def __init__(self, traverser = WaveformFileTraverser(), numericMapping=None):
+    def __init__(self, traverser = WaveformFileTraverser(), numericMapping=None, columnsToUse=None):
         '''
         @param traverser is the object which provides paths and info about files
         @param numericMapping is the dataframe which maps the signal names to high level variables
                 if None, don't use
+        @param columnsToUse instead of all columns, only output dfs with the selected columnsToUse
+                if None then return the columns from the file
         '''
         self.traverser = traverser
         if numericMapping is not None:
             numericMapping["numeric"] = numericMapping["numeric"].str.upper()
             numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
         self.numericMapping = numericMapping
+        self.columnsToUse = columnsToUse
 
     def getRecord(self, record, subject_id=None):
         '''
@@ -45,15 +48,25 @@ class WaveformReader():
                 if (self.numericMapping["numeric"] == columns[i]).any():
                     columns[i] = self.numericMapping["high_level_var"][self.numericMapping["numeric"] == columns[i]].iloc[0]
         for col in sig.columns[sig.columns.duplicated()]:
-            sig[col] = sig[col].iloc[:,0].fillna(sig[col].iloc[:,1]) #if two numerics signals exist with same name, use fillna to correctly fill in
+            accumulated = sig[col].iloc[:,0]
+            #if two numerics signals exist with same name, use fillna to correctly fill in
+            for i in range(sig[col].shape[1] - 1):
+                accumulated = accumulated.fillna(sig[col].iloc[:, i])
+            sig[col] = accumulated #weird quirk overrides all columns, instead of replacing multiple columns with one
         sig.columns = columns
+        sig = sig.loc[:,~sig.columns.duplicated()] #remove extraneous duplicates
+        if self.columnsToUse is not None:
+            for column in sig.columns:
+                toDrop = []
+                if column not in self.columnsToUse:
+                    toDrop.append(column)
+                sig = sig.drop(toDrop, axis=1)
         # Convert datetime and date.date into timestamp for a timeseries
         baseDate = fields["base_date"]
         baseTime = fields["base_time"]
         baseTimestamp = pd.Timestamp(year=baseDate.year, month=baseDate.month, day=baseDate.day, hour=baseTime.hour, minute=baseTime.minute, second=baseTime.second, microsecond=baseTime.microsecond)
         ts = pd.date_range(baseTimestamp, periods=len(sig), freq=pd.Timedelta(seconds=60))
         sig.index = ts
-        sig = sig.loc[:,~sig.columns.duplicated()]
         return sig, fields
 
 
@@ -64,7 +77,7 @@ class WaveformReader():
         @param record
         @return the waveform df
         @return fields the dictionary of specific fields associated with the numeric record
-        
+
         '''
         path = self.traverser.getSubjectPath(subject_id, False)
         sig, fields = wfdb.rdsamp(path + "/" + record)
