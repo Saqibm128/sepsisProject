@@ -41,7 +41,9 @@ class Record_Cleaner:
         hadmid, admittime = wfutil.matchRecordNameWithHADMID(recordName)
 
         # drop off seconds and milliseconds
+        admittime = pd.Timestamp(year=admittime.year, month=admittime.month, day=admittime.day, hour=admittime.hour, minute=admittime.minute)
         data.index = data.index.map(lambda date: pd.Timestamp(year=date.year, month=date.month, day=date.day, hour=date.hour, minute=date.minute))
+        data = data.join(pd.DataFrame(index=pd.date_range(admittime, admittime + pd.Timedelta('24 hours'), freq='1min')), how="outer") #force include the first 24 hours, so we correctly fill in data
         admittime = pd.Timestamp(year=admittime.year, month=admittime.month, day=admittime.day, hour=admittime.hour, minute=admittime.minute)
 
 
@@ -59,7 +61,7 @@ class Record_Cleaner:
             data = data[data.index < admittime + pd.Timedelta("{} hours".format(self.num_hours))]
 
         data = data[self.columns]
-        data.index = data.index - admittime
+
         return (hadmid, data, recordName)
 
     def helperClean(self, toClean, cleaned):
@@ -105,4 +107,6 @@ class Record_Cleaner:
                 allResults[hadmID] = {}
                 allResults[hadmID]["data"] = data
                 allResults[hadmID]["recordName"] = recordName
+        for hadmid in allResults.keys():
+            allResults[hadmid]['data'].index = allResults[hadmid]['data'].index - allResults[hadmid]['data'].index[0]
         return allResults

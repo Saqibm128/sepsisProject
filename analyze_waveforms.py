@@ -10,6 +10,7 @@ from commonDB import read_sql
 import pandas as pd
 import numpy as np
 import re
+import pickle
 import matplotlib as mpl
 # mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -203,5 +204,18 @@ if __name__ == "__main__":
     #     toConcat.append(duplicatedStats)
     # fullDuplicatedStats = pd.concat(toConcat)
     # print(fullDuplicatedStats.mean())
-    rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index) [0:30], reader=reader)
-    print(rc.cleanAll())
+    rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index), reader=reader)
+    dataDict = rc.cleanAll()
+    anyIndex = True #check to see all indices are same
+    anyColumn = True  #check to see all columns are same
+    noNulls = True #check to see nothing is null
+    expectedIndex = dataDict[149518]['data'].index
+    expectedColumn = dataDict[149518]['data'].columns
+
+    for key in dataDict.keys():
+        anyIndex = anyIndex & (expectedIndex == dataDict[key]['data'].index).all()
+        anyColumn = anyColumn & (expectedColumn == dataDict[key]['data'].columns).all()
+        noNulls = noNulls &  ~pd.isnull(dataDict[key]['data']).any().any()
+    print("indices are same? :", anyIndex, "columns are same: ", anyColumn, "no nulls detected? :", noNulls)
+    with open('data/rawdatafiles/recordData.pickle', 'wb') as file:
+        pickle.dump(dataDict, file) #store data to make things faster in future
