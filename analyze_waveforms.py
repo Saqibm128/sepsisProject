@@ -2,9 +2,7 @@ from readWaveform.waveform_reader import WaveformReader
 from readWaveform import waveformUtil
 from readWaveform.waveformUtil import percentMissingFirstNHours, processSubjectID, plotRecord
 from readWaveform.record_cleaner import Record_Cleaner
-from multiprocessing import Process
-from multiprocessing import Queue
-from multiprocessing import Manager
+from multiprocessing import Process, Queue, Manager
 from addict import Dict
 from commonDB import read_sql
 import pandas as pd
@@ -204,18 +202,34 @@ if __name__ == "__main__":
     #     toConcat.append(duplicatedStats)
     # fullDuplicatedStats = pd.concat(toConcat)
     # print(fullDuplicatedStats.mean())
-    rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index), reader=reader)
-    dataDict = rc.cleanAll()
-    anyIndex = True #check to see all indices are same
-    anyColumn = True  #check to see all columns are same
-    noNulls = True #check to see nothing is null
-    expectedIndex = dataDict[149518]['data'].index
-    expectedColumn = dataDict[149518]['data'].columns
+    # rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index[0:10]), reader=reader)
+    # dataDict, totalNumImputed = rc.cleanAll()
+    # print(totalNumImputed.mean())
+    # totalNumImputed.to_csv("data/rawdatafiles/recordsNumImputed.csv")
+    # anyIndex = True #check to see all indices are same
+    # anyColumn = True  #check to see all columns are same
+    # noNulls = True #check to see nothing is null
+    # expectedIndex = dataDict[149518]['data'].index
+    # expectedColumn = dataDict[149518]['data'].columns
+    #
+    # for key in dataDict.keys():
+    #     anyIndex = anyIndex & (expectedIndex.sort_values() == dataDict[key]['data'].index.sort_values()).all()
+    #     anyColumn = anyColumn & (expectedColumn.sort_values() == dataDict[key]['data'].columns.sort_values()).all()
+    #     noNulls = noNulls &  pd.isnull(dataDict[key]['data']).any().any()
+    #     if (not anyColumn):
+    #         print(key);
+    #         break;
+    # print("indices are same? :", anyIndex, "columns are same: ", anyColumn, "any nulls detected? :", noNulls)
+    # with open('data/rawdatafiles/recordData.pickle', 'wb') as file:
+    #     pickle.dump(dataDict, file) #store data to make things faster in future
 
-    for key in dataDict.keys():
-        anyIndex = anyIndex & (expectedIndex == dataDict[key]['data'].index).all()
-        anyColumn = anyColumn & (expectedColumn == dataDict[key]['data'].columns).all()
-        noNulls = noNulls &  ~pd.isnull(dataDict[key]['data']).any().any()
-    print("indices are same? :", anyIndex, "columns are same: ", anyColumn, "no nulls detected? :", noNulls)
-    with open('data/rawdatafiles/recordData.pickle', 'wb') as file:
-        pickle.dump(dataDict, file) #store data to make things faster in future
+    rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index[0:300]), reader=reader)
+    dataDict, totalNumImputed = rc.cleanAll(shouldImpute=False)
+    for variable in columnsToAnalyze:
+        heartRate = pd.DataFrame()
+        for key in dataDict.keys():
+            heartRate[key] = dataDict[key]['data'][variable]
+        plt.pcolormesh(pd.isnull(heartRate))
+        plt.ylabel("Number of Seconds Since Admission")
+        plt.title(variable)
+        plt.savefig("data/rawdatafiles/" + variable + "Missing.png", dpi=300)
