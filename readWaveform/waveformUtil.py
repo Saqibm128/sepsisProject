@@ -254,6 +254,7 @@ def matchRecordNameWithHADMID(recordName, time_error = '6 hours'):
     '''
     subjectid = recordName[1:7]
     admissions = read_sql("SELECT HADM_ID, ADMITTIME, DISCHTIME from ADMISSIONS where subject_id = {} and DISCHTIME > ADMITTIME".format(subjectid))
+    print(recordName)
     time = nameToTimestamp(recordName)
     matching = admissions[(admissions["ADMITTIME"] - pd.Timedelta(time_error) < time) & (admissions["DISCHTIME"] + pd.Timedelta(time_error) > time)]
     if matching["ADMITTIME"].iloc[0] > time:

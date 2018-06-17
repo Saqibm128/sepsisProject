@@ -1,7 +1,8 @@
 from readWaveform.waveform_reader import WaveformReader
 from readWaveform import waveformUtil
 from readWaveform.waveformUtil import percentMissingFirstNHours, processSubjectID, plotRecord
-from readWaveform.record_cleaner import Record_Cleaner
+from readWaveform.record_cleaner import RecordCleaner
+from readWaveform.record_segments import RecordSegmentsAnalyzer
 from multiprocessing import Process, Queue, Manager
 from addict import Dict
 from commonDB import read_sql
@@ -26,7 +27,7 @@ numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
 hoursAfterAdmit = [12, 24, 36, 48] #Hours after admission
 # numericMapping = None
 columnsToAnalyze = ["RESPIRATORY RATE", "HEART RATE", "DIASTOLIC BLOOD PRESSURE", "SYSTOLIC BLOOD PRESSURE", "OXYGEN SATURATION"]
-reader = WaveformReader(numericMapping=numericMapping)
+reader = WaveformReader(numericMapping=numericMapping, columnsToUse=columnsToAnalyze)
 reader.traverser.numeric = True
 
 
@@ -155,12 +156,12 @@ if __name__ == "__main__":
     #
     # # for non filtered
     # threshold = 1.1
-    ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-           (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
-           (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
-           (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)   &\
-           (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
-           )
+    # ind = ((allResults["HEART RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+    #        (allResults["SYSTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) & \
+    #        (allResults["DIASTOLIC BLOOD PRESSURE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold) &\
+    #        (allResults["OXYGEN SATURATION_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)   &\
+    #        (allResults["RESPIRATORY RATE_PERCENT_MISSING_FIRST_{}_HOURS".format(hour)] < threshold)
+    #        )
     #
     #
     #
@@ -202,7 +203,7 @@ if __name__ == "__main__":
     #     toConcat.append(duplicatedStats)
     # fullDuplicatedStats = pd.concat(toConcat)
     # print(fullDuplicatedStats.mean())
-    # rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index[0:10]), reader=reader)
+    # rc = RecordCleaner(columns=columnsToAnalyze, records = list(allResults[ind].index[0:10]), reader=reader)
     # dataDict, totalNumImputed = rc.cleanAll()
     # print(totalNumImputed.mean())
     # totalNumImputed.to_csv("data/rawdatafiles/recordsNumImputed.csv")
@@ -222,14 +223,18 @@ if __name__ == "__main__":
     # print("indices are same? :", anyIndex, "columns are same: ", anyColumn, "any nulls detected? :", noNulls)
     # with open('data/rawdatafiles/recordData.pickle', 'wb') as file:
     #     pickle.dump(dataDict, file) #store data to make things faster in future
-
-    rc = Record_Cleaner(columns=columnsToAnalyze, records = list(allResults[ind].index[0:300]), reader=reader)
-    dataDict, totalNumImputed = rc.cleanAll(shouldImpute=False)
-    for variable in columnsToAnalyze:
-        heartRate = pd.DataFrame()
-        for key in dataDict.keys():
-            heartRate[key] = dataDict[key]['data'][variable]
-        plt.pcolormesh(pd.isnull(heartRate))
-        plt.ylabel("Number of Seconds Since Admission")
-        plt.title(variable)
-        plt.savefig("data/rawdatafiles/" + variable + "Missing.png", dpi=300)
+    #
+    # rc = RecordCleaner(columns=columnsToAnalyze, records = list(allResults[ind].index[0:300]), reader=reader)
+    # dataDict, totalNumImputed = rc.cleanAll(shouldImpute=False)
+    # for variable in columnsToAnalyze:
+    #     heartRate = pd.DataFrame()
+    #     for key in dataDict.keys():
+    #         heartRate[key] = dataDict[key]['data'][variable]
+    #     plt.pcolormesh(pd.isnull(heartRate))
+    #     plt.ylabel("Number of Seconds Since Admission")
+    #     plt.title(variable)
+    #     plt.savefig("data/rawdatafiles/" + variable + "Missing.png", dpi=300)
+    rsa = RecordSegmentsAnalyzer(reader=reader)
+    data = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
+    with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
+        pickle.dump(data, file) #store data to make things faster in future
