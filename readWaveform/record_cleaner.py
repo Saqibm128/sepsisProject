@@ -16,12 +16,13 @@ from preprocessing.preprocessing import read_variable_ranges
 from readWaveform.waveform_traverser import WaveformFileTraverser
 from readWaveform.waveform_reader import WaveformReader
 from readWaveform import waveformUtil as wfutil
-class Record_Cleaner:
+class RecordCleaner:
     def __init__(self, variable_ranges=read_variable_ranges("preprocessing/resources/variable_ranges.csv"), columns=None, reader = WaveformReader(), records=None, num_workers=24, num_hours=24):
         '''
         Reader is an object capable of providing a record for cleaning
         variable_ranges is the DataFrame for variables, with OUTLIER_HIGH and OUTLIER_LOW values
         reader is an object which provides the record info
+                It is expected that reader has columnsToUse instantiated, with variable_ranges including those columns along with outlier vals
         numericMapping is a dataframe which maps variables from numeric mapping to
         records is a list of record names to use
         num_hours is the number of hours after admission to keep (helps with efficiency to specify here), if none keep all
@@ -31,7 +32,7 @@ class Record_Cleaner:
         self.manager = Manager()
         self.records = records
         self.num_workers = num_workers
-        self.num_hours=24
+        self.num_hours=num_hours
         if columns is not None:
             reader.columnsToUse = columns
 
@@ -42,7 +43,7 @@ class Record_Cleaner:
         admittime = pd.Timestamp(year=admittime.year, month=admittime.month, day=admittime.day, hour=admittime.hour, minute=admittime.minute)
         data.index = data.index.map(lambda date: pd.Timestamp(year=date.year, month=date.month, day=date.day, hour=date.hour, minute=date.minute))
         data = data.join(pd.DataFrame(index=pd.date_range(admittime, admittime + pd.Timedelta('24 hours'), freq='1min')), how="outer") #force include the first 24 hours, so we correctly fill in data
-        admittime = pd.Timestamp(year=admittime.year, month=admittime.month, day=admittime.day, hour=admittime.hour, minute=admittime.minute)
+
 
         for col in self.reader.columnsToUse:
             data.loc[data[col] < self.variable_ranges["OUTLIER_LOW"][col], col] = np.nan
@@ -108,7 +109,7 @@ class Record_Cleaner:
                     numImputed[col + ' SAMPLES'] = (~pd.isnull(data[col])).sum()
                 data = data.fillna(method="ffill")
                 for col in self.reader.columnsToUse:
-                    if col not in data.columns: #should never trigger based on our filtering
+                    if col not in data.columns or pd.isnull(data[col]).all(): #should never trigger based on our filtering
                         numImputed[col + " COMPLETELY MISSING"] = True
                         data[col] = (pd.Series(index=data.index).apply(lambda a: self.variable_ranges["IMPUTE"][col]))
                 for col in data.columns:

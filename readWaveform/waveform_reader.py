@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import time
 import datetime
-import commonDB
+from commonDB import read_sql
 import math
 import os
 import wfdb
@@ -27,6 +27,29 @@ class WaveformReader():
             numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
         self.numericMapping = numericMapping
         self.columnsToUse = columnsToUse
+
+    def getRecordByHADMID(self, hadmid, subjectID=None):
+        '''
+        Records combined by HADMID to form a cohesive history over entire hospital admission
+        '''
+        # Apparently multiple records for same hadm_id
+        if subjectID is None:
+            subjectID = read_sql("SELECT SUBJECT_ID FROM ADMISSIONS WHERE HADM_ID = " + str(hadmid))['SUBJECT_ID'].iloc[0]
+
+        matching = pd.DataFrame(self.traverser.matchWithHADMID(subjectID))
+        matching = matching.T
+        #find records from specific subjectID that have same hadmid and order by time of the record
+        matching = matching[(matching['hadmid'].astype(str) == hadmid)]
+        matching = matching.sort_values(by=['admittime'])
+        currentDF, fields = self.getRecord(matching.index[0])
+        if matching.shape[0] > 1:
+            for recName in matching.index[1:]:
+                data, fields = self.getRecord(recName)
+                currentDF = currentDF.fillna(data)
+        return currentDF
+
+
+
 
     def getRecord(self, record, subject_id=None):
         '''
@@ -56,11 +79,16 @@ class WaveformReader():
         sig.columns = columns
         sig = sig.loc[:,~sig.columns.duplicated()] #remove extraneous duplicates
         if self.columnsToUse is not None:
+            #drop columns not in columnsToUse
             for column in sig.columns:
                 toDrop = []
                 if column not in self.columnsToUse:
                     toDrop.append(column)
                 sig = sig.drop(toDrop, axis=1)
+            #add nan columns not in df
+            for column in self.columnsToUse:
+                if column not in sig.columns:
+                    sig[column] = pd.Series(index=sig.index)
         # Convert datetime and date.date into timestamp for a timeseries
         baseDate = fields["base_date"]
         baseTime = fields["base_time"]

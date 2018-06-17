@@ -35,7 +35,10 @@ class WaveformFileTraverser():
         @return the generated path for the waveform data for a specific subjectid
         '''
         if not p_appended:
-            subjectid = "p" + subjectid
+            subjectid = str(subjectid)
+            while len(subjectid) != 6:
+                subjectid = '0' + subjectid
+            subjectid = 'p' + subjectid
         return self.root + "/matched/" + subjectid[0:3] + "/" + subjectid
 
     def getMultiRecordFiles(self, subjectid, p_appended=False):
@@ -54,7 +57,7 @@ class WaveformFileTraverser():
         '''
         Goes through each fileDateMap entry to match each key (waveform file) to hospital admission
         time_error is the amount of time before admittime and after DISCHTIME to consider for admissions
-        @return a dictionary which matches hadm_id with the waveform file
+        @return a dictionary which matches hadm_id with the waveform file, as well as including an admittime
         '''
         subjectFiles = self.getMultiRecordFiles(subjectid, p_appended)
         fileDateMap = Dict()
@@ -75,6 +78,7 @@ class WaveformFileTraverser():
                 admittime = admissions[admissions["HADM_ID"] == matching.iloc[0]]["ADMITTIME"].iloc[0]
                 fileAdmissionMap[waveform].hadmid = matching.iloc[0] #assume that admissions don't overlap for a single subject id
                 #store either the admittime from sql or the start of records for admittimes depending on which was first
+                fileAdmissionMap.startTime = time
                 if (admittime > time):
                     fileAdmissionMap[waveform].admittime = time
                 else:
