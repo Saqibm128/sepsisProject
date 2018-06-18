@@ -42,7 +42,7 @@ testTrainSet = normalize(un_normalized)
 
 classified = pd.DataFrame.from_csv("./data/rawdatafiles/classifiedAngusSepsis.csv")
 Y = classified["angus"][testTrainSet.index]
-trainInd, testInd = sklearn.model_selection.train_test_split(pd.Series(testTrainSet.index), train_size=.9, stratify=Y)
+trainInd, testInd = sklearn.model_selection.train_test_split(pd.Series(testTrainSet.index), train_size=.9, stratify=Y, random_state=100)
 
 model_name = "LogisticRegression average data no feature selection 24 hours"
 print("beginning model:", model_name)
