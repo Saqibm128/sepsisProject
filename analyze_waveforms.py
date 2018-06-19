@@ -234,7 +234,69 @@ if __name__ == "__main__":
     #     plt.ylabel("Number of Seconds Since Admission")
     #     plt.title(variable)
     #     plt.savefig("data/rawdatafiles/" + variable + "Missing.png", dpi=300)
-    rsa = RecordSegmentsAnalyzer(reader=reader)
-    data = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
-    with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
-        pickle.dump(data, file) #store data to make things faster in future
+    # rsa = RecordSegmentsAnalyzer(reader=reader)
+    # data = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
+    # with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
+    #     pickle.dump(data, file) #store data to make things faster in future
+
+    with open('data/rawdatafiles/recordSegments.pickle', 'rb') as file:
+        data = pickle.load(file)
+
+    print("Number of HADM_IDS:", len(data))
+
+    firstSegLengths = []
+    for hadmid in data:
+        if True in hadmid:
+            firstSegLengths.append(len(hadmid[True].iloc[0]))
+        else:
+            firstSegLengths.append(0) #length of nothing is false
+    plt.title("First Filtered Segment of Data in Waveform (Most Missing = 15)")
+    plt.hist(firstSegLengths, range=(50,4000))
+    plt.xlabel("Size of First Segment")
+    plt.ylabel("Number of First Segments")
+    plt.savefig("data/rawdatafiles/firstFilteredSegmentLengths.png", dpi=300)
+    plt.hist(firstSegLengths,)
+    plt.title("First Filtered Segment of Data in Record (Most Missing = 15)")
+    plt.xlabel("Size of First Segment")
+    plt.ylabel("Number of First Segments")
+    plt.savefig("data/rawdatafiles/firstSegmentLengths.png", dpi=300)
+    plt.gcf().clear()
+    print("Median length of values for first segment of data for HADMID: ", np.median(np.array(firstSegLengths)))
+
+    missingSegments = []
+    for hadmid in data:
+        if False in hadmid:
+            for i in range(len(hadmid.loc[False])):
+                missingSegments.append(len(hadmid.loc[False].iloc[i]))
+
+    plt.hist(missingSegments)
+    plt.title("Missing Segments of Data in Record (Most Missing = 15)")
+    plt.xlabel("Size of Missing Segment")
+    plt.ylabel("Number of Missing Segments")
+    plt.savefig("data/rawdatafiles/missingSegmentLengths.png", dpi=300)
+    plt.gcf().clear()
+    print("Median length of missing segments for record for HADMID: ", np.median(np.array(missingSegments)))
+
+    numberOfSegments = []
+    for hadmid in data:
+        numberOfSegments.append(hadmid.shape[0])
+    print("Median number of segments: ", np.median(np.array(numberOfSegments)))
+    plt.hist(numberOfSegments)
+    plt.title("Number Of Segments for each HADM (Most Missing = 15)")
+    plt.xlabel("Number of Segments")
+    plt.ylabel("Number of HADMs")
+    plt.savefig("data/rawdatafiles/totalNumSegmentLengths.png", dpi=300)
+    plt.gcf().clear()
+
+
+    numberOfDataSegments = []
+    for hadmid in data:
+        if True in hadmid:
+            numberOfDataSegments.append(hadmid[True].shape[0])
+    print("Median number of data-filled segments: ", np.median(np.array(numberOfDataSegments)))
+    plt.hist(numberOfDataSegments)
+    plt.title("Number Of Segments for each HADM (Most Missing = 15)")
+    plt.xlabel("Number of Segments")
+    plt.ylabel("Number of HADMs")
+    plt.savefig("data/rawdatafiles/totalFilledSegmentLengths.png", dpi=300)
+    plt.gcf().clear()

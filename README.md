@@ -18,6 +18,11 @@ conda install -f requirements.txt
 ```
 
 ## Structure
+
+### Waveform analysis
+analyze_waveforms.py is a giant grabbag of scripted code for waveform analysis, matching all with HADMIDs, analyzing segments of numeric records, etc...
+
+### Clinical Dataset
 commonDB.py holds multiple functions to access mimic3 sql db (general queries, etc.)
 
 event_count.py is responsible for generating statistics for comparison of preprocessed and postprocessed input data
