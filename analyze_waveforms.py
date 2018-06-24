@@ -246,8 +246,8 @@ if __name__ == "__main__":
 
     firstSegLengths = []
     for hadmid in data:
-        if True in hadmid:
-            firstSegLengths.append(len(hadmid[True].iloc[0]))
+        if True in hadmid[1]:
+            firstSegLengths.append(hadmid[1][True].iloc[0])
         else:
             firstSegLengths.append(0) #length of nothing is false
     plt.title("First Filtered Segment of Data in Waveform (Most Missing = 15)")
@@ -261,42 +261,72 @@ if __name__ == "__main__":
     plt.ylabel("Number of First Segments")
     plt.savefig("data/rawdatafiles/firstSegmentLengths.png", dpi=300)
     plt.gcf().clear()
+
     print("Median length of values for first segment of data for HADMID: ", np.median(np.array(firstSegLengths)))
 
-    missingSegments = []
+    segmentLengths = []
     for hadmid in data:
-        if False in hadmid:
-            for i in range(len(hadmid.loc[False])):
-                missingSegments.append(len(hadmid.loc[False].iloc[i]))
+        if True in hadmid[1]:
+            for i in range(len(hadmid[1].loc[True])):
+                segmentLengths.append(hadmid[1].loc[True].iloc[i])
 
-    plt.hist(missingSegments)
-    plt.title("Missing Segments of Data in Record (Most Missing = 15)")
-    plt.xlabel("Size of Missing Segment")
-    plt.ylabel("Number of Missing Segments")
-    plt.savefig("data/rawdatafiles/missingSegmentLengths.png", dpi=300)
+    plt.hist(segmentLengths)
+    plt.title("Lengths of All Segments of Data in Record (Most Missing = 15)")
+    plt.xlabel("Size of Segment")
+    plt.ylabel("Number of Segments")
+    plt.savefig("data/rawdatafiles/allSegmentLengths.png", dpi=300)
     plt.gcf().clear()
-    print("Median length of missing segments for record for HADMID: ", np.median(np.array(missingSegments)))
+    print("Median length of segments for record for HADMID: ", np.median(np.array(segmentLengths)))
 
-    numberOfSegments = []
+    afterAdmittime = []
     for hadmid in data:
-        numberOfSegments.append(hadmid.shape[0])
-    print("Median number of segments: ", np.median(np.array(numberOfSegments)))
-    plt.hist(numberOfSegments)
-    plt.title("Number Of Segments for each HADM (Most Missing = 15)")
-    plt.xlabel("Number of Segments")
-    plt.ylabel("Number of HADMs")
-    plt.savefig("data/rawdatafiles/totalNumSegmentLengths.png", dpi=300)
-    plt.gcf().clear()
+        if True in hadmid[1]:
+            if 1 in hadmid[1][True]:  #is the first block a segment?
+                afterAdmittime.append(hadmid[2]) #storing the admittimeDiff here
+            else:
+                afterAdmittime.append(hadmid[2] + pd.Timedelta("{} seconds".format(hadmid[1][False][1]))) # add the time from interceding first block of False block
 
-
-    numberOfDataSegments = []
-    for hadmid in data:
-        if True in hadmid:
-            numberOfDataSegments.append(hadmid[True].shape[0])
-    print("Median number of data-filled segments: ", np.median(np.array(numberOfDataSegments)))
-    plt.hist(numberOfDataSegments)
-    plt.title("Number Of Segments for each HADM (Most Missing = 15)")
-    plt.xlabel("Number of Segments")
-    plt.ylabel("Number of HADMs")
-    plt.savefig("data/rawdatafiles/totalFilledSegmentLengths.png", dpi=300)
+    plt.hist(segmentLengths)
+    plt.title("Gap Size Before First Segments of Data in Record (Most Missing = 15)")
+    plt.xlabel("Size of Gap before All Data")
+    plt.ylabel("Number of Segments")
+    plt.savefig("data/rawdatafiles/admittimeDiffWaveform.png", dpi=300)
     plt.gcf().clear()
+    print("Median length of segments for record for HADMID: ", np.median(np.array(segmentLengths)))
+    # missingSegments = []
+    # for hadmid in data:
+    #     if False in hadmid[1]:
+    #         for i in range(len(hadmid[1].loc[False])):
+    #             missingSegments.append(hadmid[1].loc[False].iloc[i])
+    #
+    # plt.hist(missingSegments)
+    # plt.title("Missing Gaps of Data in Record (Most Missing = 15)")
+    # plt.xlabel("Size of Missing Gap")
+    # plt.ylabel("Number of Missing Gaps")
+    # plt.savefig("data/rawdatafiles/missingGapLengths.png", dpi=300)
+    # plt.gcf().clear()
+    # print("Median length of missing Gaps for record for HADMID: ", np.median(np.array(missingSegments)))
+    #
+    # numberOfSegments = []
+    # for hadmid in data:
+    #     numberOfSegments.append(hadmid[1].shape[0])
+    # print("Median number of segments and gaps: ", np.median(np.array(numberOfSegments)))
+    # plt.hist(numberOfSegments)
+    # plt.title("Number Of Segments and Gaps for each HADM (Most Missing = 15)")
+    # plt.xlabel("Number of Segments")
+    # plt.ylabel("Number of HADMs")
+    # plt.savefig("data/rawdatafiles/totalNumSegmentLengths.png", dpi=300)
+    # plt.gcf().clear()
+    #
+    #
+    # numberOfDataSegments = []
+    # for hadmid in data:
+    #     if True in hadmid[1]:
+    #         numberOfDataSegments.append(hadmid[1][True].shape[0])
+    # print("Median number of data-filled segments: ", np.median(np.array(numberOfDataSegments)))
+    # plt.hist(numberOfDataSegments)
+    # plt.title("Number Of Segments for each HADM (Most Missing = 15)")
+    # plt.xlabel("Number of Segments")
+    # plt.ylabel("Number of HADMs")
+    # plt.savefig("data/rawdatafiles/totalFilledSegmentLengths.png", dpi=300)
+    # plt.gcf().clear()

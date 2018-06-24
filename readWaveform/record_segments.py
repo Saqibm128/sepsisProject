@@ -33,9 +33,11 @@ class RecordSegmentsAnalyzer:
         if columns is not None:
             reader.columnsToUse = columns
 
-    def analyze(self, hadmID):
-        data = self.reader.getRecordByHADMID(hadmID)
 
+    def analyze(self, hadmID):
+        data, matching = self.reader.getRecordByHADMID(hadmID)
+
+        admittimeDiff = data.index[0] - matching.iloc[0]['admittime']
         data.index = data.index.map(lambda date: pd.Timestamp(year=date.year, month=date.month, day=date.day, hour=date.hour, minute=date.minute))
 
 
@@ -47,17 +49,24 @@ class RecordSegmentsAnalyzer:
         partOfSegment = pd.DataFrame(index=pd.RangeIndex(data.shape[0]), columns=["isSeg", "block"]) #is truee or false, depending on window of data
 
         #figure out which parts of the data are part of a segment or part of a missing segment
-        if (data.shape[0] > self.num_missing_most):
-            for i in range(data.shape[0] - self.num_missing_most):
-                window = data.iloc[i:i + self.num_missing_most, :]
-                partOfSegment.loc[i, 'isSeg'] = pd.isnull(window).all().any()
-            for i in range(self.num_missing_most):
-                partOfSegment.loc[data.shape[0] -  (self.num_missing_most - i), 'isSeg'] = partOfSegment.loc[data.shape[0] - self.num_missing_most - 1, 'isSeg'] & pd.isnull(data.iloc[data.shape[0] -  (self.num_missing_most - i),:]).any()
+        tempData = data.fillna(-1).reset_index(drop=True) #rolling window has incorrect behavior when analyzing nulls, use -1 as placeholder instead
+
+        partOfSegment.loc[:,'isSeg'] = ~tempData.rolling(self.num_missing_most).apply(lambda win: (win == -1).all()).any(axis=1)
+        if data.shape[0] <= self.num_missing_most:
+            partOfSegment.loc[:, 'isSeg'] = False
+        else:
+            partOfSegment.loc[0:self.num_missing_most, 'isSeg'] = partOfSegment.loc[self.num_missing_most, 'isSeg'] #we can always carry over the result for the first n
+        # if (data.shape[0] > self.num_missing_most):
+        #     for i in range(data.shape[0] - self.num_missing_most):
+        #         window = data.iloc[i:i + self.num_missing_most, :]
+        #         partOfSegment.loc[i, 'isSeg'] = ~pd.isnull(window).all().any()
+        #     for i in range(self.num_missing_most):
+        #         partOfSegment.loc[data.shape[0] -  (self.num_missing_most - i), 'isSeg'] = partOfSegment.loc[data.shape[0] - self.num_missing_most - 1, 'isSeg'] & pd.isnull(data.iloc[data.shape[0] -  (self.num_missing_most - i),:]).any()
         #https://stackoverflow.com/questions/14358567/finding-consecutive-segments-in-a-pandas-data-frame
         partOfSegment['block'] = (partOfSegment['isSeg'].shift(1) != partOfSegment['isSeg']).astype(int).cumsum()
-        segments = partOfSegment.groupby(['isSeg','block']).apply(np.array)
+        segments = partOfSegment.groupby(['isSeg','block']).apply(len)
 
-        return segments
+        return (hadmID, segments, admittimeDiff)
 
     def helperAnalyze(self, toAnalyze, analyzed):
         '''

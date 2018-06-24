@@ -40,13 +40,13 @@ class WaveformReader():
         matching = matching.T
         #find records from specific subjectID that have same hadmid and order by time of the record
         matching = matching[(matching['hadmid'].astype(str) == hadmid)]
-        matching = matching.sort_values(by=['admittime'])
+        matching = matching.sort_values(by=['admittime']) #use earliest record as base
         currentDF, fields = self.getRecord(matching.index[0])
         if matching.shape[0] > 1:
             for recName in matching.index[1:]:
                 data, fields = self.getRecord(recName)
                 currentDF = currentDF.fillna(data)
-        return currentDF
+        return currentDF, matching
 
 
 
