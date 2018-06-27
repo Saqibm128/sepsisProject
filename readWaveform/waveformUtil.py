@@ -320,13 +320,6 @@ def percentMissingFirstNHours(data, admittime, numHours, sig_name, singRecStats)
     return singRecStats
 
 
-def plotRecord(allResults, ind, name, filename, numHour = 24):
-    plt.hist(allResults[ind][name.upper() + "_PERCENT_MISSING_FIRST_" + str(numHour) + "_HOURS"], bins=20, rwidth=.5)
-    plt.xlabel("Percent Missing in First " + str(numHour) + " Hours")
-    plt.title(name)
-    plt.ylabel("Number of Numeric Records")
-    plt.savefig("data/rawdatafiles/" + filename + ".png", dpi=300, bottom=-.1)
-    plt.gcf().clear()
 
 
 if __name__ == "__main__":

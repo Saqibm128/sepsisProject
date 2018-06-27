@@ -10,16 +10,20 @@ import math
 import os
 import wfdb
 from readWaveform.waveform_traverser import WaveformFileTraverser
+from preprocessing.preprocessing import read_variable_ranges
+
 
 class WaveformReader():
 
-    def __init__(self, traverser = WaveformFileTraverser(), numericMapping=None, columnsToUse=None):
+    def __init__(self, traverser = WaveformFileTraverser(), numericMapping=None, columnsToUse=None, variable_ranges=read_variable_ranges("preprocessing/resources/variable_ranges.csv")):
         '''
         @param traverser is the object which provides paths and info about files
         @param numericMapping is the dataframe which maps the signal names to high level variables
                 if None, don't use
         @param columnsToUse instead of all columns, only output dfs with the selected columnsToUse
                 if None then return the columns from the file
+        @param variable_ranges - used primarily to remove outliers
+                if columnsToUse is set, then this must be set
         '''
         self.traverser = traverser
         if numericMapping is not None:
@@ -27,6 +31,7 @@ class WaveformReader():
             numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
         self.numericMapping = numericMapping
         self.columnsToUse = columnsToUse
+        self.variable_ranges = variable_ranges
 
     def getRecordByHADMID(self, hadmid, subjectID=None):
         '''
@@ -89,6 +94,9 @@ class WaveformReader():
             for column in self.columnsToUse:
                 if column not in sig.columns:
                     sig[column] = pd.Series(index=sig.index)
+                if self.variable_ranges is not None:
+                    sig.loc[sig[column] < self.variable_ranges["OUTLIER_LOW"][column], column] = np.nan
+                    sig.loc[sig[column] > self.variable_ranges["OUTLIER_HIGH"][column], column] = np.nan
         # Convert datetime and date.date into timestamp for a timeseries
         baseDate = fields["base_date"]
         baseTime = fields["base_time"]
