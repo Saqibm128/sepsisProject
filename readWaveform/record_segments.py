@@ -9,6 +9,7 @@ import datetime
 import commonDB
 import math
 import os
+from addict import Dict
 
 from multiprocessing import Process, Queue, Manager
 import wfdb
@@ -82,7 +83,9 @@ class RecordSegmentsAnalyzer:
         processes = [Process(target=self.helperAnalyze, args=(toAnalyze, analyzed)) for i in range(self.num_workers)]
         [process.start() for process in processes]
         [process.join() for process in processes]
-        allResults = []
+        allResults = Dict()
         while not analyzed.empty():
-            allResults.append(analyzed.get())
+            hadmid, isSeg, admittimeDiff = analyzed.get()
+            allResults[hadmid].isSeg = isSeg
+            allResults[hadmid].admittimeDiff = admittimeDiff
         return allResults

@@ -3,6 +3,7 @@ from readWaveform import waveformUtil
 from readWaveform.waveformUtil import percentMissingFirstNHours, processSubjectID
 from readWaveform.record_cleaner import RecordCleaner
 from readWaveform.record_segments import RecordSegmentsAnalyzer
+from preprocessing.preprocessing import read_variable_ranges
 from multiprocessing import Process, Queue, Manager
 from addict import Dict
 from commonDB import read_sql
@@ -10,6 +11,7 @@ import pandas as pd
 import numpy as np
 import re
 import pickle
+import os
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -25,10 +27,11 @@ numericMapping = pd.read_csv("preprocessing/resources/numeric_waveform_to_variab
 numericMapping["numeric"] = numericMapping["numeric"].str.upper()
 numericMapping["high_level_var"] = numericMapping["high_level_var"].str.upper()
 hoursAfterAdmit = [12, 24, 36, 48] #Hours after admission
-# numericMapping = None
 columnsToAnalyze = ["RESPIRATORY RATE", "HEART RATE", "DIASTOLIC BLOOD PRESSURE", "SYSTOLIC BLOOD PRESSURE", "OXYGEN SATURATION"]
-reader = WaveformReader(numericMapping=numericMapping, columnsToUse=columnsToAnalyze)
+variable_ranges=read_variable_ranges("preprocessing/resources/variable_ranges.csv")
+reader = WaveformReader(numericMapping=numericMapping, columnsToUse=columnsToAnalyze, variable_ranges=variable_ranges)
 reader.traverser.numeric = True
+
 
 
 def helperWaveformRunner(toRunQueue, toReturnQueue, numericMapping):
@@ -203,7 +206,7 @@ if __name__ == "__main__":
     #         for column in columnsToAnalyze:
     #             if column in firstHours.columns:
     #                 duplicatedDataColumns[column].append(firstHours[column])
-    #     # go through each column and count amount of overlap
+    #     # go through each column and count amount of overlap between repeated hadmids
     #     for column in columnsToAnalyze:
     #         if len(duplicatedDataColumns[column]) != 0:
     #             toAnd = [~pd.isnull(data) for data in duplicatedDataColumns[column]]
@@ -243,200 +246,220 @@ if __name__ == "__main__":
     #     plt.ylabel("Number of Seconds Since Admission")
     #     plt.title(variable)
     #     plt.savefig("data/rawdatafiles/" + variable + "Missing.png", dpi=300)
-    rsa = RecordSegmentsAnalyzer(reader=reader)
-    data = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
-    with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
-        pickle.dump(data, file) #store data to make things faster in future
-
+    # rsa = RecordSegmentsAnalyzer(reader=reader, variable_ranges=variable_ranges)
+    # firstSeg = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
+    # with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
+    #     pickle.dump(firstSeg, file) #store data to make things faster in future
+    #
     with open('data/rawdatafiles/recordSegments.pickle', 'rb') as file:
-        data = pickle.load(file)
-
-    print("Number of HADM_IDS:", len(data))
-
-    firstSegLengths = []
-    for hadmid in data:
-        if True in hadmid[1]:
-            firstSegLengths.append(hadmid[1][True].iloc[0])
-        else:
-            firstSegLengths.append(0) #length of nothing is false
-    plt.title("First Filtered Segment of Data in Waveform (Most Missing = 15)")
-    plt.hist(firstSegLengths, range=(50,4000))
-    plt.xlabel("Size of First Segment")
-    plt.ylabel("Number of First Segments")
-    plt.savefig("data/rawdatafiles/firstFilteredSegmentLengths.png", dpi=300)
-    plt.hist(firstSegLengths,)
-    plt.title("First Filtered Segment of Data in Record (Most Missing = 15)")
-    plt.xlabel("Size of First Segment")
-    plt.ylabel("Number of First Segments")
-    plt.savefig("data/rawdatafiles/firstSegmentLengths.png", dpi=300)
-    plt.gcf().clear()
-
-    print("Median length of values for first segment of data for HADMID: ", np.median(np.array(firstSegLengths)))
-
-    segmentLengths = []
-    for hadmid in data:
-        if True in hadmid[1]:
-            for i in range(len(hadmid[1].loc[True])):
-                segmentLengths.append(hadmid[1].loc[True].iloc[i])
-
-    plt.hist(segmentLengths)
-    plt.title("Lengths of All Segments of Data in Record (Most Missing = 15)")
-    plt.xlabel("Size of Segment")
-    plt.ylabel("Number of Segments")
-    plt.savefig("data/rawdatafiles/allSegmentLengths.png", dpi=300)
-    plt.gcf().clear()
-    print("Median length of segments for record for HADMID: ", np.median(np.array(segmentLengths)))
-
-    afterAdmittime = []
-    for hadmid in data:
-        if True in hadmid[1]:
-            if 1 in hadmid[1][True]:  #is the first block a segment?
-                afterAdmittime.append(hadmid[2]) #storing the admittimeDiff here
+        firstSeg = pickle.load(file)
+    #
+    # print("Number of HADM_IDS:", len(firstSeg))
+    #
+    # firstSegLengths = []
+    # for hadmid in firstSeg.keys():
+    #     if True in firstSeg[hadmid].isSeg:
+    #         firstSegLengths.append(firstSeg[hadmid].isSeg[True].iloc[0])
+    #     else:
+    #         firstSegLengths.append(0) #length of nothing is false
+    # plt.title("First Filtered Segment of Data in Waveform (Most Missing = 15)")
+    # plt.hist(firstSegLengths, range=(50,4000))
+    # plt.xlabel("Size of First Segment")
+    # plt.ylabel("Number of First Segments")
+    # plt.savefig("data/rawdatafiles/firstFilteredSegmentLengths.png", dpi=300)
+    # plt.hist(firstSegLengths,)
+    # plt.title("First Filtered Segment of Data in Record (Most Missing = 15)")
+    # plt.xlabel("Size of First Segment")
+    # plt.ylabel("Number of First Segments")
+    # plt.savefig("data/rawdatafiles/firstSegmentLengths.png", dpi=300)
+    # plt.gcf().clear()
+    #
+    # print("Median length of values for first segment of data for HADMID: ", np.median(np.array(firstSegLengths)))
+    #
+    # segmentLengths = []
+    # for hadmid in firstSeg:
+    #     if True in firstSeg[hadmid].isSeg:
+    #         for i in range(len(firstSeg[hadmid].isSeg.loc[True])):
+    #             segmentLengths.append(firstSeg[hadmid].isSeg.loc[True].iloc[i])
+    #
+    # plt.hist(segmentLengths)
+    # plt.title("Lengths of All Segments of Data in Record (Most Missing = 15)")
+    # plt.xlabel("Size of Segment")
+    # plt.ylabel("Number of Segments")
+    # plt.savefig("data/rawdatafiles/allSegmentLengths.png", dpi=300)
+    # plt.gcf().clear()
+    # print("Median length of segments for record for HADMID: ", np.median(np.array(segmentLengths)))
+    #
+    # afterAdmittime = []
+    # for hadmid in firstSeg:
+    #     if True in firstSeg[hadmid].isSeg:
+    #         if 1 in firstSeg[hadmid].isSeg[True]:  #is the first block a segment?
+    #             afterAdmittime.append(firstSeg[hadmid].admittimeDiff) #storing the admittimeDiff here
+    #         else:
+    #             afterAdmittime.append(firstSeg[hadmid].admittimeDiff + pd.Timedelta("{} seconds".format(firstSeg[hadmid].isSeg[False][1]))) # add the time from interceding first block of False block
+    #
+    # plt.hist(pd.Series(afterAdmittime) / pd.Timedelta("1 hours"))
+    # plt.title("Gap Size Before First Segments of Data in Record (Most Missing = 15)")
+    # plt.xlabel("Size of Gap before All Data (1 hour)")
+    # plt.ylabel("Number of Segments")
+    # plt.savefig("data/rawdatafiles/admittimeDiffWaveform.png", dpi=300)
+    # plt.gcf().clear()
+    # print("Median gap for record for HADMID before data starts (measured from admittime): ", np.median(np.array(afterAdmittime)))
+    # missingSegments = []
+    # for hadmid in firstSeg:
+    #     if False in firstSeg[hadmid].isSeg:
+    #         for i in range(len(firstSeg[hadmid].isSeg.loc[False])):
+    #             missingSegments.append(firstSeg[hadmid].isSeg.loc[False].iloc[i])
+    #
+    # plt.hist(missingSegments)
+    # plt.title("Missing Gaps of Data in Record (Most Missing = 15)")
+    # plt.xlabel("Size of Missing Gap")
+    # plt.ylabel("Number of Missing Gaps")
+    # plt.savefig("data/rawdatafiles/missingGapLengths.png", dpi=300)
+    # plt.gcf().clear()
+    # print("Median length of missing Gaps for record for HADMID: ", np.median(np.array(missingSegments)))
+    #
+    # numberOfSegments = []
+    # for hadmid in firstSeg:
+    #     numberOfSegments.append(firstSeg[hadmid].isSeg.shape[0])
+    # print("Median number of segments and gaps: ", np.median(np.array(numberOfSegments)))
+    # plt.hist(numberOfSegments)
+    # plt.title("Number Of Segments and Gaps for each HADM (Most Missing = 15)")
+    # plt.xlabel("Number of Segments")
+    # plt.ylabel("Number of HADMs")
+    # plt.savefig("data/rawdatafiles/totalNumSegmentLengths.png", dpi=300)
+    # plt.gcf().clear()
+    #
+    #
+    # numberOfDataSegments = []
+    # for hadmid in firstSeg:
+    #     if True in firstSeg[hadmid].isSeg:
+    #         numberOfDataSegments.append(firstSeg[hadmid].isSeg[True].shape[0])
+    # print("Median number of data-filled segments: ", np.median(np.array(numberOfDataSegments)))
+    # plt.hist(numberOfDataSegments)
+    # plt.title("Number Of Segments for each HADM (Most Missing = 15)")
+    # plt.xlabel("Number of Segments")
+    # plt.ylabel("Number of HADMs")
+    # plt.savefig("data/rawdatafiles/totalFilledSegmentLengths.png", dpi=300)
+    # plt.gcf().clear()
+    #
+    #get data into usable form for first seg analysis
+    temp = Dict()
+    for hadmid in list(firstSeg.keys()):
+        temp[hadmid] = firstSeg[hadmid]
+    firstSeg = temp
+    for hadmid in firstSeg.keys():
+        if True in firstSeg[hadmid].isSeg:
+            if 1 in firstSeg[hadmid].isSeg[True]:  #is the first block a segment?
+                firstSeg[hadmid].firstSegInd = 0 #storing the admittimeDiff here
             else:
-                afterAdmittime.append(hadmid[2] + pd.Timedelta("{} seconds".format(hadmid[1][False][1]))) # add the time from interceding first block of False block
-
-    plt.hist(pd.Series(afterAdmittime) / pd.Timedelta("1 hours"))
-    plt.title("Gap Size Before First Segments of Data in Record (Most Missing = 15)")
-    plt.xlabel("Size of Gap before All Data (1 hour)")
-    plt.ylabel("Number of Segments")
-    plt.savefig("data/rawdatafiles/admittimeDiffWaveform.png", dpi=300)
-    plt.gcf().clear()
-    print("Median gap for record for HADMID before data starts (measured from admittime): ", np.median(np.array(afterAdmittime)))
-    missingSegments = []
-    for hadmid in data:
-        if False in hadmid[1]:
-            for i in range(len(hadmid[1].loc[False])):
-                missingSegments.append(hadmid[1].loc[False].iloc[i])
-
-    plt.hist(missingSegments)
-    plt.title("Missing Gaps of Data in Record (Most Missing = 15)")
-    plt.xlabel("Size of Missing Gap")
-    plt.ylabel("Number of Missing Gaps")
-    plt.savefig("data/rawdatafiles/missingGapLengths.png", dpi=300)
-    plt.gcf().clear()
-    print("Median length of missing Gaps for record for HADMID: ", np.median(np.array(missingSegments)))
-
-    numberOfSegments = []
-    for hadmid in data:
-        numberOfSegments.append(hadmid[1].shape[0])
-    print("Median number of segments and gaps: ", np.median(np.array(numberOfSegments)))
-    plt.hist(numberOfSegments)
-    plt.title("Number Of Segments and Gaps for each HADM (Most Missing = 15)")
-    plt.xlabel("Number of Segments")
-    plt.ylabel("Number of HADMs")
-    plt.savefig("data/rawdatafiles/totalNumSegmentLengths.png", dpi=300)
-    plt.gcf().clear()
-
-
-    numberOfDataSegments = []
-    for hadmid in data:
-        if True in hadmid[1]:
-            numberOfDataSegments.append(hadmid[1][True].shape[0])
-    print("Median number of data-filled segments: ", np.median(np.array(numberOfDataSegments)))
-    plt.hist(numberOfDataSegments)
-    plt.title("Number Of Segments for each HADM (Most Missing = 15)")
-    plt.xlabel("Number of Segments")
-    plt.ylabel("Number of HADMs")
-    plt.savefig("data/rawdatafiles/totalFilledSegmentLengths.png", dpi=300)
-    plt.gcf().clear()
-
-    #get data into usable form since list of tuples is terrible
-    firstSeg = Dict()
-    for hadm in data:
-        if True in hadm[1] and (hadm[1][True].iloc[0] > 6 * 60): #has at least 6 hours
-            firstSeg[hadm[0]].data = hadm[1]
-            firstSeg[hadm[0]].timeAfterAdmit = hadm[2]
-            if 1 in hadm[1][True]:  #is the first block a segment?
-                firstSeg[hadm[0]].firstSegInd = 0 #storing the admittimeDiff here
-            else:
-                firstSeg[hadm[0]].firstSegInd = hadm[1][False][1] # add the time from interceding first block of False block
-            firstSeg[hadm[0]].firstSegLength = hadm[1][True].iloc[0]
+                firstSeg[hadmid].firstSegInd = firstSeg[hadmid].isSeg[False][1] # add the time from interceding first block of False block
+            firstSeg[hadmid].firstSegLength = firstSeg[hadmid].isSeg[True].iloc[0]
 
     def extractFirstSegment(hadmid):
         data, matching = reader.getRecordByHADMID(hadmid)
+        if columnsToAnalyze is not None:
+            for col in columnsToAnalyze:
+                data.loc[data[col] < variable_ranges["OUTLIER_LOW"][col], col] = np.nan
+                data.loc[data[col] > variable_ranges["OUTLIER_HIGH"][col], col] = np.nan
         data = data.fillna(method="ffill")
         data = data.fillna(method="bfill")
-        return data.iloc[firstSeg[hadmid].firstSegInd: firstSeg[hadmid].firstSegInd + firstSeg[hadmid].firstSegLength]
+        return data.iloc[firstSeg[hadmid].firstSegInd:firstSeg[hadmid].firstSegInd + firstSeg[hadmid].firstSegLength]
 
     def helperExtract(toRunQ, toReturnQ):
         for hadmid in iter(toRunQ.get, None):
             print(toRunQ.qsize())
             data = extractFirstSegment(hadmid)
             toReturnQ.put((hadmid, data))
-
+    firstSegFiltered = Dict() #only records meeting 6 hour criterion
     toRunQ = manager.Queue()
     toReturnQ = manager.Queue()
-    [toRunQ.put(hadmid) for hadmid in firstSeg.keys()]
+    [toRunQ.put(hadmid) for hadmid in firstSeg.keys() \
+        if True in firstSeg[hadmid].isSeg and (firstSeg[hadmid].isSeg[True].iloc[0] > 6 * 60)]
     [toRunQ.put(None) for i in range(24)]
     processes = [Process(target=helperExtract, args=[toRunQ, toReturnQ]) for i in range(24)]
     [process.start() for process in processes]
     [process.join() for process in processes]
     while not toReturnQ.empty():
         hadmid, recordData = toReturnQ.get()
-        firstSeg[hadmid].firstSegRec = recordData
+        firstSegFiltered[hadmid].firstSegRec = recordData
+        firstSegFiltered[hadmid].admittimeDiff = firstSeg[hadmid].admittimeDiff
 
     with open('data/rawdatafiles/recordFirstSegments.pickle', 'wb') as file:
-        pickle.dump(firstSeg, file) #store data to make things faster in future
+        pickle.dump(firstSegFiltered, file) #store data to make things faster in future
 
     with open('data/rawdatafiles/recordFirstSegments.pickle', 'rb') as file:
-        firstSeg = pickle.load(file)
-    Y = classified['angus'].loc[[int(hadmid) for hadmid in firstSeg.keys()]]
+        firstSegFiltered = pickle.load(file)
+    Y = classified['angus'].loc[[int(hadmid) for hadmid in list(firstSegFiltered.keys())]]
 
-    def extractSignal(sigName, recordsDict, sigKey='firstSegRec', max_allowed=None): #cringy code...
-        '''
-        @param sigName the signal (i.e. "HEART RATE") to extract
-        @param recordsDict holding all record data with hadmid as key
-        @param sigKey which key in dict has record
-        @param max_allowed how much time to cut off at (i.e. pd.Timedelta("6 hours"))
-        @return a new dataframe with hadmids as columns, of only on signal name
-        '''
-        signals = pd.DataFrame()
-        for hadmid in recordsDict.keys():
-            signal = recordsDict[hadmid][sigKey][sigName]
-            signal.index = signal.index - signal.index[0]
-            if max_allowed is not None:
-                signal = signal[signal.index < max_allowed]
-            signals[int(hadmid)] =  signal
-        return signals
-
-    for sigName in columnsToAnalyze:
-        signals = extractSignal(sigName, firstSeg, max_allowed = pd.Timedelta("6 hours"))
-        sepsisSignals = signals[signals.columns[Y==1]].mean(axis=1)
-        sepsisSignalsStd = signals[signals.columns[Y==1]].std(axis=1)
-        nonSepsisSignals = signals[signals.columns[Y==0]].mean(axis=1)
-        nonSepsisSignalsStd = signals[signals.columns[Y==0]].std(axis=1)
-        x = sepsisSignals.index
-        plt.plot(sepsisSignals.index/pd.Timedelta("1 hours"), sepsisSignals.values, color="Blue")
-        plt.plot(nonSepsisSignals.index/pd.Timedelta("1 hours"), nonSepsisSignals.values, color="Orange")
-        plt.title("Sepsis vs Nonsepsis")
-        plt.ylabel(sigName)
-        plt.xlabel("Time Since Start of First Segment (Hour)")
-        plt.legend(["Sepsis Cohort", "Non-Sepsis Cohort"])
-        plt.fill_between(sepsisSignals.index/pd.Timedelta("1 hours"), (sepsisSignals + sepsisSignalsStd).values, (sepsisSignals - sepsisSignalsStd).values, color='Blue', alpha=.5)
-        plt.fill_between(nonSepsisSignals.index/pd.Timedelta("1 hours"), (nonSepsisSignals + nonSepsisSignalsStd).values, (nonSepsisSignals - nonSepsisSignalsStd).values, color='Orange', alpha=.5)
-        plt.savefig("data/rawdatafiles/sepsisVSnonsepsis{}.png".format(sigName), dpi=300)
-        plt.gcf().clear()
-        print("First 6 hours segment, average mean of sepsis " + sigName, sepsisSignals.mean())
-        print("First 6 hours segment, average mean of nonsepsis " + sigName, nonSepsisSignals.mean())
-        print("First 6 hours segment, average std of sepsis " + sigName, sepsisSignalsStd.mean())
-        print("First 6 hours segment, average std of nonsepsis " + sigName, nonSepsisSignalsStd.mean())
+    allRecHADMIDS = pd.DataFrame([list(firstSegFiltered.keys()), \
+                                        [firstSegFiltered[hadmid].admittimeDiff for hadmid in list(firstSegFiltered.keys())], Y.tolist()]).T
+    allRecHADMIDS.columns = ["hadmid", "admittimeDiff", "Y"]
+    allRecHADMIDS = allRecHADMIDS.set_index(["hadmid"])
+    # print(allRecHADMIDS.shape)
+    allRecHADMIDS.to_csv("data/rawdatafiles/byHadmIDNumRec/allRecHADMIDS.csv")
+    for hadmid in firstSegFiltered.keys():
+        firstSixHourRec = firstSegFiltered[hadmid].firstSegRec
+        if not os.path.isdir("data/rawdatafiles/byHadmIDNumRec/{}".format(hadmid)):
+            os.mkdir("data/rawdatafiles/byHadmIDNumRec/{}".format(hadmid))
+        firstSixHourRec.to_csv("data/rawdatafiles/byHadmIDNumRec/{}/sixHourSegment.csv".format(hadmid))
 
 
-    timesAfterAdmit = pd.Series()
-    for hadm in firstSeg.keys():
-        timesAfterAdmit[hadm] = firstSeg[hadm].timeAfterAdmit
-    print("Average time between admission and first segment", timesAfterAdmit.mean())
-    print("Median time between admission and first segment", timesAfterAdmit.median())
-
-    plt.hist(timesAfterAdmit.apply(lambda time: time / pd.Timedelta("1 hours"))) #unit of 1 hour
-    plt.title("Time Between Admission and First Segment")
-    plt.xlabel("Time (Hours)")
-    plt.ylabel("Number of Hospital Admissions")
-    plt.savefig("data/rawdatafiles/admitvsfirstSeg.png", dpi=300)
-    plt.gcf().clear()
-
-    plt.hist(timesAfterAdmit.apply(lambda time: time / pd.Timedelta("1 hours")), range=(-20, 72)) #unit of 1 hour
-    plt.title("Filtered Time Between Admission and First Segment")
-    plt.xlabel("Time (Hours)")
-    plt.ylabel("Number of Hospital Admissions")
-    plt.savefig("data/rawdatafiles/filteredAdmitvsfirstSeg.png", dpi=300)
+    # def extractSignal(sigName, recordsDict, sigKey='firstSegRec', max_allowed=None): #cringy code...
+    #     '''
+    #     @param sigName the signal (i.e. "HEART RATE") to extract
+    #     @param recordsDict holding all record data with hadmid as key
+    #     @param sigKey which key in dict has record
+    #     @param max_allowed how much time to cut off at (i.e. pd.Timedelta("6 hours"))
+    #     @return a new dataframe with hadmids as columns, of only on signal name
+    #     '''
+    #     signals = pd.DataFrame()
+    #     for hadmid in recordsDict.keys():
+    #         signal = recordsDict[hadmid][sigKey].loc[:,sigName]
+    #         signal.index = signal.index - signal.index[0]
+    #         if max_allowed is not None:
+    #             signal = signal[signal.index < max_allowed]
+    #         signals[int(hadmid)] =  signal
+    #     return signals
+    #
+    # for sigName in columnsToAnalyze:
+    #     signals = extractSignal(sigName, firstSegFiltered, max_allowed = pd.Timedelta("6 hours"))
+    #     sepsisSignals = signals[signals.columns[Y==1]].mean(axis=1)
+    #     sepsisSignalsStd = signals[signals.columns[Y==1]].std(axis=1)
+    #     nonSepsisSignals = signals[signals.columns[Y==0]].mean(axis=1)
+    #     nonSepsisSignalsStd = signals[signals.columns[Y==0]].std(axis=1)
+    #     x = sepsisSignals.index
+    #     plt.plot(sepsisSignals.index/pd.Timedelta("1 hours"), sepsisSignals.values, color="Blue")
+    #     plt.plot(nonSepsisSignals.index/pd.Timedelta("1 hours"), nonSepsisSignals.values, color="Orange")
+    #     plt.title("Sepsis vs Nonsepsis")
+    #     plt.ylabel(sigName)
+    #     plt.xlabel("Time Since Start of First Segment (Hour)")
+    #     plt.legend(["Sepsis Cohort", "Non-Sepsis Cohort"])
+    #     plt.fill_between(sepsisSignals.index/pd.Timedelta("1 hours"), (sepsisSignals + sepsisSignalsStd).values, (sepsisSignals - sepsisSignalsStd).values, color='Blue', alpha=.5)
+    #     plt.fill_between(nonSepsisSignals.index/pd.Timedelta("1 hours"), (nonSepsisSignals + nonSepsisSignalsStd).values, (nonSepsisSignals - nonSepsisSignalsStd).values, color='Orange', alpha=.5)
+    #     plt.savefig("data/rawdatafiles/sepsisVSnonsepsis{}.png".format(sigName), dpi=300)
+    #     plt.gcf().clear()
+    #     print("First 6 hours segment, average mean of sepsis " + sigName, sepsisSignals.mean())
+    #     print("First 6 hours segment, average mean of nonsepsis " + sigName, nonSepsisSignals.mean())
+    #     print("First 6 hours segment, average std of sepsis " + sigName, sepsisSignalsStd.mean())
+    #     print("First 6 hours segment, average std of nonsepsis " + sigName, nonSepsisSignalsStd.mean())
+    #
+    #
+    # timesAfterAdmit = pd.Series()
+    # for hadm in firstSegFiltered.keys():
+    #     timesAfterAdmit[hadm] = firstSeg[hadm].admittimeDiff
+    # print("Average time between admission and first segment", timesAfterAdmit.mean())
+    # print("Median time between admission and first segment", timesAfterAdmit.median())
+    #
+    # plt.hist(timesAfterAdmit.apply(lambda time: time / pd.Timedelta("1 hours"))) #unit of 1 hour
+    # plt.title("Time Between Admission and First Segment")
+    # plt.xlabel("Time (Hours)")
+    # plt.ylabel("Number of Hospital Admissions")
+    # plt.savefig("data/rawdatafiles/admitvsfirstSeg.png", dpi=300)
+    # plt.gcf().clear()
+    #
+    # plt.hist(timesAfterAdmit.apply(lambda time: time / pd.Timedelta("1 hours")), range=(-20, 72)) #unit of 1 hour
+    # plt.title("Filtered Time Between Admission and First Segment")
+    # plt.xlabel("Time (Hours)")
+    # plt.ylabel("Number of Hospital Admissions")
+    # plt.savefig("data/rawdatafiles/filteredAdmitvsfirstSeg.png", dpi=300)

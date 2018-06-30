@@ -61,13 +61,16 @@ class WaveformReader():
         Numerical records is a minute by minute summary of the data
         @param subject_id if None, will try to extract from record name
         @param record
-        @return the numerical record df
-        @return fields the dictionary of specific fields associated with the numeric record
+        @return the numerical record df, fields the dictionary of specific fields associated with the numeric record
         '''
         if subject_id == None:
             subject_id = record[1:7]
         path = self.traverser.getSubjectPath(subject_id, False)
-        sig, fields = wfdb.rdsamp(path + "/" + record)
+        try:
+            sig, fields = wfdb.rdsamp(path + "/" + record)
+        except:
+            print("Could not read:", path + "/" + record)
+            raise BaseException("Failure on record")
         sig = pd.DataFrame(sig)
         columns = fields["sig_name"]
         for i in range(len(columns)):
