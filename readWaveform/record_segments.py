@@ -13,6 +13,7 @@ from addict import Dict
 
 from multiprocessing import Process, Queue, Manager
 import wfdb
+from commonDB import read_sql
 from preprocessing.preprocessing import read_variable_ranges
 from readWaveform.waveform_traverser import WaveformFileTraverser
 from readWaveform.waveform_reader import WaveformReader
@@ -61,7 +62,10 @@ class RecordSegmentsAnalyzer:
         partOfSegment['block'] = (partOfSegment['isSeg'].shift(1) != partOfSegment['isSeg']).astype(int).cumsum()
         segments = partOfSegment.groupby(['isSeg','block']).apply(len)
 
-        return (hadmID, segments, admittimeDiff)
+        dob = read_sql("WITH admit as (SELECT SUBJECT_ID FROM ADMISSIONS WHERE HADM_ID={}) SELECT DOB FROM ADMIT JOIN PATIENTS on ADMIT.SUBJECT_ID = PATIENTS.SUBJECT_ID"\
+                       .format(hadmID)).iloc[0,0]
+
+        return (hadmID, segments, admittimeDiff, matching.iloc[0]['admittime'], dob)
 
     def helperAnalyze(self, toAnalyze, analyzed):
         '''
@@ -85,7 +89,9 @@ class RecordSegmentsAnalyzer:
         [process.join() for process in processes]
         allResults = Dict()
         while not analyzed.empty():
-            hadmid, isSeg, admittimeDiff = analyzed.get()
+            hadmid, isSeg, admittimeDiff, admittime, dob = analyzed.get()
             allResults[hadmid].isSeg = isSeg
             allResults[hadmid].admittimeDiff = admittimeDiff
+            allResults[hadmid].admittime = admittime
+            allResults[hadmid].dob = dob
         return allResults

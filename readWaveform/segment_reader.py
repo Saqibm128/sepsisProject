@@ -5,6 +5,7 @@ import datetime
 import commonDB
 import math
 import os
+import scipy.stats
 from addict import Dict
 from multiprocessing import Process, Queue, Manager
 
@@ -56,7 +57,10 @@ class SegmentReader():
         min.columns = min.columns + " MIN"
         max = resampler.max()
         max.columns = max.columns + " MAX"
-        return mean.join([std, min, max]).stack()
+        entropy = resampler.apply(scipy.stats.entropy).fillna(0)
+        entropy = entropy.apply(lambda X: X.apply(lambda x: 0 if np.isinf(x) else x))
+        entropy.columns = entropy.columns + " ENTROPY"
+        return mean.join([std, min, max, entropy]).stack()
     def readSimpleStats(self, hadmid, unittime=pd.Timedelta('1 hours')):
         '''
         combines read and simpleStats
@@ -65,13 +69,13 @@ class SegmentReader():
         stats = self.simpleStats(data)
         return stats
 
-    def simpleStatsAllHelper(self, toRun, toReturn):
+    def simpleStatsAllHelper(self, toRun, toReturn, unittime=pd.Timedelta("1 hours")):
         for hadmid in iter(toRun.get, None):
             print(toRun.qsize())
-            toReturn.put((hadmid, self.readSimpleStats(hadmid)))
+            toReturn.put((hadmid, self.readSimpleStats(hadmid, unittime=unittime)))
 
 
-    def simpleStatsAll(self, hadmids=None, Y=None):
+    def simpleStatsAll(self, hadmids=None, Y=None, unittime=pd.Timedelta("1 hours")):
         '''
         @param Y a vector categorizing sepsis, if None ignored, has index of hadmids
         @param hadmids, a list of hadmids to read, if None, use the info_df
@@ -85,7 +89,7 @@ class SegmentReader():
         toReturn = manager.Queue()
         [toRun.put(hadmid) for hadmid in hadmids]
         [toRun.put(None) for worker in range(self.num_workers)] #end signal for process while loop
-        processes = [Process(target=self.simpleStatsAllHelper, args=(toRun, toReturn)) for worker in range(self.num_workers)]
+        processes = [Process(target=self.simpleStatsAllHelper, args=(toRun, toReturn, unittime)) for worker in range(self.num_workers)]
         [process.start() for process in processes]
         [process.join() for process in processes]
 

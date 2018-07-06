@@ -246,11 +246,11 @@ if __name__ == "__main__":
     #     plt.ylabel("Number of Seconds Since Admission")
     #     plt.title(variable)
     #     plt.savefig("data/rawdatafiles/" + variable + "Missing.png", dpi=300)
-    # rsa = RecordSegmentsAnalyzer(reader=reader, variable_ranges=variable_ranges)
-    # firstSeg = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
-    # with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
-    #     pickle.dump(firstSeg, file) #store data to make things faster in future
-    #
+    rsa = RecordSegmentsAnalyzer(reader=reader, variable_ranges=variable_ranges)
+    firstSeg = rsa.analyzeAll(hadmids=allResults[allResults['HADM_MAPPING'] != 'NOT FOUND']['HADM_MAPPING'].unique())
+    with open('data/rawdatafiles/recordSegments.pickle', 'wb') as file:
+        pickle.dump(firstSeg, file) #store data to make things faster in future
+
     with open('data/rawdatafiles/recordSegments.pickle', 'rb') as file:
         firstSeg = pickle.load(file)
     #
@@ -344,10 +344,7 @@ if __name__ == "__main__":
     # plt.gcf().clear()
     #
     #get data into usable form for first seg analysis
-    temp = Dict()
-    for hadmid in list(firstSeg.keys()):
-        temp[hadmid] = firstSeg[hadmid]
-    firstSeg = temp
+
     for hadmid in firstSeg.keys():
         if True in firstSeg[hadmid].isSeg:
             if 1 in firstSeg[hadmid].isSeg[True]:  #is the first block a segment?
@@ -375,7 +372,9 @@ if __name__ == "__main__":
     toRunQ = manager.Queue()
     toReturnQ = manager.Queue()
     [toRunQ.put(hadmid) for hadmid in firstSeg.keys() \
-        if True in firstSeg[hadmid].isSeg and (firstSeg[hadmid].isSeg[True].iloc[0] > 6 * 60)]
+        if True in firstSeg[hadmid].isSeg and (firstSeg[hadmid].isSeg[True].iloc[0] > 6 * 60) \
+        and (firstSeg[hadmid].admittimeDiff < pd.Timedelta("72 hours"))\
+        and ((firstSeg[hadmid].admittime - firstSeg[hadmid].dob) > pd.Timedelta("{} days".format(365.25 * 18)))]
     [toRunQ.put(None) for i in range(24)]
     processes = [Process(target=helperExtract, args=[toRunQ, toReturnQ]) for i in range(24)]
     [process.start() for process in processes]

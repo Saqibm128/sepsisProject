@@ -78,3 +78,6 @@ def getCategorizations(hadm_ids = None):
     angusData = pd.read_sql(query, conn)
     angusData.set_index(["hadm_id"], inplace=True)
     return angusData
+
+if __name__=="__main__":
+    getCategorizations().to_csv("data/rawdatafiles/categorizations.csv")

@@ -9,4 +9,5 @@ preprocessing/config.json
 out/*.out
 *.out
 nohup.out
+*.err
 secrets.json
