@@ -404,44 +404,44 @@ if __name__ == "__main__":
         firstSixHourRec.to_csv("data/rawdatafiles/byHadmIDNumRec/{}/sixHourSegment.csv".format(hadmid))
 
 
-    # def extractSignal(sigName, recordsDict, sigKey='firstSegRec', max_allowed=None): #cringy code...
-    #     '''
-    #     @param sigName the signal (i.e. "HEART RATE") to extract
-    #     @param recordsDict holding all record data with hadmid as key
-    #     @param sigKey which key in dict has record
-    #     @param max_allowed how much time to cut off at (i.e. pd.Timedelta("6 hours"))
-    #     @return a new dataframe with hadmids as columns, of only on signal name
-    #     '''
-    #     signals = pd.DataFrame()
-    #     for hadmid in recordsDict.keys():
-    #         signal = recordsDict[hadmid][sigKey].loc[:,sigName]
-    #         signal.index = signal.index - signal.index[0]
-    #         if max_allowed is not None:
-    #             signal = signal[signal.index < max_allowed]
-    #         signals[int(hadmid)] =  signal
-    #     return signals
-    #
-    # for sigName in columnsToAnalyze:
-    #     signals = extractSignal(sigName, firstSegFiltered, max_allowed = pd.Timedelta("6 hours"))
-    #     sepsisSignals = signals[signals.columns[Y==1]].mean(axis=1)
-    #     sepsisSignalsStd = signals[signals.columns[Y==1]].std(axis=1)
-    #     nonSepsisSignals = signals[signals.columns[Y==0]].mean(axis=1)
-    #     nonSepsisSignalsStd = signals[signals.columns[Y==0]].std(axis=1)
-    #     x = sepsisSignals.index
-    #     plt.plot(sepsisSignals.index/pd.Timedelta("1 hours"), sepsisSignals.values, color="Blue")
-    #     plt.plot(nonSepsisSignals.index/pd.Timedelta("1 hours"), nonSepsisSignals.values, color="Orange")
-    #     plt.title("Sepsis vs Nonsepsis")
-    #     plt.ylabel(sigName)
-    #     plt.xlabel("Time Since Start of First Segment (Hour)")
-    #     plt.legend(["Sepsis Cohort", "Non-Sepsis Cohort"])
-    #     plt.fill_between(sepsisSignals.index/pd.Timedelta("1 hours"), (sepsisSignals + sepsisSignalsStd).values, (sepsisSignals - sepsisSignalsStd).values, color='Blue', alpha=.5)
-    #     plt.fill_between(nonSepsisSignals.index/pd.Timedelta("1 hours"), (nonSepsisSignals + nonSepsisSignalsStd).values, (nonSepsisSignals - nonSepsisSignalsStd).values, color='Orange', alpha=.5)
-    #     plt.savefig("data/rawdatafiles/sepsisVSnonsepsis{}.png".format(sigName), dpi=300)
-    #     plt.gcf().clear()
-    #     print("First 6 hours segment, average mean of sepsis " + sigName, sepsisSignals.mean())
-    #     print("First 6 hours segment, average mean of nonsepsis " + sigName, nonSepsisSignals.mean())
-    #     print("First 6 hours segment, average std of sepsis " + sigName, sepsisSignalsStd.mean())
-    #     print("First 6 hours segment, average std of nonsepsis " + sigName, nonSepsisSignalsStd.mean())
+    def extractSignal(sigName, recordsDict, sigKey='firstSegRec', max_allowed=None): #cringy code...
+        '''
+        @param sigName the signal (i.e. "HEART RATE") to extract
+        @param recordsDict holding all record data with hadmid as key
+        @param sigKey which key in dict has record
+        @param max_allowed how much time to cut off at (i.e. pd.Timedelta("6 hours"))
+        @return a new dataframe with hadmids as columns, of only on signal name
+        '''
+        signals = pd.DataFrame()
+        for hadmid in recordsDict.keys():
+            signal = recordsDict[hadmid][sigKey].loc[:,sigName]
+            signal.index = signal.index - signal.index[0]
+            if max_allowed is not None:
+                signal = signal[signal.index < max_allowed]
+            signals[int(hadmid)] =  signal
+        return signals
+
+    for sigName in columnsToAnalyze:
+        signals = extractSignal(sigName, firstSegFiltered, max_allowed = pd.Timedelta("6 hours"))
+        sepsisSignals = signals[signals.columns[Y==1]].mean(axis=1)
+        sepsisSignalsStd = signals[signals.columns[Y==1]].std(axis=1)
+        nonSepsisSignals = signals[signals.columns[Y==0]].mean(axis=1)
+        nonSepsisSignalsStd = signals[signals.columns[Y==0]].std(axis=1)
+        x = sepsisSignals.index
+        plt.plot(sepsisSignals.index/pd.Timedelta("1 hours"), sepsisSignals.values, color="Blue")
+        plt.plot(nonSepsisSignals.index/pd.Timedelta("1 hours"), nonSepsisSignals.values, color="Orange")
+        plt.title("Sepsis vs Nonsepsis")
+        plt.ylabel(sigName)
+        plt.xlabel("Time Since Start of First Segment (Hour)")
+        plt.legend(["Sepsis Cohort", "Non-Sepsis Cohort"])
+        plt.fill_between(sepsisSignals.index/pd.Timedelta("1 hours"), (sepsisSignals + sepsisSignalsStd).values, (sepsisSignals - sepsisSignalsStd).values, color='Blue', alpha=.5)
+        plt.fill_between(nonSepsisSignals.index/pd.Timedelta("1 hours"), (nonSepsisSignals + nonSepsisSignalsStd).values, (nonSepsisSignals - nonSepsisSignalsStd).values, color='Orange', alpha=.5)
+        plt.savefig("data/rawdatafiles/sepsisVSnonsepsis{}.png".format(sigName), dpi=300)
+        plt.gcf().clear()
+        print("First 6 hours segment, average mean of sepsis " + sigName, sepsisSignals.mean())
+        print("First 6 hours segment, average mean of nonsepsis " + sigName, nonSepsisSignals.mean())
+        print("First 6 hours segment, average std of sepsis " + sigName, sepsisSignalsStd.mean())
+        print("First 6 hours segment, average std of nonsepsis " + sigName, nonSepsisSignalsStd.mean())
     #
     #
     # timesAfterAdmit = pd.Series()

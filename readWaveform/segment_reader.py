@@ -60,13 +60,19 @@ class SegmentReader():
         entropy = resampler.apply(scipy.stats.entropy).fillna(0)
         entropy = entropy.apply(lambda X: X.apply(lambda x: 0 if np.isinf(x) else x))
         entropy.columns = entropy.columns + " ENTROPY"
-        return mean.join([std, min, max, entropy]).stack()
+        skewness = resampler.apply(scipy.stats.skew)
+        skewness.columns = skewness.columns + " SKEW"
+        kurtosis = resampler.apply(scipy.stats.kurtosis)
+        kurtosis.columns = kurtosis.columns + " KURTOSIS"
+        trajectory = resampler.apply(lambda x: x.iloc[-1] - x.iloc[0])
+        trajectory.columns = trajectory.columns + " TRAJECTORY"
+        return mean.join([std, min, max, entropy, skewness, kurtosis, trajectory]).stack()
     def readSimpleStats(self, hadmid, unittime=pd.Timedelta('1 hours')):
         '''
         combines read and simpleStats
         '''
         data = self.read(hadmid)
-        stats = self.simpleStats(data)
+        stats = self.simpleStats(data, unittime=unittime)
         return stats
 
     def simpleStatsAllHelper(self, toRun, toReturn, unittime=pd.Timedelta("1 hours")):

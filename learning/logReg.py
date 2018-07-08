@@ -85,6 +85,8 @@ def test_train_valid_explicit(Xtrain, Xtest, Ytrain, Ytest, validation_size=.1, 
     params.solver = ['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     params.penalty = ['l2']
     params.n_jobs = [1]
-    params.C = [.1, .2, .4, .8, 1.6, 3.2, 6.4]
+    params.C = [.1, .2, .4, .8, 1.6, 3.2]
     logReg = linMod.LogisticRegression();
-    return util.gridsearch_CV_wrapper(params, logReg, Xtrain, Ytrain, Xtest, Ytest, validation_size, n_jobs=n_jobs)
+    results = util.gridsearch_CV_wrapper(params, logReg, Xtrain, Ytrain, Xtest, Ytest, validation_size, n_jobs=n_jobs)
+    results.weights = results.predictor.coef_
+    return results

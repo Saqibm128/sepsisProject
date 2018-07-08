@@ -25,7 +25,7 @@ def test_train_valid_explicit(Xtrain, Ytrain, Xtest, Ytest, validation_size=.1, 
     '''
     params = Dict()
     params.criterion = ['gini', 'entropy']
-    params.n_estimators = [20, 60, 200, 400, 600, 800]
+    params.n_estimators = [100, 200, 400, 600] 
     params.max_features = ['auto', 'log2', .1, .4, .8]
     params.max_depth = [None, 1, 4]
     params.min_samples_split = [2, 8]
@@ -33,4 +33,6 @@ def test_train_valid_explicit(Xtrain, Ytrain, Xtest, Ytest, validation_size=.1, 
     params.min_impurity_decrease = [0, .5, 1]
     params.n_jobs = [4]
     rf = sklearn.ensemble.RandomForestClassifier()
-    return util.gridsearch_CV_wrapper(params=params, model=rf, Xtrain = Xtrain, Ytrain=Ytrain, Xtest=Xtest, Ytest=Ytest, validation_size=validation_size, n_jobs=n_jobs)
+    results = util.gridsearch_CV_wrapper(params=params, model=rf, Xtrain = Xtrain, Ytrain=Ytrain, Xtest=Xtest, Ytest=Ytest, validation_size=validation_size, n_jobs=n_jobs)
+    results.weights =  pd.DataFrame(results.predictor.feature_importances_).transpose()
+    return results
